@@ -255,8 +255,13 @@
             <span class="text-xs font-medium text-slate-500 dark:text-slate-400">Rata-rata SA / Hari</span>
             <span class="p-1.5 rounded-lg bg-indigo-500/15 text-indigo-400 text-xs font-bold">AVG</span>
           </div>
-          <div id="kpiAvgSA" class="text-2xl font-extrabold font-mono mt-2">0</div>
-          <p id="kpiPeakDay" class="text-[11px] text-emerald-500 font-medium mt-3">Tertinggi: -</p>
+          <div class="flex items-baseline flex-wrap gap-x-2 mt-2">
+            <span id="kpiAvgSA" class="text-2xl font-extrabold font-mono">0.0 SA</span>
+            <span class="text-2xl font-extrabold font-mono text-slate-400">vs</span>
+            <span id="kpiAvgVsOctEOM" class="text-2xl font-extrabold font-mono text-blue-500">0.0 SA</span>
+          </div>
+          <p id="kpiAvgDiff" class="text-[11px] font-semibold font-mono mt-1 text-slate-500 dark:text-slate-400">Selisih: 0.0 SA (0.0%)</p>
+          <p id="kpiPeakDay" class="text-[11px] text-emerald-500 font-medium mt-2">Tertinggi: -</p>
         </div>
 
         <div class="p-4 rounded-2xl glass-card bg-white dark:bg-slate-900/75 border border-slate-200/80 dark:border-slate-800">
@@ -832,7 +837,30 @@
         if (day) dayMap[day] = (dayMap[day] || 0) + 1;
       });
       const activeDays = Object.keys(dayMap).length || 1;
-      document.getElementById('kpiAvgSA').textContent = (total / activeDays).toFixed(1);
+      const currentAvgSA = total / activeDays;
+      const currentAvgEl = document.getElementById('kpiAvgSA');
+      currentAvgEl.textContent = `${currentAvgSA.toFixed(1)} SA`;
+      const octoberEOMTotal = filteredData.filter(isOctoberFullEOMData).length;
+      const octoberEOMAvg = octoberEOMTotal / 31;
+      const avgVsOctoberDiff = currentAvgSA - octoberEOMAvg;
+      const avgVsOctoberPct = octoberEOMAvg > 0 ? (avgVsOctoberDiff / octoberEOMAvg) * 100 : 0;
+      const avgVsOctoberEl = document.getElementById('kpiAvgVsOctEOM');
+      avgVsOctoberEl.textContent = `${octoberEOMAvg.toFixed(1)} SA`;
+      // Angka yang lebih tinggi diberi warna biru; angka yang lebih rendah merah.
+      if (Math.abs(avgVsOctoberDiff) < 0.000001) {
+        currentAvgEl.className = 'text-2xl font-extrabold font-mono text-slate-500';
+        avgVsOctoberEl.className = 'text-2xl font-extrabold font-mono text-slate-500';
+      } else if (avgVsOctoberDiff > 0) {
+        currentAvgEl.className = 'text-2xl font-extrabold font-mono text-blue-500';
+        avgVsOctoberEl.className = 'text-2xl font-extrabold font-mono text-rose-500';
+      } else {
+        currentAvgEl.className = 'text-2xl font-extrabold font-mono text-rose-500';
+        avgVsOctoberEl.className = 'text-2xl font-extrabold font-mono text-blue-500';
+      }
+      const avgDiffEl = document.getElementById('kpiAvgDiff');
+      const diffSign = avgVsOctoberDiff > 0 ? '+' : '';
+      avgDiffEl.className = `text-[11px] font-semibold font-mono mt-1 ${avgVsOctoberDiff > 0 ? 'text-blue-500' : avgVsOctoberDiff < 0 ? 'text-rose-500' : 'text-slate-500 dark:text-slate-400'}`;
+      avgDiffEl.textContent = `Selisih: ${diffSign}${avgVsOctoberDiff.toFixed(1)} SA (${diffSign}${avgVsOctoberPct.toFixed(1)}%)`;
 
       let peakDay = '-', peakVal = 0;
       Object.entries(dayMap).forEach(([d, v]) => {
