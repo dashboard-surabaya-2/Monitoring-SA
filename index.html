@@ -216,8 +216,9 @@
           </div>
           <div class="mt-2 flex items-center justify-between gap-1.5 bg-slate-100/80 dark:bg-slate-950/80 px-2 py-1 rounded-lg border border-slate-200/70 dark:border-slate-800 no-print">
             <label for="octCutoffSelect" class="text-[10px] font-semibold text-slate-500 dark:text-slate-400 whitespace-nowrap">Bandingkan Okt s/d:</label>
-            <select id="octCutoffSelect" onchange="onOctCutoffChange()" class="text-[11px] font-mono font-bold bg-transparent text-indigo-600 dark:text-cyan-400 focus:outline-none cursor-pointer">
+            <select id="octCutoffSelect" onchange="onOctCutoffChange()" class="max-w-[105px] text-[11px] font-mono font-bold bg-transparent text-indigo-600 dark:text-cyan-400 focus:outline-none cursor-pointer">
               <option value="AUTO">Otomatis</option>
+              <option value="1">01 Okt</option><option value="2">02 Okt</option><option value="3">03 Okt</option><option value="4">04 Okt</option><option value="5">05 Okt</option><option value="6">06 Okt</option><option value="7">07 Okt</option><option value="8">08 Okt</option><option value="9">09 Okt</option><option value="10">10 Okt</option><option value="11">11 Okt</option><option value="12">12 Okt</option><option value="13">13 Okt</option><option value="14">14 Okt</option><option value="15">15 Okt</option><option value="16">16 Okt</option><option value="17">17 Okt</option><option value="18">18 Okt</option><option value="19">19 Okt</option><option value="20">20 Okt</option><option value="21">21 Okt</option><option value="22">22 Okt</option><option value="23">23 Okt</option><option value="24">24 Okt</option><option value="25">25 Okt</option><option value="26">26 Okt</option><option value="27">27 Okt</option><option value="28">28 Okt</option><option value="29">29 Okt</option><option value="30">30 Okt</option><option value="31">31 Okt</option>
             </select>
           </div>
           <div class="mt-2 w-full bg-slate-200 dark:bg-slate-800 h-1.5 rounded-full overflow-hidden">
@@ -238,8 +239,8 @@
           </div>
           <div class="mt-2 flex items-center justify-between gap-1 bg-white/80 dark:bg-slate-950/80 px-2 py-1 rounded-lg border border-indigo-200/70 dark:border-slate-800 no-print">
             <label for="runrateTargetDaySelect" class="text-[10px] font-semibold text-slate-500 dark:text-slate-400 whitespace-nowrap">Cek Positif s/d:</label>
-            <select id="runrateTargetDaySelect" onchange="onRunrateTargetDayChange()" class="text-[11px] font-mono font-bold bg-transparent text-indigo-600 dark:text-cyan-400 focus:outline-none cursor-pointer">
-              <option value="30">30 Nov (EOM)</option>
+            <select id="runrateTargetDaySelect" onchange="onRunrateTargetDayChange()" class="max-w-[112px] text-[11px] font-mono font-bold bg-transparent text-indigo-600 dark:text-cyan-400 focus:outline-none cursor-pointer">
+              <option value="1">01 Nov</option><option value="2">02 Nov</option><option value="3">03 Nov</option><option value="4">04 Nov</option><option value="5">05 Nov</option><option value="6">06 Nov</option><option value="7">07 Nov</option><option value="8">08 Nov</option><option value="9">09 Nov</option><option value="10">10 Nov</option><option value="11">11 Nov</option><option value="12">12 Nov</option><option value="13">13 Nov</option><option value="14">14 Nov</option><option value="15">15 Nov</option><option value="16">16 Nov</option><option value="17">17 Nov</option><option value="18">18 Nov</option><option value="19">19 Nov</option><option value="20">20 Nov</option><option value="21">21 Nov</option><option value="22">22 Nov</option><option value="23">23 Nov</option><option value="24">24 Nov</option><option value="25">25 Nov</option><option value="26">26 Nov</option><option value="27">27 Nov</option><option value="28">28 Nov</option><option value="29">29 Nov</option><option value="30">30 Nov (EOM)</option>
             </select>
           </div>
           <div id="kpiDailyNeededBox" class="mt-2 pt-1.5 border-t border-slate-200/70 dark:border-slate-800/80 text-[11px] leading-snug">
@@ -685,7 +686,7 @@
       return info && info.month === 11;
     }
 
-    let selectedOctCutoff = '16';
+    let selectedOctCutoff = 'AUTO';
     let selectedRunrateTargetDay = '30';
 
     function getLatestNovDay() {
@@ -698,7 +699,33 @@
         const parsed = parseInt(selectedOctCutoff, 10);
         if (!isNaN(parsed) && parsed >= 1 && parsed <= 31) return parsed;
       }
-      return getLatestNovDay();
+      // Default otomatis: gunakan tanggal kalender hari ini untuk pembanding bulan lalu.
+      // Jika bulan sebelumnya lebih pendek, batasi ke hari terakhir bulan tersebut.
+      const today = new Date();
+      const lastDayOfPreviousMonth = new Date(today.getFullYear(), today.getMonth(), 0).getDate();
+      return Math.min(today.getDate(), lastDayOfPreviousMonth);
+    }
+
+    function updateOctAutoOptionLabel() {
+      const select = document.getElementById('octCutoffSelect');
+      if (!select) return;
+      const autoOption = select.querySelector('option[value="AUTO"]');
+      if (autoOption) {
+        const day = getCurrentCutoffDay();
+        autoOption.textContent = `Otomatis (${String(day).padStart(2, '0')} Okt)`;
+      }
+      select.value = selectedOctCutoff;
+    }
+
+    // Dropdown handlers for selecting comparison / target calendar dates.
+    function onOctCutoffChange() {
+      selectedOctCutoff = document.getElementById('octCutoffSelect').value;
+      refreshAll();
+    }
+
+    function onRunrateTargetDayChange() {
+      selectedRunrateTargetDay = document.getElementById('runrateTargetDaySelect').value;
+      refreshAll();
     }
 
     function isOctoberMTDData(row, cutoffDay) {
@@ -1498,6 +1525,7 @@
       renderTab1Table();
     }
 
+    updateOctAutoOptionLabel();
     populateFilterDropdowns();
     applyFilters();
     window.addEventListener('DOMContentLoaded', () => { syncFromGoogleSheet(true); });
