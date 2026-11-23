@@ -280,7 +280,7 @@
         <div class="p-4 rounded-2xl glass-card bg-white dark:bg-slate-900/75 border border-slate-200/80 dark:border-slate-800">
           <div class="flex items-center justify-between">
             <span class="text-xs font-medium text-slate-500 dark:text-slate-400">Top ASM Bulan Ini</span>
-            <span class="p-1.5 rounded-lg bg-amber-500/15 text-amber-400 text-xs font-bold">★ ASM</span>
+            <span class="inline-flex w-16 h-10 shrink-0 items-center justify-center gap-1 px-2 rounded-lg bg-amber-500/15 text-amber-400 text-xs font-bold whitespace-nowrap">★ ASM</span>
           </div>
           <div id="kpiTopASM" class="text-sm font-bold mt-2.5 truncate">-</div>
           <p id="kpiTopASMSub" class="text-xs font-mono text-amber-500 font-semibold mt-2">0 SA</p>
@@ -289,7 +289,7 @@
         <div class="p-4 rounded-2xl glass-card bg-white dark:bg-slate-900/75 border border-slate-200/80 dark:border-slate-800">
           <div class="flex items-center justify-between">
             <span class="text-xs font-medium text-slate-500 dark:text-slate-400">Top AE Bulan Ini</span>
-            <span class="p-1.5 rounded-lg bg-purple-500/15 text-purple-400 text-xs font-bold">★ AE</span>
+            <span class="inline-flex w-16 h-10 shrink-0 items-center justify-center gap-1 px-2 rounded-lg bg-purple-500/15 text-purple-400 text-xs font-bold whitespace-nowrap">★ AE</span>
           </div>
           <div id="kpiTopAE" class="text-sm font-bold mt-2.5 truncate">-</div>
           <p id="kpiTopAESub" class="text-xs font-mono text-purple-400 font-semibold mt-2">0 SA</p>
@@ -427,7 +427,7 @@
     <!-- TAB 2 -->
     <section id="tabContent2" class="mt-6 space-y-6 hidden">
       <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-6 gap-3.5">
-        <div onclick="setDelayFilter('PAID')" id="cardDelay_PAID" class="cursor-pointer p-4 rounded-2xl glass-card bg-white dark:bg-slate-900/75 border-2 border-transparent hover:border-emerald-500/60 transition shadow-sm">
+        <div onclick="showTab2KPIDetail('PAID')" id="cardDelay_PAID" class="cursor-pointer p-4 rounded-2xl glass-card bg-white dark:bg-slate-900/75 border-2 border-transparent hover:border-emerald-500/60 transition shadow-sm">
           <div class="flex items-center justify-between">
             <span class="text-xs font-semibold text-emerald-500">SA PAID (Lunas)</span>
             <span class="w-2.5 h-2.5 rounded-full bg-emerald-500"></span>
@@ -437,7 +437,7 @@
           <div id="kpiPaidRate" class="text-[11px] font-semibold text-emerald-500 mt-1">Collection: 0%</div>
         </div>
 
-        <div onclick="setDelayFilter('ALL_UNPAID')" id="cardDelay_ALL_UNPAID" class="cursor-pointer p-4 rounded-2xl glass-card bg-white dark:bg-slate-900/75 border-2 border-transparent hover:border-slate-400 transition shadow-sm">
+        <div onclick="showTab2KPIDetail('ALL_UNPAID')" id="cardDelay_ALL_UNPAID" class="cursor-pointer p-4 rounded-2xl glass-card bg-white dark:bg-slate-900/75 border-2 border-transparent hover:border-slate-400 transition shadow-sm">
           <div class="flex items-center justify-between">
             <span class="text-xs font-semibold text-slate-500 dark:text-slate-300">Total SA UNPAID</span>
             <span class="w-2.5 h-2.5 rounded-full bg-slate-400"></span>
@@ -447,7 +447,7 @@
           <div class="text-[11px] text-slate-400 mt-1">Klik untuk semua unpaid</div>
         </div>
 
-        <div onclick="setDelayFilter('1-3')" id="cardDelay_1-3" class="cursor-pointer p-4 rounded-2xl glass-card bg-amber-500/5 dark:bg-amber-500/10 border-2 border-amber-500/30 hover:border-amber-400 transition">
+        <div onclick="showTab2KPIDetail('1-3')" id="cardDelay_1-3" class="cursor-pointer p-4 rounded-2xl glass-card bg-amber-500/5 dark:bg-amber-500/10 border-2 border-amber-500/30 hover:border-amber-400 transition">
           <div class="flex items-center justify-between">
             <span class="text-xs font-bold text-amber-600 dark:text-amber-400">Telat 1 – 3 Hari</span>
             <span class="px-1.5 py-0.5 rounded text-[10px] font-bold bg-amber-500/20 text-amber-500">RINGAN</span>
@@ -457,7 +457,7 @@
           <div class="text-[10px] text-amber-600/80 dark:text-amber-400/80 mt-1">Follow-up reminder WA</div>
         </div>
 
-        <div onclick="setDelayFilter('4-6')" id="cardDelay_4-6" class="cursor-pointer p-4 rounded-2xl glass-card bg-orange-500/5 dark:bg-orange-500/10 border-2 border-orange-500/30 hover:border-orange-400 transition">
+        <div onclick="showTab2KPIDetail('4-6')" id="cardDelay_4-6" class="cursor-pointer p-4 rounded-2xl glass-card bg-orange-500/5 dark:bg-orange-500/10 border-2 border-orange-500/30 hover:border-orange-400 transition">
           <div class="flex items-center justify-between">
             <span class="text-xs font-bold text-orange-600 dark:text-orange-400">Telat 4 – 6 Hari</span>
             <span class="px-1.5 py-0.5 rounded text-[10px] font-bold bg-orange-500/20 text-orange-500">SEDANG</span>
@@ -467,7 +467,7 @@
           <div class="text-[10px] text-orange-600/80 dark:text-orange-400/80 mt-1">Eskalasi AE & ASM</div>
         </div>
 
-        <div onclick="setDelayFilter('7-9')" id="cardDelay_7-9" class="cursor-pointer p-4 rounded-2xl glass-card bg-rose-500/5 dark:bg-rose-500/10 border-2 border-rose-500/30 hover:border-rose-400 transition">
+        <div onclick="showTab2KPIDetail('7-9')" id="cardDelay_7-9" class="cursor-pointer p-4 rounded-2xl glass-card bg-rose-500/5 dark:bg-rose-500/10 border-2 border-rose-500/30 hover:border-rose-400 transition">
           <div class="flex items-center justify-between">
             <span class="text-xs font-bold text-rose-600 dark:text-rose-400">Telat 7 – 9 Hari</span>
             <span class="px-1.5 py-0.5 rounded text-[10px] font-bold bg-rose-500/20 text-rose-500">TINGGI</span>
@@ -477,7 +477,7 @@
           <div class="text-[10px] text-rose-600/80 dark:text-rose-400/80 mt-1">Prioritas kunjungan</div>
         </div>
 
-        <div onclick="setDelayFilter('>9')" id="cardDelay_>9" class="cursor-pointer p-4 rounded-2xl glass-card bg-red-600/10 dark:bg-red-950/40 border-2 border-red-500/40 hover:border-red-500 transition">
+        <div onclick="showTab2KPIDetail('>9')" id="cardDelay_>9" class="cursor-pointer p-4 rounded-2xl glass-card bg-red-600/10 dark:bg-red-950/40 border-2 border-red-500/40 hover:border-red-500 transition">
           <div class="flex items-center justify-between">
             <span class="text-xs font-bold text-red-600 dark:text-red-400">Telat &gt; 9 Hari</span>
             <span class="px-1.5 py-0.5 rounded text-[10px] font-bold bg-red-600 text-white animate-pulse">KRITIS</span>
@@ -524,7 +524,7 @@
           <div class="flex flex-wrap items-center gap-2 no-print">
             <div class="flex flex-wrap gap-1">
               <button onclick="setDelayFilter('ALL')" id="pill_ALL" class="px-2.5 py-1 rounded-lg text-xs font-semibold bg-indigo-600 text-white">Semua</button>
-              <button onclick="setDelayFilter('PAID')" id="pill_PAID" class="px-2.5 py-1 rounded-lg text-xs font-semibold bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300">PAID</button>
+              <button onclick="showTab2KPIDetail('PAID')" id="pill_PAID" class="px-2.5 py-1 rounded-lg text-xs font-semibold bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300">PAID</button>
               <button onclick="setDelayFilter('1-3')" id="pill_1-3" class="px-2.5 py-1 rounded-lg text-xs font-semibold bg-amber-500/15 text-amber-600 dark:text-amber-400">1–3 Hari</button>
               <button onclick="setDelayFilter('4-6')" id="pill_4-6" class="px-2.5 py-1 rounded-lg text-xs font-semibold bg-orange-500/15 text-orange-600 dark:text-orange-400">4–6 Hari</button>
               <button onclick="setDelayFilter('7-9')" id="pill_7-9" class="px-2.5 py-1 rounded-lg text-xs font-semibold bg-rose-500/15 text-rose-600 dark:text-rose-400">7–9 Hari</button>
@@ -533,6 +533,7 @@
 
             <input type="text" id="searchTab2" oninput="renderTab2Table()" placeholder="Cari Sub ID / Pelanggan / AE..." class="px-3 py-1.5 rounded-xl text-xs bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 focus:outline-none focus:border-indigo-500" />
 
+            <button onclick="generatePaidUnpaidWhatsAppReport()" title="Buat report WhatsApp sesuai filter" class="inline-flex items-center gap-2 px-3 py-1.5 rounded-xl text-xs font-bold bg-green-600 hover:bg-green-500 text-white transition shadow-sm"><span>●</span> Report WA Paid &amp; Unpaid</button>
             <button onclick="copyWAText('tab2Detail')" title="Export Report Text WhatsApp" class="inline-flex items-center justify-center p-2 rounded-xl bg-teal-600 hover:bg-teal-500 text-white transition shadow-sm">
               <svg class="w-4 h-4 fill-current" viewBox="0 0 24 24"><path d="M12.031 6.172c-3.181 0-5.767 2.586-5.768 5.766-.001 1.298.38 2.27 1.019 3.287l-.582 2.128 2.182-.573c.978.58 1.911.928 3.145.929 3.178 0 5.767-2.587 5.768-5.766.001-3.187-2.575-5.77-5.764-5.771zm3.392 8.244c-.144.405-.837.774-1.17.824-.299.045-.677.063-1.092-.069-.252-.08-.575-.187-.988-.365-1.739-.751-2.874-2.502-2.961-2.617-.087-.116-.708-.94-.708-1.793s.448-1.273.607-1.446c.159-.173.346-.217.462-.217l.332.006c.106.005.249-.04.39.298.144.347.491 1.2.534 1.287.043.087.072.188.014.304-.058.116-.087.188-.173.289l-.26.304c-.087.086-.177.18-.076.354.101.174.449.741.964 1.201.662.591 1.221.774 1.394.86s.274.072.376-.043c.101-.116.433-.506.549-.68.116-.173.231-.145.39-.087s1.011.477 1.184.564.289.13.332.202c.045.072.045.419-.1.824zm-3.423-14.416c-6.627 0-12 5.373-12 12s5.373 12 12 12 12-5.373 12-12-5.373-12-12-12zm.029 18.88c-1.161 0-2.305-.292-3.318-.844l-3.677.964.984-3.595c-.607-1.052-.927-2.246-.926-3.468.001-3.825 3.113-6.937 6.937-6.937 1.856.001 3.598.723 4.907 2.034 1.31 1.311 2.031 3.054 2.03 4.908-.001 3.825-3.113 6.938-6.937 6.938z"/></svg>
             </button>
@@ -554,6 +555,7 @@
                 <th class="py-3 px-3">Tgl Aktivasi</th>
                 <th class="py-3 px-3 text-right">Nominal Invoice</th>
                 <th class="py-3 px-3 text-center">Status</th>
+                <th class="py-3 px-3 text-center">Unpaid (Hari)</th>
                 <th class="py-3 px-3 text-center">Indikator Keterlambatan</th>
               </tr>
             </thead>
@@ -1294,19 +1296,103 @@
       document.getElementById('donutCenterCount').textContent = unpaid.length;
     }
 
+    function getTab2RowsForBucket(bucket) {
+      return getNovemberSA().filter(r => {
+        const b = getDelayBucket(r);
+        if (bucket === 'ALL_UNPAID') return b !== 'PAID';
+        if (bucket === 'ALL') return true;
+        return b === bucket;
+      }).sort((a,b) => (parseInt(b.unpaid_days)||0) - (parseInt(a.unpaid_days)||0));
+    }
+
+    function tab2RowLabel(r, idx) {
+      const bucket = getDelayBucket(r);
+      const days = parseInt(r.unpaid_days) || 0;
+      const status = bucket === 'PAID' ? '✅ PAID' : `⚠️ UNPAID ${days} hari`;
+      return `${idx + 1}. *${r.name || '-'}* | Sub ID: ${r.subscription_id || '-'} | AE: ${r.sales_agent_name || '-'} | ASM: ${r.asm_name || '-'} | Paket: ${r.plan || '-'} | Cluster: ${r.clustername || '-'} | Aktivasi: ${r.service_activation_date || '-'} | ${status} | Unpaid: ${bucket === 'PAID' ? '—' : `${days} hari`} | Tagihan: ${formatIDR(Number(r.invoice_amount)||0)}`;
+    }
+
+    function showTab2KPIDetail(bucket) {
+      delayFilter = bucket;
+      ['ALL','PAID','1-3','4-6','7-9','>9'].forEach(p => {
+        const el = document.getElementById('pill_' + p);
+        if (el) el.classList.toggle('ring-2', p === bucket);
+      });
+      renderTab2Table();
+      const rows = getTab2RowsForBucket(bucket);
+      const labels = { PAID:'SA PAID (Lunas)', ALL_UNPAID:'Total SA UNPAID', '1-3':'Telat 1–3 Hari', '4-6':'Telat 4–6 Hari', '7-9':'Telat 7–9 Hari', '>9':'Telat >9 Hari' };
+      const total = rows.reduce((sum,r)=>sum+(Number(r.invoice_amount)||0),0);
+      const body = [
+        `📋 *DETAIL ${labels[bucket] || 'MONITORING SA'}*`,
+        `📅 Periode: 1–30 November 2026`,
+        `👤 ASM: ${document.getElementById('filterASM').selectedOptions[0]?.text || 'Semua ASM'}`,
+        `🧑‍💼 AE: ${document.getElementById('filterAE').selectedOptions[0]?.text || 'Semua AE'}`,
+        `📦 Paket: ${document.getElementById('filterPlan').selectedOptions[0]?.text || 'Semua Paket'}`,
+        `📊 Jumlah data: *${rows.length}*`,
+        `💰 Total nominal: *${formatIDR(total)}*`,
+        '',
+        ...rows.map(tab2RowLabel)
+      ].join('\n');
+      openWAModal(`Detail KPI – ${labels[bucket] || 'Monitoring'}`, body);
+    }
+
+    function generatePaidUnpaidWhatsAppReport() {
+      const bucket = delayFilter || 'ALL';
+      const rows = getTab2RowsForBucket(bucket);
+      const sum = rows.reduce((a,r)=>a+(Number(r.invoice_amount)||0),0);
+      const bucketNames = { ALL:'Semua SA', PAID:'SA PAID', ALL_UNPAID:'SA UNPAID', '1-3':'Telat 1–3 Hari', '4-6':'Telat 4–6 Hari', '7-9':'Telat 7–9 Hari', '>9':'Telat >9 Hari' };
+      const report = [
+        `📊 *MONITORING SA PAID & UNPAID – MORA REPUBLIC SURABAYA 2*`,
+        `📅 Periode: 1–30 November 2026`,
+        `👤 ASM: ${document.getElementById('filterASM').selectedOptions[0]?.text || 'Semua ASM'}`,
+        `🧑‍💼 AE: ${document.getElementById('filterAE').selectedOptions[0]?.text || 'Semua AE'}`,
+        `📦 Paket: ${document.getElementById('filterPlan').selectedOptions[0]?.text || 'Semua Paket'}`,
+        `🔎 Kategori: ${bucketNames[bucket] || 'Semua SA'}`,
+        '',
+        `📌 *RINGKASAN*`,
+        `• Jumlah SA: *${rows.length}*`,
+        `• Total tagihan: *${formatIDR(sum)}*`,
+        '',
+        `🧾 *DETAIL PELANGGAN*`,
+        ...(rows.length ? rows.map(tab2RowLabel) : ['Tidak ada data sesuai filter.'])
+      ].join('\n');
+      openWAModal('Report WhatsApp – Paid & Unpaid', report);
+    }
+
     function renderTab2Charts() {
       const isDark = document.documentElement.classList.contains('dark');
       const gridColor = isDark ? 'rgba(148, 163, 184, 0.1)' : 'rgba(15, 23, 42, 0.07)';
       const textColor = isDark ? '#94a3b8' : '#475569';
 
-      const asms = [...new Set(getNovemberSA().map(r => r.asm_name).filter(Boolean))];
+      // Default: group by ASM. When one ASM is selected, drill down to its AEs.
+      const selectedASM = document.getElementById('filterASM').value;
+      const drillToAE = selectedASM !== 'ALL';
+      const rows = getNovemberSA();
+      const groupKey = drillToAE ? 'sales_agent_name' : 'asm_name';
+      const groupLabel = drillToAE ? 'AE' : 'ASM';
+      const chartTitle = drillToAE
+        ? 'Sebaran PAID vs Kategori Keterlambatan UNPAID per AE'
+        : 'Sebaran PAID vs Kategori Keterlambatan UNPAID per ASM';
+      const chartSubtitle = drillToAE
+        ? `Khusus tim ${selectedASM.replace(' .', '')} • November 2026 berdasarkan Nama AE`
+        : 'Khusus SA bulan November 2026 berdasarkan Nama ASM';
+
+      const titleEl = document.querySelector('#tabContent2 h3');
+      const subtitleEl = titleEl?.nextElementSibling;
+      if (titleEl) titleEl.textContent = chartTitle;
+      if (subtitleEl) subtitleEl.textContent = chartSubtitle;
+
+      const groups = [...new Set(rows.map(r => (r[groupKey] || '').trim()).filter(Boolean))]
+        .sort((a, b) => a.localeCompare(b, 'id'));
       const buckets = ['PAID', '1-3', '4-6', '7-9', '>9'];
       const colors = ['#10b981', '#f59e0b', '#f97316', '#f43f5e', '#dc2626'];
       const labelsMap = ['PAID', 'Telat 1-3 Hari', 'Telat 4-6 Hari', 'Telat 7-9 Hari', 'Telat >9 Hari'];
 
-      const datasets = buckets.map((b, idx) => ({
+      const datasets = buckets.map((bucket, idx) => ({
         label: labelsMap[idx],
-        data: asms.map(a => getNovemberSA().filter(r => r.asm_name === a && getDelayBucket(r) === b).length),
+        data: groups.map(group => rows.filter(r =>
+          (r[groupKey] || '').trim() === group && getDelayBucket(r) === bucket
+        ).length),
         backgroundColor: colors[idx],
         borderRadius: 3
       }));
@@ -1314,19 +1400,32 @@
       if (chartPaidUnpaidInstance) chartPaidUnpaidInstance.destroy();
       chartPaidUnpaidInstance = new Chart(document.getElementById('chartPaidUnpaidASM'), {
         type: 'bar',
-        data: { labels: asms.map(a => a.replace(' .', '')), datasets },
+        data: { labels: groups.map(name => name.replace(' .', '')), datasets },
         options: {
           responsive: true,
           maintainAspectRatio: false,
-          plugins: { legend: { labels: { color: textColor, font: { size: 11 } } } },
+          plugins: {
+            legend: { labels: { color: textColor, font: { size: 11 } } },
+            tooltip: {
+              callbacks: {
+                title: items => `${groupLabel}: ${items[0]?.label || ''}`
+              }
+            }
+          },
           scales: {
-            x: { stacked: true, ticks: { color: textColor, font: { size: 10 } }, grid: { display: false } },
+            x: {
+              stacked: true,
+              ticks: { color: textColor, font: { size: 10 }, autoSkip: false, maxRotation: 35, minRotation: 20 },
+              grid: { display: false }
+            },
             y: { stacked: true, beginAtZero: true, ticks: { stepSize: 1, color: textColor }, grid: { color: gridColor } }
           }
         }
       });
 
-      const unpaidBuckets = ['1-3', '4-6', '7-9', '>9'].map(b => getNovemberSA().filter(r => getDelayBucket(r) === b).length);
+      const unpaidBuckets = ['1-3', '4-6', '7-9', '>9'].map(bucket =>
+        rows.filter(r => getDelayBucket(r) === bucket).length
+      );
       if (chartUnpaidDonutInstance) chartUnpaidDonutInstance.destroy();
       chartUnpaidDonutInstance = new Chart(document.getElementById('chartUnpaidDonut'), {
         type: 'doughnut',
@@ -1399,10 +1498,11 @@
             <td class="py-3 px-3 font-mono">${r.service_activation_date}</td>
             <td class="py-3 px-3 text-right font-mono font-bold">${formatIDR(r.invoice_amount)}</td>
             <td class="py-3 px-3 text-center">${statusBadge}</td>
+            <td class="py-3 px-3 text-center font-mono font-bold ${bucket === 'PAID' ? 'text-emerald-500' : days > 9 ? 'text-red-500' : days > 6 ? 'text-rose-500' : days > 3 ? 'text-orange-500' : 'text-amber-500'}">${bucket === 'PAID' ? '—' : `${days} hari`}</td>
             <td class="py-3 px-3 text-center">${delayBadge}</td>
           </tr>
         `;
-      }).join('') || `<tr><td colspan="9" class="py-8 text-center text-slate-400">Tidak ada data sesuai filter.</td></tr>`;
+      }).join('') || `<tr><td colspan="10" class="py-8 text-center text-slate-400">Tidak ada data sesuai filter.</td></tr>`;
     }
 
     function switchTab(tabNum) {
