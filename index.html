@@ -1,0 +1,1506 @@
+<!DOCTYPE html>
+<html lang="id" class="dark">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>MoraRepublic — Monitoring SA Surabaya 2</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/papaparse@5.4.1/papaparse.min.js"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          fontFamily: {
+            sans: ['Inter', 'sans-serif'],
+            mono: ['JetBrains Mono', 'monospace'],
+          }
+        }
+      }
+    }
+  </script>
+  <style>
+    body {
+      font-family: 'Inter', sans-serif;
+      transition: background-color 0.25s ease, color 0.25s ease;
+    }
+    .glass-card {
+      backdrop-filter: blur(14px);
+      -webkit-backdrop-filter: blur(14px);
+    }
+    .custom-scrollbar::-webkit-scrollbar {
+      height: 6px;
+      width: 6px;
+    }
+    .custom-scrollbar::-webkit-scrollbar-track {
+      background: transparent;
+    }
+    .custom-scrollbar::-webkit-scrollbar-thumb {
+      background: rgba(148, 163, 184, 0.35);
+      border-radius: 9999px;
+    }
+    @media print {
+      .no-print { display: none !important; }
+    }
+  </style>
+</head>
+<body class="bg-slate-50 text-slate-900 dark:bg-[#080d1a] dark:text-slate-100 min-h-screen relative overflow-x-hidden">
+
+  <!-- Ambient Glow -->
+  <div class="pointer-events-none fixed inset-0 overflow-hidden z-0 hidden dark:block">
+    <div class="absolute -top-32 -left-24 w-96 h-96 bg-cyan-500/10 rounded-full blur-3xl"></div>
+    <div class="absolute top-1/3 -right-24 w-96 h-96 bg-indigo-500/10 rounded-full blur-3xl"></div>
+  </div>
+
+  <div class="relative z-10 max-w-[1600px] mx-auto px-4 sm:px-6 lg:px-8 py-6">
+    
+    <!-- Header -->
+    <header class="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4 pb-6 border-b border-slate-200 dark:border-slate-800/80">
+      <div class="flex items-start sm:items-center gap-3.5 sm:gap-4">
+        <div class="flex-shrink-0 flex items-center gap-3 px-3.5 py-2.5 rounded-2xl bg-white dark:bg-slate-900/95 border border-slate-200/90 dark:border-indigo-500/30 shadow-md shadow-indigo-500/10">
+          <div class="w-10 h-10 sm:w-11 sm:h-11 rounded-xl bg-white flex items-center justify-center p-1 shadow-inner border border-slate-100 overflow-hidden">
+            <img
+              src="https://images.glints.com/unsafe/glints-dashboard.oss-ap-southeast-1.aliyuncs.com/company-logo/24363e32bc19830c496a4c32ef6d7f6b.png"
+              alt="Logo Resmi MoraRepublic"
+              class="w-full h-full object-contain"
+              onerror="this.style.display='none'; this.nextElementSibling.style.display='block';"
+            />
+            <svg style="display:none;" class="w-9 h-9" viewBox="0 0 64 64" fill="none" xmlns="http://www.w3.org/2000/svg" aria-label="Logo Roket MoraRepublic">
+              <defs>
+                <linearGradient id="moraRocketBody" x1="16" y1="8" x2="48" y2="48" gradientUnits="userSpaceOnUse">
+                  <stop offset="0%" stop-color="#38BDF8"/>
+                  <stop offset="50%" stop-color="#4F46E5"/>
+                  <stop offset="100%" stop-color="#7C3AED"/>
+                </linearGradient>
+                <linearGradient id="moraRocketFlame" x1="32" y1="42" x2="32" y2="60" gradientUnits="userSpaceOnUse">
+                  <stop offset="0%" stop-color="#FACC15"/>
+                  <stop offset="60%" stop-color="#F97316"/>
+                  <stop offset="100%" stop-color="#EF4444"/>
+                </linearGradient>
+              </defs>
+              <path d="M22 36L13 44L22 44V36Z" fill="#4338CA"/>
+              <path d="M42 36L51 44L42 44V36Z" fill="#6D28D9"/>
+              <path d="M32 6C24 15 21 26 22 42H42C43 26 40 15 32 6Z" fill="url(#moraRocketBody)"/>
+              <circle cx="32" cy="24" r="5" fill="#E0F2FE" stroke="#1E1B4B" stroke-width="2"/>
+              <path d="M26 44C26 51 32 59 32 59C32 59 38 51 38 44H26Z" fill="url(#moraRocketFlame)"/>
+            </svg>
+          </div>
+          <div class="leading-none pr-1">
+            <div class="text-sm sm:text-base font-extrabold tracking-tight text-[#1e1b4b] dark:text-white">
+              Mora<span class="text-indigo-600 dark:text-cyan-400">Republic</span>
+            </div>
+            <div class="text-[9px] font-mono font-bold uppercase tracking-widest text-indigo-600/80 dark:text-cyan-400/90 mt-1">
+              SURABAYA 2
+            </div>
+          </div>
+        </div>
+
+        <div>
+          <div class="flex flex-wrap items-center gap-2 mb-1.5">
+            <span class="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 border border-emerald-500/30">
+              <span class="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span>
+              LIVE SYNC • SURABAYA 2
+            </span>
+            <span id="syncStatusBadge" class="text-xs text-slate-500 dark:text-slate-400">
+              Periode: November 2026 • Update: 16 Nov 2026
+            </span>
+          </div>
+          <h1 class="text-xl sm:text-3xl font-extrabold tracking-tight bg-gradient-to-r from-slate-900 via-indigo-800 to-cyan-700 dark:from-white dark:via-cyan-100 dark:to-indigo-300 bg-clip-text text-transparent">
+            Monitoring SA Surabaya 2
+          </h1>
+          <p class="text-xs sm:text-sm text-slate-500 dark:text-slate-400 mt-0.5">
+            Sumber Data: Google Sheet Dashboard Performa SA Surabaya 2 • Tab <code class="px-1.5 py-0.5 rounded bg-slate-200/70 dark:bg-slate-800 text-xs">data Update</code> + Monitoring Paid & Unpaid
+          </p>
+        </div>
+      </div>
+
+      <div class="flex flex-wrap items-center gap-2.5 no-print">
+        <button onclick="openSheetModal()" class="inline-flex items-center gap-2 px-3.5 py-2 rounded-xl text-xs sm:text-sm font-semibold bg-indigo-600 hover:bg-indigo-500 text-white shadow-lg shadow-indigo-600/20 transition">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path></svg>
+          Hubungkan Google Sheet
+        </button>
+
+        <button onclick="window.print()" class="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-xs sm:text-sm font-medium bg-white dark:bg-slate-900/90 border border-slate-200 dark:border-slate-800 hover:bg-slate-100 dark:hover:bg-slate-800 transition">
+          <svg class="w-4 h-4 text-slate-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"></path></svg>
+          Print
+        </button>
+
+        <button onclick="toggleTheme()" id="themeBtn" class="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-xs sm:text-sm font-medium bg-white dark:bg-slate-900/90 border border-slate-200 dark:border-slate-800 hover:bg-slate-100 dark:hover:bg-slate-800 transition">
+          <span id="themeIcon">☀️</span>
+          <span id="themeLabel">Light Mode</span>
+        </button>
+      </div>
+    </header>
+
+    <!-- WIDGET CUACA TERKINI -->
+    <div class="mt-4 p-4 rounded-2xl glass-card bg-white/90 dark:bg-slate-900/85 border border-slate-200/80 dark:border-slate-800 shadow-sm flex flex-col md:flex-row md:items-center justify-between gap-4 no-print">
+      <div class="flex items-center gap-3">
+        <div id="weatherIconBg" class="w-12 h-12 rounded-2xl bg-amber-500/15 dark:bg-amber-500/20 text-amber-500 flex items-center justify-center text-2xl shadow-inner">
+          ⛅
+        </div>
+        <div>
+          <div class="flex items-center gap-2">
+            <h3 class="text-xs font-bold uppercase tracking-wider text-slate-400">Prakiraan Cuaca Terkini</h3>
+            <span class="px-2 py-0.5 rounded-full text-[10px] font-semibold bg-indigo-500/15 text-indigo-600 dark:text-cyan-400">Live Info</span>
+          </div>
+          <div class="flex items-baseline gap-2 mt-0.5">
+            <span id="weatherLocationTitle" class="text-base font-extrabold text-slate-800 dark:text-white">Kota Surabaya</span>
+            <span id="weatherTemp" class="text-lg font-extrabold font-mono text-amber-500">32°C</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="flex flex-col sm:flex-row sm:items-center gap-3">
+        <div id="weatherDesc" class="text-xs font-medium text-slate-600 dark:text-slate-300 bg-slate-100 dark:bg-slate-950 px-3 py-2 rounded-xl border border-slate-200/70 dark:border-slate-800">
+          Cerah Berawan • Lembap 65% • Angin 12 km/jam
+        </div>
+        
+        <div class="inline-flex p-1 rounded-xl bg-slate-100 dark:bg-slate-950 border border-slate-200 dark:border-slate-800">
+          <button onclick="switchWeather('surabaya')" id="weatherBtnSurabaya" class="px-3 py-1.5 rounded-lg text-xs font-bold transition bg-indigo-600 text-white shadow">
+            Kota Surabaya
+          </button>
+          <button onclick="switchWeather('sidoarjo')" id="weatherBtnSidoarjo" class="px-3 py-1.5 rounded-lg text-xs font-semibold text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white transition">
+            Kab. Sidoarjo
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Floating Filter & Tab Bar -->
+    <div class="mt-5 p-4 rounded-2xl glass-card bg-white/85 dark:bg-slate-900/75 border border-slate-200/80 dark:border-slate-800/90 shadow-sm flex flex-col xl:flex-row xl:items-center justify-between gap-4 no-print">
+      <div class="inline-flex p-1 rounded-xl bg-slate-100 dark:bg-slate-950/90 border border-slate-200/70 dark:border-slate-800 self-start">
+        <button id="tabBtn1" onclick="switchTab(1)" class="px-4 py-2 rounded-lg text-xs sm:text-sm font-bold transition-all bg-indigo-600 text-white shadow">
+          1. Performa SA Harian Bulan Ini
+        </button>
+        <button id="tabBtn2" onclick="switchTab(2)" class="px-4 py-2 rounded-lg text-xs sm:text-sm font-semibold text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white transition-all">
+          2. Monitoring SA Paid & Unpaid
+        </button>
+      </div>
+
+      <div class="grid grid-cols-1 sm:grid-cols-3 gap-2.5 flex-1 max-w-3xl">
+        <div>
+          <label class="block text-[10px] font-semibold uppercase tracking-wider text-slate-400 mb-1">Nama ASM</label>
+          <select id="filterASM" onchange="applyFilters()" class="w-full px-3 py-1.5 rounded-xl text-xs font-medium bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 focus:outline-none focus:border-indigo-500">
+            <option value="ALL">Semua ASM</option>
+          </select>
+        </div>
+        <div>
+          <label class="block text-[10px] font-semibold uppercase tracking-wider text-slate-400 mb-1">Nama AE (Sales Agent)</label>
+          <select id="filterAE" onchange="applyFilters()" class="w-full px-3 py-1.5 rounded-xl text-xs font-medium bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 focus:outline-none focus:border-indigo-500">
+            <option value="ALL">Semua AE</option>
+          </select>
+        </div>
+        <div>
+          <label class="block text-[10px] font-semibold uppercase tracking-wider text-slate-400 mb-1">Paket / Plan</label>
+          <select id="filterPlan" onchange="applyFilters()" class="w-full px-3 py-1.5 rounded-xl text-xs font-medium bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 focus:outline-none focus:border-indigo-500">
+            <option value="ALL">Semua Paket</option>
+          </select>
+        </div>
+      </div>
+    </div>
+
+    <!-- TAB 1 -->
+    <section id="tabContent1" class="mt-6 space-y-6">
+      <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-4">
+        <div class="p-4 rounded-2xl glass-card bg-white dark:bg-slate-900/75 border border-slate-200/80 dark:border-slate-800">
+          <div class="flex items-center justify-between gap-1">
+            <span class="text-xs font-medium text-slate-500 dark:text-slate-400">SA Nov vs Okt (MTD)</span>
+            <span id="kpiMoMBadge" class="px-2 py-0.5 rounded-md bg-emerald-500/15 text-emerald-500 text-[11px] font-bold">0%</span>
+          </div>
+          <div class="flex items-baseline flex-wrap gap-2 mt-2">
+            <div id="kpiTotalSA" class="text-2xl font-extrabold font-mono">0</div>
+            <span id="kpiMoMDiffNum" class="text-sm font-extrabold font-mono text-slate-400">(0 SA)</span>
+            <span id="kpiPrevMonthSA" class="text-xs font-mono text-slate-400">vs 0 (Okt)</span>
+          </div>
+          <div class="mt-2 flex items-center justify-between gap-1.5 bg-slate-100/80 dark:bg-slate-950/80 px-2 py-1 rounded-lg border border-slate-200/70 dark:border-slate-800 no-print">
+            <label for="octCutoffSelect" class="text-[10px] font-semibold text-slate-500 dark:text-slate-400 whitespace-nowrap">Bandingkan Okt s/d:</label>
+            <select id="octCutoffSelect" onchange="onOctCutoffChange()" class="text-[11px] font-mono font-bold bg-transparent text-indigo-600 dark:text-cyan-400 focus:outline-none cursor-pointer">
+              <option value="AUTO">Otomatis</option>
+            </select>
+          </div>
+          <div class="mt-2 w-full bg-slate-200 dark:bg-slate-800 h-1.5 rounded-full overflow-hidden">
+            <div id="kpiTargetBar" class="bg-gradient-to-r from-cyan-500 to-indigo-500 h-full rounded-full" style="width: 78%"></div>
+          </div>
+          <p id="kpiTargetText" class="text-[11px] text-slate-500 dark:text-slate-400 mt-1.5">Perbandingan s/d tgl 16</p>
+        </div>
+
+        <div class="p-4 rounded-2xl glass-card bg-gradient-to-br from-indigo-500/10 via-white to-cyan-500/10 dark:from-indigo-950/60 dark:via-slate-900/85 dark:to-cyan-950/40 border border-indigo-500/30 dark:border-cyan-500/30 shadow-sm">
+          <div class="flex items-center justify-between gap-1">
+            <span class="text-xs font-bold text-indigo-700 dark:text-cyan-300">Runrate EOM vs Okt</span>
+            <span id="kpiRunrateBadge" class="px-2 py-0.5 rounded-md bg-emerald-500/15 text-emerald-500 text-[10px] font-bold">+0%</span>
+          </div>
+          <div class="flex items-baseline flex-wrap gap-1.5 mt-1.5">
+            <div id="kpiRunrateEOM" class="text-2xl font-extrabold font-mono text-indigo-600 dark:text-cyan-400">0</div>
+            <span id="kpiRunrateDiff" class="text-xs font-extrabold font-mono text-emerald-500">(+0)</span>
+            <span id="kpiOctEOMRef" class="text-[11px] font-mono text-slate-500 dark:text-slate-400">vs 0 (Okt EOM)</span>
+          </div>
+          <div class="mt-2 flex items-center justify-between gap-1 bg-white/80 dark:bg-slate-950/80 px-2 py-1 rounded-lg border border-indigo-200/70 dark:border-slate-800 no-print">
+            <label for="runrateTargetDaySelect" class="text-[10px] font-semibold text-slate-500 dark:text-slate-400 whitespace-nowrap">Cek Positif s/d:</label>
+            <select id="runrateTargetDaySelect" onchange="onRunrateTargetDayChange()" class="text-[11px] font-mono font-bold bg-transparent text-indigo-600 dark:text-cyan-400 focus:outline-none cursor-pointer">
+              <option value="30">30 Nov (EOM)</option>
+            </select>
+          </div>
+          <div id="kpiDailyNeededBox" class="mt-2 pt-1.5 border-t border-slate-200/70 dark:border-slate-800/80 text-[11px] leading-snug">
+            <span class="text-slate-500 dark:text-slate-400">Kejar harian: </span>
+            <span id="kpiDailyNeededVal" class="font-mono font-extrabold text-amber-500">0 SA/hr</span>
+            <div id="kpiDailyNeededSub" class="text-[10px] text-slate-500 dark:text-slate-400 mt-0.5">Butuh 0 SA lagi dalam 0 hari</div>
+          </div>
+        </div>
+
+        <div class="p-4 rounded-2xl glass-card bg-white dark:bg-slate-900/75 border border-slate-200/80 dark:border-slate-800">
+          <div class="flex items-center justify-between">
+            <span class="text-xs font-medium text-slate-500 dark:text-slate-400">Rata-rata SA / Hari</span>
+            <span class="p-1.5 rounded-lg bg-indigo-500/15 text-indigo-400 text-xs font-bold">AVG</span>
+          </div>
+          <div id="kpiAvgSA" class="text-2xl font-extrabold font-mono mt-2">0</div>
+          <p id="kpiPeakDay" class="text-[11px] text-emerald-500 font-medium mt-3">Tertinggi: -</p>
+        </div>
+
+        <div class="p-4 rounded-2xl glass-card bg-white dark:bg-slate-900/75 border border-slate-200/80 dark:border-slate-800">
+          <div class="flex items-center justify-between">
+            <span class="text-xs font-medium text-slate-500 dark:text-slate-400">Est. Revenue Before Tax</span>
+            <span class="p-1.5 rounded-lg bg-emerald-500/15 text-emerald-400 text-xs font-bold">IDR</span>
+          </div>
+          <div id="kpiRevenue" class="text-xl font-extrabold font-mono mt-2">Rp 0</div>
+          <p id="kpiActiveAECount" class="text-[11px] text-slate-500 dark:text-slate-400 mt-3">0 AE aktif berkontribusi</p>
+        </div>
+
+        <div class="p-4 rounded-2xl glass-card bg-white dark:bg-slate-900/75 border border-slate-200/80 dark:border-slate-800">
+          <div class="flex items-center justify-between">
+            <span class="text-xs font-medium text-slate-500 dark:text-slate-400">Top ASM Bulan Ini</span>
+            <span class="p-1.5 rounded-lg bg-amber-500/15 text-amber-400 text-xs font-bold">★ ASM</span>
+          </div>
+          <div id="kpiTopASM" class="text-sm font-bold mt-2.5 truncate">-</div>
+          <p id="kpiTopASMSub" class="text-xs font-mono text-amber-500 font-semibold mt-2">0 SA</p>
+        </div>
+
+        <div class="p-4 rounded-2xl glass-card bg-white dark:bg-slate-900/75 border border-slate-200/80 dark:border-slate-800">
+          <div class="flex items-center justify-between">
+            <span class="text-xs font-medium text-slate-500 dark:text-slate-400">Top AE Bulan Ini</span>
+            <span class="p-1.5 rounded-lg bg-purple-500/15 text-purple-400 text-xs font-bold">★ AE</span>
+          </div>
+          <div id="kpiTopAE" class="text-sm font-bold mt-2.5 truncate">-</div>
+          <p id="kpiTopAESub" class="text-xs font-mono text-purple-400 font-semibold mt-2">0 SA</p>
+        </div>
+      </div>
+
+      <div class="grid grid-cols-1 lg:grid-cols-3 gap-5">
+        <div class="lg:col-span-2 p-5 rounded-2xl glass-card bg-white dark:bg-slate-900/75 border border-slate-200/80 dark:border-slate-800">
+          <div class="flex items-center justify-between mb-4">
+            <div>
+              <h3 class="text-sm font-bold">Tren Aktivasi SA Harian (November 2026)</h3>
+              <p class="text-xs text-slate-500 dark:text-slate-400">Khusus aktivitas Service Activation (SA) dengan tanggal aktivasi bulan November</p>
+            </div>
+            <span class="text-xs font-mono px-2.5 py-1 rounded-lg bg-cyan-500/10 text-cyan-500 border border-cyan-500/20">Daily Trend</span>
+          </div>
+          <div class="h-64">
+            <canvas id="chartDailySA"></canvas>
+          </div>
+        </div>
+
+        <div class="p-5 rounded-2xl glass-card bg-white dark:bg-slate-900/75 border border-slate-200/80 dark:border-slate-800">
+          <div class="mb-4">
+            <h3 class="text-sm font-bold">Kontribusi SA per Nama ASM</h3>
+            <p id="subChartASMBar" class="text-xs text-slate-500 dark:text-slate-400">Perbandingan SA Bulan Ini (Nov) vs Bulan Lalu (Okt MTD)</p>
+          </div>
+          <div class="h-64">
+            <canvas id="chartASMBar"></canvas>
+          </div>
+        </div>
+      </div>
+
+      <div class="grid grid-cols-1 xl:grid-cols-2 gap-5">
+        <div class="p-5 rounded-2xl glass-card bg-white dark:bg-slate-900/75 border border-slate-200/80 dark:border-slate-800">
+          <div class="flex items-center justify-between mb-3">
+            <div>
+              <h3 class="text-base font-bold flex items-center gap-2">
+                <span class="text-amber-500">🏆</span> Ranking Pencapaian SA per ASM
+              </h3>
+              <p id="subRankASM" class="text-xs text-slate-500 dark:text-slate-400">Perbandingan November vs Oktober di tanggal yang sama (s/d tgl 16)</p>
+            </div>
+            <div class="flex items-center gap-2 no-print">
+              <button onclick="copyWAText('rankASM')" title="Export Report Text WhatsApp" class="inline-flex items-center justify-center p-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white transition shadow-sm">
+                <svg class="w-4 h-4 fill-current" viewBox="0 0 24 24"><path d="M12.031 6.172c-3.181 0-5.767 2.586-5.768 5.766-.001 1.298.38 2.27 1.019 3.287l-.582 2.128 2.182-.573c.978.58 1.911.928 3.145.929 3.178 0 5.767-2.587 5.768-5.766.001-3.187-2.575-5.77-5.764-5.771zm3.392 8.244c-.144.405-.837.774-1.17.824-.299.045-.677.063-1.092-.069-.252-.08-.575-.187-.988-.365-1.739-.751-2.874-2.502-2.961-2.617-.087-.116-.708-.94-.708-1.793s.448-1.273.607-1.446c.159-.173.346-.217.462-.217l.332.006c.106.005.249-.04.39.298.144.347.491 1.2.534 1.287.043.087.072.188.014.304-.058.116-.087.188-.173.289l-.26.304c-.087.086-.177.18-.076.354.101.174.449.741.964 1.201.662.591 1.221.774 1.394.86s.274.072.376-.043c.101-.116.433-.506.549-.68.116-.173.231-.145.39-.087s1.011.477 1.184.564.289.13.332.202c.045.072.045.419-.1.824zm-3.423-14.416c-6.627 0-12 5.373-12 12s5.373 12 12 12 12-5.373 12-12-5.373-12-12-12zm.029 18.88c-1.161 0-2.305-.292-3.318-.844l-3.677.964.984-3.595c-.607-1.052-.927-2.246-.926-3.468.001-3.825 3.113-6.937 6.937-6.937 1.856.001 3.598.723 4.907 2.034 1.31 1.311 2.031 3.054 2.03 4.908-.001 3.825-3.113 6.938-6.937 6.938z"/></svg>
+              </button>
+            </div>
+          </div>
+          <div class="overflow-x-auto custom-scrollbar rounded-xl border border-slate-200/80 dark:border-slate-800 max-h-96">
+            <table class="w-full text-left border-collapse text-xs">
+              <thead class="bg-slate-100/90 dark:bg-slate-950 text-slate-600 dark:text-slate-300 uppercase text-[10px] font-bold sticky top-0">
+                <tr>
+                  <th class="py-2.5 px-3 text-center w-12">Rank</th>
+                  <th class="py-2.5 px-3">Nama ASM</th>
+                  <th class="py-2.5 px-2">Branch</th>
+                  <th class="py-2.5 px-3 text-center">Nov (MTD)</th>
+                  <th class="py-2.5 px-3 text-center">Okt (MTD)</th>
+                  <th class="py-2.5 px-3 text-center">Selisih</th>
+                  <th class="py-2.5 px-3 text-right">Growth</th>
+                </tr>
+              </thead>
+              <tbody id="rankASMBody" class="divide-y divide-slate-200/70 dark:divide-slate-800/80">
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <div class="p-5 rounded-2xl glass-card bg-white dark:bg-slate-900/75 border border-slate-200/80 dark:border-slate-800">
+          <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 mb-3">
+            <div>
+              <h3 class="text-base font-bold flex items-center gap-2">
+                <span class="text-purple-500">🥇</span> Ranking Pencapaian SA per AE
+              </h3>
+              <p id="subRankAE" class="text-xs text-slate-500 dark:text-slate-400">Hanya menampilkan AE yang aktif di bulan ini</p>
+            </div>
+            <div class="flex items-center gap-2 no-print">
+              <input type="text" id="searchRankAE" oninput="renderRankingTables()" placeholder="Cari AE / ASM..." class="px-2.5 py-1 rounded-lg text-xs bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 focus:outline-none focus:border-indigo-500" />
+              <button onclick="copyWAText('rankAE')" title="Export Report Text WhatsApp" class="inline-flex items-center justify-center p-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white transition shadow-sm">
+                <svg class="w-4 h-4 fill-current" viewBox="0 0 24 24"><path d="M12.031 6.172c-3.181 0-5.767 2.586-5.768 5.766-.001 1.298.38 2.27 1.019 3.287l-.582 2.128 2.182-.573c.978.58 1.911.928 3.145.929 3.178 0 5.767-2.587 5.768-5.766.001-3.187-2.575-5.77-5.764-5.771zm3.392 8.244c-.144.405-.837.774-1.17.824-.299.045-.677.063-1.092-.069-.252-.08-.575-.187-.988-.365-1.739-.751-2.874-2.502-2.961-2.617-.087-.116-.708-.94-.708-1.793s.448-1.273.607-1.446c.159-.173.346-.217.462-.217l.332.006c.106.005.249-.04.39.298.144.347.491 1.2.534 1.287.043.087.072.188.014.304-.058.116-.087.188-.173.289l-.26.304c-.087.086-.177.18-.076.354.101.174.449.741.964 1.201.662.591 1.221.774 1.394.86s.274.072.376-.043c.101-.116.433-.506.549-.68.116-.173.231-.145.39-.087s1.011.477 1.184.564.289.13.332.202c.045.072.045.419-.1.824zm-3.423-14.416c-6.627 0-12 5.373-12 12s5.373 12 12 12 12-5.373 12-12-5.373-12-12-12zm.029 18.88c-1.161 0-2.305-.292-3.318-.844l-3.677.964.984-3.595c-.607-1.052-.927-2.246-.926-3.468.001-3.825 3.113-6.937 6.937-6.937 1.856.001 3.598.723 4.907 2.034 1.31 1.311 2.031 3.054 2.03 4.908-.001 3.825-3.113 6.938-6.937 6.938z"/></svg>
+              </button>
+            </div>
+          </div>
+          <div class="overflow-x-auto custom-scrollbar rounded-xl border border-slate-200/80 dark:border-slate-800 max-h-96">
+            <table class="w-full text-left border-collapse text-xs">
+              <thead class="bg-slate-100/90 dark:bg-slate-950 text-slate-600 dark:text-slate-300 uppercase text-[10px] font-bold sticky top-0">
+                <tr>
+                  <th class="py-2.5 px-3 text-center w-12">Rank</th>
+                  <th class="py-2.5 px-3">Nama AE & ASM</th>
+                  <th class="py-2.5 px-3 text-center">Nov (MTD)</th>
+                  <th class="py-2.5 px-3 text-center">Okt (MTD)</th>
+                  <th class="py-2.5 px-3 text-center">Selisih</th>
+                  <th class="py-2.5 px-3 text-right">Growth</th>
+                </tr>
+              </thead>
+              <tbody id="rankAEBody" class="divide-y divide-slate-200/70 dark:divide-slate-800/80">
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <div class="p-5 rounded-2xl glass-card bg-white dark:bg-slate-900/75 border border-slate-200/80 dark:border-slate-800">
+        <div class="flex flex-col md:flex-row md:items-center justify-between gap-3 mb-4">
+          <div>
+            <h3 class="text-base font-bold">Rincian Performa SA Harian — Lengkap Nama ASM & AE</h3>
+            <p class="text-xs text-slate-500 dark:text-slate-400">Hanya menampilkan AE yang aktif di bulan ini (November)</p>
+          </div>
+
+          <div class="flex flex-wrap items-center gap-2 no-print">
+            <input type="text" id="searchTab1" oninput="renderTab1Table()" placeholder="Cari nama ASM / AE / ID..." class="px-3 py-1.5 rounded-xl text-xs bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 focus:outline-none focus:border-indigo-500" />
+            
+            <div class="inline-flex p-0.5 rounded-xl bg-slate-100 dark:bg-slate-950 border border-slate-200 dark:border-slate-800">
+              <button id="viewMatrixBtn" onclick="setTab1View('matrix')" class="px-3 py-1 rounded-lg text-xs font-semibold text-slate-500 dark:text-slate-400">Matriks Harian Nov (1–30)</button>
+              <button id="viewSummaryBtn" onclick="setTab1View('summary')" class="px-3 py-1 rounded-lg text-xs font-semibold bg-indigo-600 text-white">Ringkasan AE & ASM</button>
+            </div>
+
+            <button onclick="copyWAText('tab1Detail')" title="Export Report Text WhatsApp" class="inline-flex items-center justify-center p-2 rounded-xl bg-teal-600 hover:bg-teal-500 text-white transition shadow-sm">
+              <svg class="w-4 h-4 fill-current" viewBox="0 0 24 24"><path d="M12.031 6.172c-3.181 0-5.767 2.586-5.768 5.766-.001 1.298.38 2.27 1.019 3.287l-.582 2.128 2.182-.573c.978.58 1.911.928 3.145.929 3.178 0 5.767-2.587 5.768-5.766.001-3.187-2.575-5.77-5.764-5.771zm3.392 8.244c-.144.405-.837.774-1.17.824-.299.045-.677.063-1.092-.069-.252-.08-.575-.187-.988-.365-1.739-.751-2.874-2.502-2.961-2.617-.087-.116-.708-.94-.708-1.793s.448-1.273.607-1.446c.159-.173.346-.217.462-.217l.332.006c.106.005.249-.04.39.298.144.347.491 1.2.534 1.287.043.087.072.188.014.304-.058.116-.087.188-.173.289l-.26.304c-.087.086-.177.18-.076.354.101.174.449.741.964 1.201.662.591 1.221.774 1.394.86s.274.072.376-.043c.101-.116.433-.506.549-.68.116-.173.231-.145.39-.087s1.011.477 1.184.564.289.13.332.202c.045.072.045.419-.1.824zm-3.423-14.416c-6.627 0-12 5.373-12 12s5.373 12 12 12 12-5.373 12-12-5.373-12-12-12zm.029 18.88c-1.161 0-2.305-.292-3.318-.844l-3.677.964.984-3.595c-.607-1.052-.927-2.246-.926-3.468.001-3.825 3.113-6.937 6.937-6.937 1.856.001 3.598.723 4.907 2.034 1.31 1.311 2.031 3.054 2.03 4.908-.001 3.825-3.113 6.938-6.937 6.938z"/></svg>
+            </button>
+            <button onclick="exportCSVTab1()" class="px-3 py-1.5 rounded-xl text-xs font-semibold bg-emerald-600 hover:bg-emerald-500 text-white transition">
+              Export CSV Tab 1
+            </button>
+          </div>
+        </div>
+
+        <div class="overflow-x-auto custom-scrollbar rounded-xl border border-slate-200/80 dark:border-slate-800">
+          <table class="w-full text-left border-collapse text-xs">
+            <thead id="tab1TableHead" class="bg-slate-100/90 dark:bg-slate-950 text-slate-600 dark:text-slate-300 uppercase text-[11px] font-bold">
+            </thead>
+            <tbody id="tab1TableBody" class="divide-y divide-slate-200/70 dark:divide-slate-800/80">
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+    <!-- TAB 2 -->
+    <section id="tabContent2" class="mt-6 space-y-6 hidden">
+      <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-6 gap-3.5">
+        <div onclick="setDelayFilter('PAID')" id="cardDelay_PAID" class="cursor-pointer p-4 rounded-2xl glass-card bg-white dark:bg-slate-900/75 border-2 border-transparent hover:border-emerald-500/60 transition shadow-sm">
+          <div class="flex items-center justify-between">
+            <span class="text-xs font-semibold text-emerald-500">SA PAID (Lunas)</span>
+            <span class="w-2.5 h-2.5 rounded-full bg-emerald-500"></span>
+          </div>
+          <div id="kpiPaidCount" class="text-2xl font-extrabold font-mono mt-2">0</div>
+          <div id="kpiPaidAmount" class="text-[11px] font-mono text-slate-500 dark:text-slate-400 mt-1">Rp 0</div>
+          <div id="kpiPaidRate" class="text-[11px] font-semibold text-emerald-500 mt-1">Collection: 0%</div>
+        </div>
+
+        <div onclick="setDelayFilter('ALL_UNPAID')" id="cardDelay_ALL_UNPAID" class="cursor-pointer p-4 rounded-2xl glass-card bg-white dark:bg-slate-900/75 border-2 border-transparent hover:border-slate-400 transition shadow-sm">
+          <div class="flex items-center justify-between">
+            <span class="text-xs font-semibold text-slate-500 dark:text-slate-300">Total SA UNPAID</span>
+            <span class="w-2.5 h-2.5 rounded-full bg-slate-400"></span>
+          </div>
+          <div id="kpiUnpaidCount" class="text-2xl font-extrabold font-mono mt-2">0</div>
+          <div id="kpiUnpaidAmount" class="text-[11px] font-mono text-slate-500 dark:text-slate-400 mt-1">Rp 0</div>
+          <div class="text-[11px] text-slate-400 mt-1">Klik untuk semua unpaid</div>
+        </div>
+
+        <div onclick="setDelayFilter('1-3')" id="cardDelay_1-3" class="cursor-pointer p-4 rounded-2xl glass-card bg-amber-500/5 dark:bg-amber-500/10 border-2 border-amber-500/30 hover:border-amber-400 transition">
+          <div class="flex items-center justify-between">
+            <span class="text-xs font-bold text-amber-600 dark:text-amber-400">Telat 1 – 3 Hari</span>
+            <span class="px-1.5 py-0.5 rounded text-[10px] font-bold bg-amber-500/20 text-amber-500">RINGAN</span>
+          </div>
+          <div id="kpiDelay1_3" class="text-2xl font-extrabold font-mono text-amber-600 dark:text-amber-400 mt-2">0</div>
+          <div id="kpiDelay1_3Amt" class="text-[11px] font-mono text-slate-500 dark:text-slate-400 mt-1">Rp 0</div>
+          <div class="text-[10px] text-amber-600/80 dark:text-amber-400/80 mt-1">Follow-up reminder WA</div>
+        </div>
+
+        <div onclick="setDelayFilter('4-6')" id="cardDelay_4-6" class="cursor-pointer p-4 rounded-2xl glass-card bg-orange-500/5 dark:bg-orange-500/10 border-2 border-orange-500/30 hover:border-orange-400 transition">
+          <div class="flex items-center justify-between">
+            <span class="text-xs font-bold text-orange-600 dark:text-orange-400">Telat 4 – 6 Hari</span>
+            <span class="px-1.5 py-0.5 rounded text-[10px] font-bold bg-orange-500/20 text-orange-500">SEDANG</span>
+          </div>
+          <div id="kpiDelay4_6" class="text-2xl font-extrabold font-mono text-orange-600 dark:text-orange-400 mt-2">0</div>
+          <div id="kpiDelay4_6Amt" class="text-[11px] font-mono text-slate-500 dark:text-slate-400 mt-1">Rp 0</div>
+          <div class="text-[10px] text-orange-600/80 dark:text-orange-400/80 mt-1">Eskalasi AE & ASM</div>
+        </div>
+
+        <div onclick="setDelayFilter('7-9')" id="cardDelay_7-9" class="cursor-pointer p-4 rounded-2xl glass-card bg-rose-500/5 dark:bg-rose-500/10 border-2 border-rose-500/30 hover:border-rose-400 transition">
+          <div class="flex items-center justify-between">
+            <span class="text-xs font-bold text-rose-600 dark:text-rose-400">Telat 7 – 9 Hari</span>
+            <span class="px-1.5 py-0.5 rounded text-[10px] font-bold bg-rose-500/20 text-rose-500">TINGGI</span>
+          </div>
+          <div id="kpiDelay7_9" class="text-2xl font-extrabold font-mono text-rose-600 dark:text-rose-400 mt-2">0</div>
+          <div id="kpiDelay7_9Amt" class="text-[11px] font-mono text-slate-500 dark:text-slate-400 mt-1">Rp 0</div>
+          <div class="text-[10px] text-rose-600/80 dark:text-rose-400/80 mt-1">Prioritas kunjungan</div>
+        </div>
+
+        <div onclick="setDelayFilter('>9')" id="cardDelay_>9" class="cursor-pointer p-4 rounded-2xl glass-card bg-red-600/10 dark:bg-red-950/40 border-2 border-red-500/40 hover:border-red-500 transition">
+          <div class="flex items-center justify-between">
+            <span class="text-xs font-bold text-red-600 dark:text-red-400">Telat &gt; 9 Hari</span>
+            <span class="px-1.5 py-0.5 rounded text-[10px] font-bold bg-red-600 text-white animate-pulse">KRITIS</span>
+          </div>
+          <div id="kpiDelayGt9" class="text-2xl font-extrabold font-mono text-red-600 dark:text-red-400 mt-2">0</div>
+          <div id="kpiDelayGt9Amt" class="text-[11px] font-mono text-slate-500 dark:text-slate-400 mt-1">Rp 0</div>
+          <div class="text-[10px] text-red-600/90 dark:text-red-400/90 mt-1">Risiko isolir / churn</div>
+        </div>
+      </div>
+
+      <div class="grid grid-cols-1 lg:grid-cols-3 gap-5">
+        <div class="lg:col-span-2 p-5 rounded-2xl glass-card bg-white dark:bg-slate-900/75 border border-slate-200/80 dark:border-slate-800">
+          <div class="mb-4">
+            <h3 class="text-sm font-bold">Sebaran PAID vs Kategori Keterlambatan UNPAID per ASM</h3>
+            <p class="text-xs text-slate-500 dark:text-slate-400">Khusus SA bulan November 2026 berdasarkan Nama ASM</p>
+          </div>
+          <div class="h-64">
+            <canvas id="chartPaidUnpaidASM"></canvas>
+          </div>
+        </div>
+
+        <div class="p-5 rounded-2xl glass-card bg-white dark:bg-slate-900/75 border border-slate-200/80 dark:border-slate-800 relative">
+          <div class="mb-4">
+            <h3 class="text-sm font-bold">Proporsi Aging Keterlambatan UNPAID</h3>
+            <p class="text-xs text-slate-500 dark:text-slate-400">Distribusi bucket 1-3, 4-6, 7-9, dan &gt;9 hari</p>
+          </div>
+          <div class="h-64 relative flex items-center justify-center">
+            <canvas id="chartUnpaidDonut"></canvas>
+            <div class="pointer-events-none absolute inset-0 flex flex-col items-center justify-center pt-4">
+              <span class="text-[10px] uppercase tracking-wider text-slate-400 font-semibold">Total Unpaid</span>
+              <span id="donutCenterCount" class="text-2xl font-extrabold font-mono text-rose-500">0</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="p-5 rounded-2xl glass-card bg-white dark:bg-slate-900/75 border border-slate-200/80 dark:border-slate-800">
+        <div class="flex flex-col xl:flex-row xl:items-center justify-between gap-3 mb-4">
+          <div>
+            <h3 class="text-base font-bold">Detail Monitoring SA Paid & Unpaid</h3>
+            <p class="text-xs text-slate-500 dark:text-slate-400">Khusus aktivitas Service Activation (SA) bulan November 2026 • Klik indikator untuk filter</p>
+          </div>
+
+          <div class="flex flex-wrap items-center gap-2 no-print">
+            <div class="flex flex-wrap gap-1">
+              <button onclick="setDelayFilter('ALL')" id="pill_ALL" class="px-2.5 py-1 rounded-lg text-xs font-semibold bg-indigo-600 text-white">Semua</button>
+              <button onclick="setDelayFilter('PAID')" id="pill_PAID" class="px-2.5 py-1 rounded-lg text-xs font-semibold bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300">PAID</button>
+              <button onclick="setDelayFilter('1-3')" id="pill_1-3" class="px-2.5 py-1 rounded-lg text-xs font-semibold bg-amber-500/15 text-amber-600 dark:text-amber-400">1–3 Hari</button>
+              <button onclick="setDelayFilter('4-6')" id="pill_4-6" class="px-2.5 py-1 rounded-lg text-xs font-semibold bg-orange-500/15 text-orange-600 dark:text-orange-400">4–6 Hari</button>
+              <button onclick="setDelayFilter('7-9')" id="pill_7-9" class="px-2.5 py-1 rounded-lg text-xs font-semibold bg-rose-500/15 text-rose-600 dark:text-rose-400">7–9 Hari</button>
+              <button onclick="setDelayFilter('>9')" id="pill_>9" class="px-2.5 py-1 rounded-lg text-xs font-semibold bg-red-500/15 text-red-600 dark:text-red-400">&gt;9 Hari</button>
+            </div>
+
+            <input type="text" id="searchTab2" oninput="renderTab2Table()" placeholder="Cari Sub ID / Pelanggan / AE..." class="px-3 py-1.5 rounded-xl text-xs bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 focus:outline-none focus:border-indigo-500" />
+
+            <button onclick="copyWAText('tab2Detail')" title="Export Report Text WhatsApp" class="inline-flex items-center justify-center p-2 rounded-xl bg-teal-600 hover:bg-teal-500 text-white transition shadow-sm">
+              <svg class="w-4 h-4 fill-current" viewBox="0 0 24 24"><path d="M12.031 6.172c-3.181 0-5.767 2.586-5.768 5.766-.001 1.298.38 2.27 1.019 3.287l-.582 2.128 2.182-.573c.978.58 1.911.928 3.145.929 3.178 0 5.767-2.587 5.768-5.766.001-3.187-2.575-5.77-5.764-5.771zm3.392 8.244c-.144.405-.837.774-1.17.824-.299.045-.677.063-1.092-.069-.252-.08-.575-.187-.988-.365-1.739-.751-2.874-2.502-2.961-2.617-.087-.116-.708-.94-.708-1.793s.448-1.273.607-1.446c.159-.173.346-.217.462-.217l.332.006c.106.005.249-.04.39.298.144.347.491 1.2.534 1.287.043.087.072.188.014.304-.058.116-.087.188-.173.289l-.26.304c-.087.086-.177.18-.076.354.101.174.449.741.964 1.201.662.591 1.221.774 1.394.86s.274.072.376-.043c.101-.116.433-.506.549-.68.116-.173.231-.145.39-.087s1.011.477 1.184.564.289.13.332.202c.045.072.045.419-.1.824zm-3.423-14.416c-6.627 0-12 5.373-12 12s5.373 12 12 12 12-5.373 12-12-5.373-12-12-12zm.029 18.88c-1.161 0-2.305-.292-3.318-.844l-3.677.964.984-3.595c-.607-1.052-.927-2.246-.926-3.468.001-3.825 3.113-6.937 6.937-6.937 1.856.001 3.598.723 4.907 2.034 1.31 1.311 2.031 3.054 2.03 4.908-.001 3.825-3.113 6.938-6.937 6.938z"/></svg>
+            </button>
+            <button onclick="exportCSVTab2()" class="px-3 py-1.5 rounded-xl text-xs font-semibold bg-emerald-600 hover:bg-emerald-500 text-white transition">
+              Export CSV Tab 2
+            </button>
+          </div>
+        </div>
+
+        <div class="overflow-x-auto custom-scrollbar rounded-xl border border-slate-200/80 dark:border-slate-800">
+          <table class="w-full text-left border-collapse text-xs">
+            <thead class="bg-slate-100/90 dark:bg-slate-950 text-slate-600 dark:text-slate-300 uppercase text-[11px] font-bold">
+              <tr>
+                <th class="py-3 px-3">Sub ID & Order</th>
+                <th class="py-3 px-3">Pelanggan & Cluster</th>
+                <th class="py-3 px-3">Branch</th>
+                <th class="py-3 px-3">ASM & AE</th>
+                <th class="py-3 px-3">Paket</th>
+                <th class="py-3 px-3">Tgl Aktivasi</th>
+                <th class="py-3 px-3 text-right">Nominal Invoice</th>
+                <th class="py-3 px-3 text-center">Status</th>
+                <th class="py-3 px-3 text-center">Indikator Keterlambatan</th>
+              </tr>
+            </thead>
+            <tbody id="tab2TableBody" class="divide-y divide-slate-200/70 dark:divide-slate-800/80">
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+  </div>
+
+  <!-- MODAL GOOGLE SHEET -->
+  <div id="sheetModal" class="fixed inset-0 z-50 hidden items-center justify-center bg-black/70 backdrop-blur-sm p-4">
+    <div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl max-w-xl w-full p-6 shadow-2xl">
+      <div class="flex items-center justify-between pb-3 border-b border-slate-200 dark:border-slate-800">
+        <h3 class="text-base font-bold">Hubungkan Sumber Data Google Sheet</h3>
+        <button onclick="closeSheetModal()" class="text-slate-400 hover:text-slate-600 dark:hover:text-white text-lg font-bold">&times;</button>
+      </div>
+
+      <div class="mt-4 space-y-4 text-xs">
+        <div>
+          <label class="block font-semibold mb-1">URL Google Sheet Dashboard Performa SA Surabaya 2</label>
+          <input type="text" id="gsheetUrlInput" value="https://docs.google.com/spreadsheets/d/1RHBB-N5TZ4LzNRRu7RVHOKWwd1ewSyBSQ1r9ZN8Q2jQ/edit?gid=0#gid=0" class="w-full px-3 py-2 rounded-xl bg-slate-50 dark:bg-slate-950 border border-slate-300 dark:border-slate-700 font-mono text-[11px]" />
+          <p class="text-slate-500 mt-1">Sinkronisasi membaca dua tab dalam spreadsheet yang sama: data Update (GID 0) dan Monitoring Paid & Unpaid (GID 1539299389). Pastikan akses Viewer aktif.</p>
+        </div>
+
+        <div class="flex flex-wrap gap-2">
+          <button onclick="syncFromGoogleSheet()" class="px-4 py-2 rounded-xl font-semibold bg-indigo-600 hover:bg-indigo-500 text-white">
+            Sinkronkan Kedua Tab
+          </button>
+          <button onclick="resetSampleData()" class="px-4 py-2 rounded-xl font-semibold bg-slate-200 dark:bg-slate-800 hover:bg-slate-300 dark:hover:bg-slate-700">
+            Gunakan Data Sampel Bawaan
+          </button>
+        </div>
+
+        <div class="pt-3 border-t border-slate-200 dark:border-slate-800">
+          <label class="block font-semibold mb-1">Alternatif: Copy-Paste Langsung dari Tab "data Update" (data performa SA)</label>
+          <textarea id="pasteDataArea" rows="4" placeholder="Blok seluruh data di Google Sheet (Ctrl+A, Ctrl+C), lalu tempel di sini (Ctrl+V)..." class="w-full p-2.5 rounded-xl bg-slate-50 dark:bg-slate-950 border border-slate-300 dark:border-slate-700 font-mono text-[11px]"></textarea>
+          <button onclick="importPastedData()" class="mt-2 px-4 py-2 rounded-xl font-semibold bg-emerald-600 hover:bg-emerald-500 text-white">
+            Proses Data Paste
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL WA -->
+  <div id="waModal" class="fixed inset-0 z-50 hidden items-center justify-center bg-black/70 backdrop-blur-sm p-4">
+    <div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl max-w-xl w-full p-5 shadow-2xl">
+      <div class="flex items-center justify-between pb-3 border-b border-slate-200 dark:border-slate-800">
+        <div class="flex items-center gap-2">
+          <span class="text-lg">💬</span>
+          <h3 id="waModalTitle" class="text-sm sm:text-base font-bold">Export Report Text WhatsApp</h3>
+        </div>
+        <button onclick="closeWAModal()" class="text-slate-400 hover:text-slate-600 dark:hover:text-white text-xl font-bold">&times;</button>
+      </div>
+      <div class="mt-3">
+        <textarea id="waPreviewText" rows="12" readonly class="w-full p-3 rounded-xl bg-slate-50 dark:bg-slate-950 border border-slate-300 dark:border-slate-700 font-mono text-xs leading-relaxed focus:outline-none"></textarea>
+      </div>
+      <div class="mt-4 flex flex-wrap items-center justify-end gap-2">
+        <button onclick="closeWAModal()" class="px-3.5 py-2 rounded-xl text-xs font-semibold bg-slate-200 dark:bg-slate-800 hover:bg-slate-300 dark:hover:bg-slate-700 transition">
+          Tutup
+        </button>
+        <a id="waDirectLink" href="#" target="_blank" class="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-xs font-semibold bg-green-600 hover:bg-green-500 text-white transition">
+          Buka WhatsApp Web / App
+        </a>
+        <button onclick="reCopyWABox()" class="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl text-xs font-semibold bg-indigo-600 hover:bg-indigo-500 text-white transition">
+          📋 Salin Ulang Teks
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- TOAST -->
+  <div id="waToast" class="fixed bottom-5 right-5 z-50 hidden items-center gap-2 px-4 py-2.5 rounded-xl bg-emerald-600 text-white text-xs font-bold shadow-xl">
+    <span>✅</span>
+    <span id="waToastMsg">Teks report WA berhasil disalin ke clipboard!</span>
+  </div>
+
+  <script>
+    const SAMPLE_DATA = [
+      { subscription_id: "6310001", order_id: "KM102643100001", name: "BUDI*** SANT***", branch: "Surabaya", asm_name: "MUHAMAD ADI SUWONO .", sales_agent_code: "6278127", sales_agent_name: "MUHAMMAD IZZA MAHENDRA KRISNA PUTRA .", plan: "Ekonomis Internet A", clustername: "WONOKROMO RW 02 SURABAYA", service_activation_date: "2026-10-03", invoice_amount: 166500, revenue_before_tax: 150000, invoice_status: "PAID", payment_method: "BCA VA DIRECT", unpaid_days: 0 },
+      { subscription_id: "6310002", order_id: "KM102643100002", name: "RINA*** KUSU***", branch: "Surabaya", asm_name: "TRIYONO FIRMANSYAH .", sales_agent_code: "6234161", sales_agent_name: "FEFRI MEI KRISNIA .", plan: "Pas Internet A", clustername: "PEPELEGI INDAH RW 03", service_activation_date: "2026-10-07", invoice_amount: 138750, revenue_before_tax: 125000, invoice_status: "PAID", payment_method: "BCA VA DIRECT", unpaid_days: 0 },
+      { subscription_id: "6310003", order_id: "KM102643100003", name: "DEDI*** PRAT***", branch: "Sidoarjo", asm_name: "VINNA RIZKI PUTRI .", sales_agent_code: "6285975", sales_agent_name: "YACUB SANDY SETIAWAN .", plan: "Neo100 Internet", clustername: "KETAJEN RW 02 SIDOARJO", service_activation_date: "2026-10-12", invoice_amount: 244200, revenue_before_tax: 220000, invoice_status: "PAID", payment_method: "VA_INDOMARET", unpaid_days: 0 },
+      { subscription_id: "6421574", order_id: "KM102643894988", name: "BERNARDI*** YU*** KRISTIAND***", branch: "Surabaya", asm_name: "MUHAMAD ADI SUWONO .", sales_agent_code: "6278127", sales_agent_name: "MUHAMMAD IZZA MAHENDRA KRISNA PUTRA .", plan: "Ekonomis Internet A", clustername: "WONOKROMO RW 02 SURABAYA - FDT 02", service_activation_date: "2026-11-01", invoice_amount: 166500, revenue_before_tax: 150000, invoice_status: "PAID", payment_method: "BCA VA DIRECT", unpaid_days: 0 },
+      { subscription_id: "6464130", order_id: "KM102644121771", name: "E** JUN***", branch: "Surabaya", asm_name: "KRESNA BAYU FIRMANSYAH .", sales_agent_code: "6296966", sales_agent_name: "LINDU AJI ADIVIAN PANGESTU .", plan: "Pas Internet A", clustername: "PENELEH RW 14 GENTENG - FDT 01", service_activation_date: "2026-11-02", invoice_amount: 138750, revenue_before_tax: 125000, invoice_status: "PAID", payment_method: "RINTIS MOBILE PULSA", unpaid_days: 0 },
+      { subscription_id: "6404204", order_id: "KM102643831874", name: "D*** IRA***", branch: "Surabaya", asm_name: "FAJAR SYAIFUDIN .", sales_agent_code: "6315046", sales_agent_name: "SITI FATIMATUZ ZAHROH .", plan: "Pas Internet A", clustername: "WONOKASIAN RW 06 WONOAYU", service_activation_date: "2026-11-04", invoice_amount: 138750, revenue_before_tax: 125000, invoice_status: "UNPAID", payment_method: "-", unpaid_days: 12 },
+      { subscription_id: "6491011", order_id: "KM102644301122", name: "AGUS*** PRASET***", branch: "Surabaya", asm_name: "MUHAMAD ADI SUWONO .", sales_agent_code: "6278127", sales_agent_name: "MUHAMMAD IZZA MAHENDRA KRISNA PUTRA .", plan: "Neo100 Internet", clustername: "RUKO SENTRA TROPODO", service_activation_date: "2026-11-08", invoice_amount: 244200, revenue_before_tax: 220000, invoice_status: "PAID", payment_method: "BCA VA DIRECT", unpaid_days: 0 },
+      { subscription_id: "6491102", order_id: "KM102644305541", name: "BAMBANG*** WIJ***", branch: "Surabaya", asm_name: "TRIYONO FIRMANSYAH .", sales_agent_code: "6234161", sales_agent_name: "FEFRI MEI KRISNIA .", plan: "Pas Internet A", clustername: "PEPELEGI INDAH RW 03", service_activation_date: "2026-11-10", invoice_amount: 138750, revenue_before_tax: 125000, invoice_status: "UNPAID", payment_method: "-", unpaid_days: 6 },
+      { subscription_id: "6491488", order_id: "KM102644325510", name: "INTAN*** PERM***", branch: "Surabaya", asm_name: "MUHAMAD ADI SUWONO .", sales_agent_code: "6278127", sales_agent_name: "MUHAMMAD IZZA MAHENDRA KRISNA PUTRA .", plan: "Pas Internet A", clustername: "PERUMAHAN THE GRAHA RESIDENCE", service_activation_date: "2026-11-15", invoice_amount: 138750, revenue_before_tax: 125000, invoice_status: "PAID", payment_method: "BCA VA DIRECT", unpaid_days: 0 }
+    ];
+
+    let rawData = [...SAMPLE_DATA];
+    let filteredData = [...SAMPLE_DATA];
+    let activeTab = 1;
+    let tab1ViewMode = 'summary';
+    let delayFilter = 'ALL';
+
+    let chartDailyInstance = null;
+    let chartASMBarInstance = null;
+    let chartPaidUnpaidInstance = null;
+    let chartUnpaidDonutInstance = null;
+
+    const formatIDR = (num) => new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', maximumFractionDigits: 0 }).format(num || 0);
+
+    function getDelayBucket(row) {
+      if ((row.invoice_status || '').toUpperCase() === 'PAID') return 'PAID';
+      const d = parseInt(row.unpaid_days) || 0;
+      if (d <= 3) return '1-3';
+      if (d <= 6) return '4-6';
+      if (d <= 9) return '7-9';
+      return '>9';
+    }
+
+    function parseDateInfo(dateStr) {
+      if (!dateStr) return null;
+      const s = String(dateStr).trim().split(' ')[0];
+      if (/^\d{4}-\d{1,2}-\d{1,2}/.test(s)) {
+        const parts = s.split('-');
+        return { year: parseInt(parts[0], 10), month: parseInt(parts[1], 10), day: parseInt(parts[2], 10) };
+      }
+      if (/^\d{1,2}\/\d{1,2}\/\d{4}/.test(s)) {
+        const parts = s.split('/');
+        const p0 = parseInt(parts[0], 10), p1 = parseInt(parts[1], 10), year = parseInt(parts[2], 10);
+        if (p0 > 12) return { year, month: p1, day: p0 };
+        return { year, month: p0, day: p1 };
+      }
+      return null;
+    }
+
+    function extractDay(dateStr) {
+      const info = parseDateInfo(dateStr);
+      return info ? info.day : null;
+    }
+
+    function isNovemberData(row) {
+      const info = parseDateInfo(row.service_activation_date);
+      return info && info.month === 11;
+    }
+
+    let selectedOctCutoff = '16';
+    let selectedRunrateTargetDay = '30';
+
+    function getLatestNovDay() {
+      const novDays = rawData.map(r => parseDateInfo(r.service_activation_date)).filter(info => info && info.month === 11).map(info => info.day);
+      return novDays.length > 0 ? Math.max(...novDays) : 16;
+    }
+
+    function getCurrentCutoffDay() {
+      if (selectedOctCutoff && selectedOctCutoff !== 'AUTO') {
+        const parsed = parseInt(selectedOctCutoff, 10);
+        if (!isNaN(parsed) && parsed >= 1 && parsed <= 31) return parsed;
+      }
+      return getLatestNovDay();
+    }
+
+    function isOctoberMTDData(row, cutoffDay) {
+      const info = parseDateInfo(row.service_activation_date);
+      return info && info.month === 10 && info.day <= cutoffDay;
+    }
+
+    function isOctoberFullEOMData(row) {
+      const info = parseDateInfo(row.service_activation_date);
+      return info && info.month === 10;
+    }
+
+    function populateFilterDropdowns() {
+      const asms = [...new Set(rawData.map(r => r.asm_name).filter(Boolean))].sort();
+      const aes = [...new Set(rawData.map(r => r.sales_agent_name).filter(Boolean))].sort();
+      const plans = [...new Set(rawData.map(r => r.plan).filter(Boolean))].sort();
+
+      const fillSelect = (id, items, defaultText) => {
+        const el = document.getElementById(id);
+        const current = el.value;
+        el.innerHTML = `<option value="ALL">${defaultText}</option>` + items.map(v => `<option value="${v}">${v}</option>`).join('');
+        if (items.includes(current)) el.value = current;
+      };
+
+      fillSelect('filterASM', asms, 'Semua ASM');
+      fillSelect('filterAE', aes, 'Semua AE');
+      fillSelect('filterPlan', plans, 'Semua Paket');
+    }
+
+    function applyFilters() {
+      const asm = document.getElementById('filterASM').value;
+      const ae = document.getElementById('filterAE').value;
+      const plan = document.getElementById('filterPlan').value;
+
+      filteredData = rawData.filter(r => {
+        if (asm !== 'ALL' && r.asm_name !== asm) return false;
+        if (ae !== 'ALL' && r.sales_agent_name !== ae) return false;
+        if (plan !== 'ALL' && r.plan !== plan) return false;
+        return true;
+      });
+
+      refreshAll();
+    }
+
+    function getNovemberSA() {
+      return filteredData.filter(isNovemberData);
+    }
+
+    function getOctoberMTDSA() {
+      const cutoff = getCurrentCutoffDay();
+      return filteredData.filter(r => isOctoberMTDData(r, cutoff));
+    }
+
+    function refreshAll() {
+      updateTab1KPIs();
+      renderTab1Charts();
+      renderRankingTables();
+      renderTab1Table();
+      updateTab2KPIs();
+      renderTab2Charts();
+      renderTab2Table();
+    }
+
+    function updateTab1KPIs() {
+      const novData = getNovemberSA();
+      const octData = getOctoberMTDSA();
+      const cutoff = getCurrentCutoffDay();
+
+      const total = novData.length;
+      const prevTotal = octData.length;
+      const diff = total - prevTotal;
+      const growthPct = prevTotal > 0 ? Math.round((diff / prevTotal) * 100) : (total > 0 ? 100 : 0);
+
+      document.getElementById('kpiTotalSA').textContent = total;
+      document.getElementById('kpiPrevMonthSA').textContent = `vs ${prevTotal} (Okt s/d tgl ${cutoff})`;
+
+      const diffNumEl = document.getElementById('kpiMoMDiffNum');
+      const badge = document.getElementById('kpiMoMBadge');
+      if (diff > 0) {
+        diffNumEl.className = 'text-sm font-extrabold font-mono text-emerald-500';
+        diffNumEl.textContent = `(+${diff} SA)`;
+        badge.className = 'px-2 py-0.5 rounded-md bg-emerald-500/15 text-emerald-500 text-[11px] font-bold';
+        badge.textContent = `+${diff} (+${growthPct}%)`;
+      } else if (diff < 0) {
+        diffNumEl.className = 'text-sm font-extrabold font-mono text-rose-500';
+        diffNumEl.textContent = `(${diff} SA)`;
+        badge.className = 'px-2 py-0.5 rounded-md bg-rose-500/15 text-rose-500 text-[11px] font-bold';
+        badge.textContent = `${diff} (${growthPct}%)`;
+      } else {
+        diffNumEl.className = 'text-sm font-extrabold font-mono text-slate-400';
+        diffNumEl.textContent = `(0 SA)`;
+        badge.className = 'px-2 py-0.5 rounded-md bg-slate-500/15 text-slate-400 text-[11px] font-bold';
+        badge.textContent = `0 (0%)`;
+      }
+
+      const targetMonthly = Math.max(total + 5, prevTotal || 25);
+      const pct = Math.min(100, Math.round((total / targetMonthly) * 100));
+      document.getElementById('kpiTargetBar').style.width = pct + '%';
+      document.getElementById('kpiTargetText').textContent = `Perbandingan MTD s/d tgl ${cutoff} (${diff >= 0 ? '+' + diff : diff} SA vs Okt)`;
+
+      const dayMap = {};
+      getNovemberSA().forEach(r => {
+        const day = extractDay(r.service_activation_date);
+        if (day) dayMap[day] = (dayMap[day] || 0) + 1;
+      });
+      const activeDays = Object.keys(dayMap).length || 1;
+      document.getElementById('kpiAvgSA').textContent = (total / activeDays).toFixed(1);
+
+      let peakDay = '-', peakVal = 0;
+      Object.entries(dayMap).forEach(([d, v]) => {
+        if (v > peakVal) { peakVal = v; peakDay = `${d} Nov (${v} SA)`; }
+      });
+      document.getElementById('kpiPeakDay').textContent = `Tertinggi: ${peakDay}`;
+
+      const rev = getNovemberSA().reduce((acc, r) => acc + (Number(r.revenue_before_tax) || Number(r.invoice_amount) || 0), 0);
+      document.getElementById('kpiRevenue').textContent = formatIDR(rev);
+
+      const uniqueAEs = new Set(getNovemberSA().map(r => r.sales_agent_name).filter(Boolean));
+      document.getElementById('kpiActiveAECount').textContent = `${uniqueAEs.size} AE aktif berkontribusi`;
+
+      const asmCounts = {}, aeCounts = {};
+      getNovemberSA().forEach(r => {
+        if (r.asm_name) asmCounts[r.asm_name] = (asmCounts[r.asm_name] || 0) + 1;
+        if (r.sales_agent_name) aeCounts[r.sales_agent_name] = (aeCounts[r.sales_agent_name] || 0) + 1;
+      });
+
+      const topASM = Object.entries(asmCounts).sort((a, b) => b[1] - a[1])[0];
+      document.getElementById('kpiTopASM').textContent = topASM ? topASM[0] : '-';
+      document.getElementById('kpiTopASMSub').textContent = topASM ? `${topASM[1]} SA` : '0 SA';
+
+      const topAE = Object.entries(aeCounts).sort((a, b) => b[1] - a[1])[0];
+      document.getElementById('kpiTopAE').textContent = topAE ? topAE[0] : '-';
+      document.getElementById('kpiTopAESub').textContent = topAE ? `${topAE[1]} SA` : '0 SA';
+
+      const currentDay = getLatestNovDay();
+      const runrateEOM = Math.round((currentDay > 0 ? (total / currentDay) : 0) * 30);
+      const octFullEOM = filteredData.filter(isOctoberFullEOMData).length;
+      const rrDiff = runrateEOM - octFullEOM;
+      const rrGrowthPct = octFullEOM > 0 ? Math.round((rrDiff / octFullEOM) * 100) : (runrateEOM > 0 ? 100 : 0);
+
+      document.getElementById('kpiRunrateEOM').textContent = runrateEOM;
+      document.getElementById('kpiOctEOMRef').textContent = `vs ${octFullEOM} (Okt EOM)`;
+
+      const rrDiffEl = document.getElementById('kpiRunrateDiff');
+      const rrBadgeEl = document.getElementById('kpiRunrateBadge');
+      if (rrDiff > 0) {
+        rrDiffEl.className = 'text-xs font-extrabold font-mono text-emerald-500';
+        rrDiffEl.textContent = `(+${rrDiff})`;
+        rrBadgeEl.className = 'px-2 py-0.5 rounded-md bg-emerald-500/15 text-emerald-500 text-[10px] font-bold';
+        rrBadgeEl.textContent = `+${rrGrowthPct}%`;
+      } else if (rrDiff < 0) {
+        rrDiffEl.className = 'text-xs font-extrabold font-mono text-rose-500';
+        rrDiffEl.textContent = `(${rrDiff})`;
+        rrBadgeEl.className = 'px-2 py-0.5 rounded-md bg-rose-500/15 text-rose-500 text-[10px] font-bold';
+        rrBadgeEl.textContent = `${rrGrowthPct}%`;
+      } else {
+        rrDiffEl.className = 'text-xs font-extrabold font-mono text-slate-400';
+        rrDiffEl.textContent = `(0)`;
+        rrBadgeEl.className = 'px-2 py-0.5 rounded-md bg-slate-500/15 text-slate-400 text-[10px] font-bold';
+        rrBadgeEl.textContent = `0%`;
+      }
+
+      const targetDay = parseInt(selectedRunrateTargetDay, 10) || 30;
+      const remainingDays = Math.max(1, targetDay - currentDay);
+      const targetCumulative = Math.ceil((octFullEOM / 30) * targetDay);
+      const neededTotalSA = Math.max(0, targetCumulative - total);
+      const neededPerDay = neededTotalSA > 0 ? (neededTotalSA / remainingDays).toFixed(1) : '0.0';
+
+      const dailyValEl = document.getElementById('kpiDailyNeededVal');
+      const dailySubEl = document.getElementById('kpiDailyNeededSub');
+      if (neededTotalSA === 0) {
+        dailyValEl.className = 'font-mono font-extrabold text-emerald-500';
+        dailyValEl.textContent = 'SUDAH POSITIF ✓';
+        dailySubEl.textContent = `Sudah melampaui target proporsional tgl ${targetDay}`;
+      } else {
+        dailyValEl.className = 'font-mono font-extrabold text-amber-500';
+        dailyValEl.textContent = `${neededPerDay} SA/hr`;
+        dailySubEl.textContent = `Butuh +${neededTotalSA} SA dlm ${remainingDays} hr`;
+      }
+    }
+
+    function renderTab1Charts() {
+      const isDark = document.documentElement.classList.contains('dark');
+      const gridColor = isDark ? 'rgba(148, 163, 184, 0.1)' : 'rgba(15, 23, 42, 0.07)';
+      const textColor = isDark ? '#94a3b8' : '#475569';
+      const cutoff = getCurrentCutoffDay();
+
+      const labels = Array.from({ length: 30 }, (_, i) => `Tgl ${String(i + 1).padStart(2, '0')}`);
+      const dailyValuesNov = Array(30).fill(null);
+      const dailyValuesOct = Array(30).fill(null);
+      for (let i = 0; i < cutoff; i++) { dailyValuesNov[i] = 0; dailyValuesOct[i] = 0; }
+      
+      getNovemberSA().forEach(r => {
+        const d = extractDay(r.service_activation_date);
+        if (d >= 1 && d <= 30) dailyValuesNov[d - 1] = (dailyValuesNov[d - 1] || 0) + 1;
+      });
+      getOctoberMTDSA().forEach(r => {
+        const d = extractDay(r.service_activation_date);
+        if (d >= 1 && d <= cutoff) dailyValuesOct[d - 1] = (dailyValuesOct[d - 1] || 0) + 1;
+      });
+
+      if (chartDailyInstance) chartDailyInstance.destroy();
+      const ctx1 = document.getElementById('chartDailySA').getContext('2d');
+      const grad = ctx1.createLinearGradient(0, 0, 0, 240);
+      grad.addColorStop(0, 'rgba(6, 182, 212, 0.35)');
+      grad.addColorStop(1, 'rgba(6, 182, 212, 0.0)');
+
+      chartDailyInstance = new Chart(ctx1, {
+        type: 'line',
+        data: {
+          labels,
+          datasets: [
+            { label: 'November (Bulan Ini)', data: dailyValuesNov, borderColor: '#06b6d4', backgroundColor: grad, borderWidth: 2.5, fill: true, tension: 0.35, pointRadius: 4 },
+            { label: `Oktober (s/d Tgl ${cutoff})`, data: dailyValuesOct, borderColor: '#94a3b8', borderDash: [5, 5], borderWidth: 2, fill: false, tension: 0.35, pointRadius: 3 }
+          ]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: { legend: { display: true, labels: { color: textColor, font: { size: 11 } } } },
+          scales: {
+            x: { grid: { display: false }, ticks: { color: textColor, font: { size: 10 } } },
+            y: { beginAtZero: true, ticks: { stepSize: 1, color: textColor, font: { size: 10 } }, grid: { color: gridColor } }
+          }
+        }
+      });
+
+      const novDataASM = getNovemberSA();
+      const octDataASM = getOctoberMTDSA();
+      const allAsms = [...new Set([...novDataASM.map(r => r.asm_name), ...octDataASM.map(r => r.asm_name)].filter(Boolean))];
+      const asmSorted = allAsms.map(a => ({
+        name: a,
+        nov: novDataASM.filter(r => r.asm_name === a).length,
+        oct: octDataASM.filter(r => r.asm_name === a).length
+      })).sort((a, b) => b.nov - a.nov || b.oct - a.oct);
+
+      if (chartASMBarInstance) chartASMBarInstance.destroy();
+      chartASMBarInstance = new Chart(document.getElementById('chartASMBar'), {
+        type: 'bar',
+        data: {
+          labels: asmSorted.map(x => x.name.replace(' .', '')),
+          datasets: [
+            { label: 'Bulan Ini (Nov)', data: asmSorted.map(x => x.nov), backgroundColor: '#06b6d4', borderRadius: 4 },
+            { label: `Bulan Lalu (Okt s/d ${cutoff})`, data: asmSorted.map(x => x.oct), backgroundColor: '#6366f1', borderRadius: 4 }
+          ]
+        },
+        options: {
+          indexAxis: 'y',
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: { legend: { labels: { color: textColor, font: { size: 11 } } } },
+          scales: {
+            x: { beginAtZero: true, ticks: { stepSize: 1, color: textColor, font: { size: 10 } }, grid: { color: gridColor } },
+            y: { ticks: { color: textColor, font: { size: 10 } }, grid: { display: false } }
+          }
+        }
+      });
+    }
+
+    function renderRankingTables() {
+      const novData = getNovemberSA();
+      const octData = getOctoberMTDSA();
+      const cutoff = getCurrentCutoffDay();
+
+      const formatGrowth = (nov, oct) => {
+        const diff = nov - oct;
+        const pct = oct > 0 ? Math.round((diff / oct) * 100) : (nov > 0 ? 100 : 0);
+        const diffStr = diff > 0 ? `+${diff}` : `${diff}`;
+        if (diff > 0) return { diffHtml: `<span class="font-mono font-bold text-emerald-500">${diffStr}</span>`, pctHtml: `<span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-500/15 text-emerald-500">▲ +${pct}%</span>` };
+        if (diff < 0) return { diffHtml: `<span class="font-mono font-bold text-rose-500">${diffStr}</span>`, pctHtml: `<span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-rose-500/15 text-rose-500">▼ ${pct}%</span>` };
+        return { diffHtml: `<span class="font-mono text-slate-400">0</span>`, pctHtml: `<span class="px-2 py-0.5 rounded-full text-[10px] font-semibold bg-slate-500/15 text-slate-400">0%</span>` };
+      };
+
+      const getMedal = (idx) => {
+        if (idx === 0) return `<span class="inline-flex items-center justify-center w-6 h-6 rounded-full bg-amber-400/20 text-amber-400 font-extrabold text-xs">1</span>`;
+        if (idx === 1) return `<span class="inline-flex items-center justify-center w-6 h-6 rounded-full bg-slate-300/25 text-slate-300 font-extrabold text-xs">2</span>`;
+        if (idx === 2) return `<span class="inline-flex items-center justify-center w-6 h-6 rounded-full bg-orange-400/20 text-orange-400 font-extrabold text-xs">3</span>`;
+        return `<span class="font-mono text-slate-400 font-semibold">${idx + 1}</span>`;
+      };
+
+      const asmMap = {};
+      novData.forEach(r => {
+        const k = r.asm_name || 'Unknown ASM';
+        if (!asmMap[k]) asmMap[k] = { asm: k, branch: r.branch || '-', nov: 0, oct: 0 };
+        asmMap[k].nov++;
+      });
+      octData.forEach(r => {
+        const k = r.asm_name || 'Unknown ASM';
+        if (!asmMap[k]) asmMap[k] = { asm: k, branch: r.branch || '-', nov: 0, oct: 0 };
+        asmMap[k].oct++;
+      });
+      const asmRanks = Object.values(asmMap).sort((a, b) => b.nov - a.nov || b.oct - a.oct);
+      document.getElementById('rankASMBody').innerHTML = asmRanks.map((item, idx) => {
+        const g = formatGrowth(item.nov, item.oct);
+        return `
+          <tr class="hover:bg-slate-50 dark:hover:bg-slate-800/40 transition">
+            <td class="py-2.5 px-3 text-center">${getMedal(idx)}</td>
+            <td class="py-2.5 px-3 font-bold">${item.asm}</td>
+            <td class="py-2.5 px-2"><span class="px-2 py-0.5 rounded-full text-[10px] font-semibold bg-slate-200/70 dark:bg-slate-800">${item.branch}</span></td>
+            <td class="py-2.5 px-3 text-center font-mono font-extrabold text-cyan-500 text-sm">${item.nov}</td>
+            <td class="py-2.5 px-3 text-center font-mono text-slate-500 dark:text-slate-400">${item.oct}</td>
+            <td class="py-2.5 px-3 text-center">${g.diffHtml}</td>
+            <td class="py-2.5 px-3 text-right">${g.pctHtml}</td>
+          </tr>
+        `;
+      }).join('') || `<tr><td colspan="7" class="py-6 text-center text-slate-400">Belum ada data ASM.</td></tr>`;
+
+      // ⚠️ KETENTUAN UTAMA: HANYA MENAMPILKAN AE YANG AKTIF DI BULAN INI SAJA
+      const aeMap = {};
+      novData.forEach(r => {
+        const k = `${r.sales_agent_name || 'Unknown AE'}|||${r.asm_name || '-'}`;
+        if (!aeMap[k]) aeMap[k] = { ae: r.sales_agent_name || 'Unknown AE', aeCode: r.sales_agent_code || '-', asm: r.asm_name || '-', nov: 0, oct: 0 };
+        aeMap[k].nov++;
+      });
+      // Tarik data Oktober HANYA untuk AE yang sudah terdaftar aktif di November (tanpa memasukkan AE lama yang sudah keluar)
+      octData.forEach(r => {
+        const k = `${r.sales_agent_name || 'Unknown AE'}|||${r.asm_name || '-'}`;
+        if (aeMap[k]) {
+          aeMap[k].oct++;
+        }
+      });
+
+      const qAE = (document.getElementById('searchRankAE').value || '').toLowerCase();
+      const aeRanks = Object.values(aeMap)
+        .filter(item => item.ae.toLowerCase().includes(qAE) || item.asm.toLowerCase().includes(qAE) || item.aeCode.toLowerCase().includes(qAE))
+        .sort((a, b) => b.nov - a.nov || b.oct - a.oct);
+
+      document.getElementById('rankAEBody').innerHTML = aeRanks.map((item, idx) => {
+        const g = formatGrowth(item.nov, item.oct);
+        return `
+          <tr class="hover:bg-slate-50 dark:hover:bg-slate-800/40 transition">
+            <td class="py-2.5 px-3 text-center">${getMedal(idx)}</td>
+            <td class="py-2.5 px-3">
+              <div class="font-bold">${item.ae}</div>
+              <div class="text-[10px] text-slate-400">ASM: ${item.asm} • ID: ${item.aeCode}</div>
+            </td>
+            <td class="py-2.5 px-3 text-center font-mono font-extrabold text-cyan-500 text-sm">${item.nov}</td>
+            <td class="py-2.5 px-3 text-center font-mono text-slate-500 dark:text-slate-400">${item.oct}</td>
+            <td class="py-2.5 px-3 text-center">${g.diffHtml}</td>
+            <td class="py-2.5 px-3 text-right">${g.pctHtml}</td>
+          </tr>
+        `;
+      }).join('') || `<tr><td colspan="6" class="py-6 text-center text-slate-400">Belum ada data AE aktif bulan ini.</td></tr>`;
+    }
+
+    function getAEPerformanceRows() {
+      const TARGET_PER_AE = 15;
+      const grouped = {};
+
+      // ⚠️ HANYA AMBIL DATA BULAN INI (NOVEMBER) SAJA
+      getNovemberSA().forEach(r => {
+        const key = `${r.asm_name || '-'}|||${r.sales_agent_name || '-'}`;
+        if (!grouped[key]) {
+          grouped[key] = {
+            asm: r.asm_name || '-',
+            ae: r.sales_agent_name || '-',
+            aeCode: r.sales_agent_code || '-',
+            branch: r.branch || '-',
+            days: Array(30).fill(0),
+            total: 0,
+            prevMonth: 0,
+            target: TARGET_PER_AE,
+            paid: 0,
+            unpaid: 0,
+            revenue: 0
+          };
+        }
+        const d = extractDay(r.service_activation_date);
+        if (d >= 1 && d <= 30) grouped[key].days[d - 1]++;
+        grouped[key].total++;
+        if ((r.invoice_status || '').toUpperCase() === 'PAID') grouped[key].paid++;
+        else grouped[key].unpaid++;
+        grouped[key].revenue += (Number(r.revenue_before_tax) || Number(r.invoice_amount) || 0);
+      });
+
+      // Tambahkan perbandingan bulan lalu (Oktober MTD) HANYA untuk AE yang aktif di bulan ini
+      getOctoberMTDSA().forEach(r => {
+        const key = `${r.asm_name || '-'}|||${r.sales_agent_name || '-'}`;
+        if (grouped[key]) {
+          grouped[key].prevMonth++;
+        }
+      });
+
+      return Object.values(grouped).map(item => {
+        const diffPrev = item.total - item.prevMonth;
+        const vsTargetDiff = item.total - item.target;
+        const targetPct = Math.round((item.total / item.target) * 100);
+        return { ...item, diffPrev, vsTargetDiff, targetPct };
+      });
+    }
+
+    function renderTab1Table() {
+      const q = (document.getElementById('searchTab1').value || '').toLowerCase();
+      const head = document.getElementById('tab1TableHead');
+      const body = document.getElementById('tab1TableBody');
+
+      const rows = getAEPerformanceRows()
+        .filter(g => g.asm.toLowerCase().includes(q) || g.ae.toLowerCase().includes(q) || g.aeCode.toLowerCase().includes(q))
+        .sort((a, b) => b.total - a.total || b.prevMonth - a.prevMonth);
+
+      const formatDiffBadge = (diff) => {
+        if (diff > 0) return `<span class="font-mono font-bold text-emerald-500">+${diff}</span>`;
+        if (diff < 0) return `<span class="font-mono font-bold text-rose-500">${diff}</span>`;
+        return `<span class="font-mono text-slate-400">0</span>`;
+      };
+
+      const formatTargetComparison = (r) => {
+        const gapStr = r.vsTargetDiff >= 0 ? `+${r.vsTargetDiff}` : `${r.vsTargetDiff}`;
+        const barW = Math.min(100, r.targetPct);
+        const colorCls = r.targetPct >= 100 ? 'text-emerald-500 bg-emerald-500/15' : r.targetPct >= 70 ? 'text-amber-500 bg-amber-500/15' : 'text-rose-500 bg-rose-500/15';
+        const barColor = r.targetPct >= 100 ? 'bg-emerald-500' : r.targetPct >= 70 ? 'bg-amber-500' : 'bg-rose-500';
+        return `
+          <div class="min-w-[115px]">
+            <div class="flex items-center justify-between gap-1.5 text-[11px]">
+              <span class="font-mono font-bold ${r.vsTargetDiff >= 0 ? 'text-emerald-500' : 'text-rose-500'}">${gapStr} SA</span>
+              <span class="px-1.5 py-0.5 rounded font-mono font-bold text-[10px] ${colorCls}">${r.targetPct}%</span>
+            </div>
+            <div class="w-full h-1.5 bg-slate-200 dark:bg-slate-800 rounded-full overflow-hidden mt-1">
+              <div class="h-full ${barColor} rounded-full" style="width:${barW}%"></div>
+            </div>
+          </div>
+        `;
+      };
+
+      if (tab1ViewMode === 'matrix') {
+        let dayHeaders = '';
+        for (let i = 1; i <= 30; i++) dayHeaders += `<th class="py-2.5 px-2 text-center font-mono">${String(i).padStart(2, '0')}</th>`;
+        head.innerHTML = `
+          <tr>
+            <th class="py-2.5 px-3 sticky left-0 bg-slate-100 dark:bg-slate-950 z-10">Nama AE & ASM</th>
+            <th class="py-2.5 px-2">Branch</th>
+            <th class="py-2.5 px-2.5 text-center bg-cyan-500/10 text-cyan-600 dark:text-cyan-400 whitespace-nowrap">SA Bln Ini</th>
+            <th class="py-2.5 px-2.5 text-center whitespace-nowrap">SA Bln Lalu</th>
+            <th class="py-2.5 px-2.5 text-center whitespace-nowrap">Selisih</th>
+            <th class="py-2.5 px-2 text-center whitespace-nowrap">Target</th>
+            <th class="py-2.5 px-3 text-center whitespace-nowrap">vs Target (15)</th>
+            <th class="py-2.5 px-2 text-center text-emerald-500 whitespace-nowrap">Paid</th>
+            <th class="py-2.5 px-2 text-center text-rose-500 whitespace-nowrap">Unpaid</th>
+            ${dayHeaders}
+          </tr>
+        `;
+        body.innerHTML = rows.map(r => {
+          const cells = r.days.map(val => {
+            if (val === 0) return `<td class="py-2 px-2 text-center text-slate-300 dark:text-slate-700 font-mono">·</td>`;
+            const bg = val >= 2 ? 'bg-cyan-500 text-white font-bold' : 'bg-cyan-500/20 text-cyan-600 dark:text-cyan-300 font-bold';
+            return `<td class="py-2 px-1.5 text-center"><span class="inline-block w-6 h-6 leading-6 rounded-md font-mono text-[11px] ${bg}">${val}</span></td>`;
+          }).join('');
+
+          return `
+            <tr class="hover:bg-slate-50 dark:hover:bg-slate-800/40 transition">
+              <td class="py-2.5 px-3 sticky left-0 bg-white dark:bg-slate-900 z-10 whitespace-nowrap border-r border-slate-200/60 dark:border-slate-800/80">
+                <div class="font-bold">${r.ae}</div>
+                <div class="text-[10px] text-slate-400">ASM: ${r.asm} • ID: ${r.aeCode}</div>
+              </td>
+              <td class="py-2.5 px-2 whitespace-nowrap"><span class="px-2 py-0.5 rounded-full text-[10px] font-semibold bg-slate-200/70 dark:bg-slate-800">${r.branch}</span></td>
+              <td class="py-2.5 px-2.5 text-center font-extrabold font-mono text-cyan-500 bg-cyan-500/5 text-sm">${r.total}</td>
+              <td class="py-2.5 px-2.5 text-center font-mono text-slate-500 dark:text-slate-400">${r.prevMonth}</td>
+              <td class="py-2.5 px-2.5 text-center">${formatDiffBadge(r.diffPrev)}</td>
+              <td class="py-2.5 px-2 text-center font-mono font-semibold text-slate-400">${r.target}</td>
+              <td class="py-2.5 px-3">${formatTargetComparison(r)}</td>
+              <td class="py-2.5 px-2 text-center font-mono font-bold text-emerald-500">${r.paid}</td>
+              <td class="py-2.5 px-2 text-center font-mono font-bold text-rose-500">${r.unpaid}</td>
+              ${cells}
+            </tr>
+          `;
+        }).join('') || `<tr><td colspan="39" class="py-8 text-center text-slate-400">Tidak ada AE aktif di bulan ini.</td></tr>`;
+      } else {
+        head.innerHTML = `
+          <tr>
+            <th class="py-3 px-3">Nama AE (Sales Agent)</th>
+            <th class="py-3 px-3">Nama ASM</th>
+            <th class="py-3 px-2.5">Branch</th>
+            <th class="py-3 px-3 text-center bg-cyan-500/10 text-cyan-600 dark:text-cyan-400">SA Bulan Ini</th>
+            <th class="py-3 px-3 text-center">SA Bulan Lalu</th>
+            <th class="py-3 px-3 text-center">Selisih</th>
+            <th class="py-3 px-2.5 text-center">Target AE</th>
+            <th class="py-3 px-3 text-center">Perbandingan Target</th>
+            <th class="py-3 px-3 text-center text-emerald-500">SA Paid</th>
+            <th class="py-3 px-3 text-center text-rose-500">SA Unpaid</th>
+            <th class="py-3 px-3 text-right">Est. Revenue</th>
+          </tr>
+        `;
+        body.innerHTML = rows.map(r => `
+          <tr class="hover:bg-slate-50 dark:hover:bg-slate-800/40 transition">
+            <td class="py-3 px-3">
+              <div class="font-bold">${r.ae}</div>
+              <div class="text-[10px] font-mono text-slate-400">ID: ${r.aeCode}</div>
+            </td>
+            <td class="py-3 px-3 font-medium text-slate-600 dark:text-slate-300">${r.asm}</td>
+            <td class="py-3 px-2.5"><span class="px-2 py-0.5 rounded-full text-[10px] font-semibold bg-slate-200/70 dark:bg-slate-800">${r.branch}</span></td>
+            <td class="py-3 px-3 text-center font-mono font-extrabold text-cyan-500 bg-cyan-500/5 text-sm">${r.total}</td>
+            <td class="py-3 px-3 text-center font-mono text-slate-500 dark:text-slate-400">${r.prevMonth}</td>
+            <td class="py-3 px-3 text-center">${formatDiffBadge(r.diffPrev)}</td>
+            <td class="py-3 px-2.5 text-center font-mono font-semibold text-slate-400">${r.target}</td>
+            <td class="py-3 px-3">${formatTargetComparison(r)}</td>
+            <td class="py-3 px-3 text-center font-mono font-bold text-emerald-500">${r.paid}</td>
+            <td class="py-3 px-3 text-center font-mono font-bold text-rose-500">${r.unpaid}</td>
+            <td class="py-3 px-3 text-right font-mono font-semibold">${formatIDR(r.revenue)}</td>
+          </tr>
+        `).join('') || `<tr><td colspan="11" class="py-8 text-center text-slate-400">Tidak ada AE aktif di bulan ini.</td></tr>`;
+      }
+    }
+
+    function updateTab2KPIs() {
+      const paid = getNovemberSA().filter(r => getDelayBucket(r) === 'PAID');
+      const unpaid = getNovemberSA().filter(r => getDelayBucket(r) !== 'PAID');
+      const b1_3 = getNovemberSA().filter(r => getDelayBucket(r) === '1-3');
+      const b4_6 = getNovemberSA().filter(r => getDelayBucket(r) === '4-6');
+      const b7_9 = getNovemberSA().filter(r => getDelayBucket(r) === '7-9');
+      const bGt9 = getNovemberSA().filter(r => getDelayBucket(r) === '>9');
+
+      const sumInv = arr => arr.reduce((a, b) => a + (Number(b.invoice_amount) || 0), 0);
+      const collRate = getNovemberSA().length ? Math.round((paid.length / getNovemberSA().length) * 100) : 0;
+
+      document.getElementById('kpiPaidCount').textContent = paid.length;
+      document.getElementById('kpiPaidAmount').textContent = formatIDR(sumInv(paid));
+      document.getElementById('kpiPaidRate').textContent = `Collection Rate: ${collRate}%`;
+
+      document.getElementById('kpiUnpaidCount').textContent = unpaid.length;
+      document.getElementById('kpiUnpaidAmount').textContent = formatIDR(sumInv(unpaid));
+
+      document.getElementById('kpiDelay1_3').textContent = b1_3.length;
+      document.getElementById('kpiDelay1_3Amt').textContent = formatIDR(sumInv(b1_3));
+
+      document.getElementById('kpiDelay4_6').textContent = b4_6.length;
+      document.getElementById('kpiDelay4_6Amt').textContent = formatIDR(sumInv(b4_6));
+
+      document.getElementById('kpiDelay7_9').textContent = b7_9.length;
+      document.getElementById('kpiDelay7_9Amt').textContent = formatIDR(sumInv(b7_9));
+
+      document.getElementById('kpiDelayGt9').textContent = bGt9.length;
+      document.getElementById('kpiDelayGt9Amt').textContent = formatIDR(sumInv(bGt9));
+
+      document.getElementById('donutCenterCount').textContent = unpaid.length;
+    }
+
+    function renderTab2Charts() {
+      const isDark = document.documentElement.classList.contains('dark');
+      const gridColor = isDark ? 'rgba(148, 163, 184, 0.1)' : 'rgba(15, 23, 42, 0.07)';
+      const textColor = isDark ? '#94a3b8' : '#475569';
+
+      const asms = [...new Set(getNovemberSA().map(r => r.asm_name).filter(Boolean))];
+      const buckets = ['PAID', '1-3', '4-6', '7-9', '>9'];
+      const colors = ['#10b981', '#f59e0b', '#f97316', '#f43f5e', '#dc2626'];
+      const labelsMap = ['PAID', 'Telat 1-3 Hari', 'Telat 4-6 Hari', 'Telat 7-9 Hari', 'Telat >9 Hari'];
+
+      const datasets = buckets.map((b, idx) => ({
+        label: labelsMap[idx],
+        data: asms.map(a => getNovemberSA().filter(r => r.asm_name === a && getDelayBucket(r) === b).length),
+        backgroundColor: colors[idx],
+        borderRadius: 3
+      }));
+
+      if (chartPaidUnpaidInstance) chartPaidUnpaidInstance.destroy();
+      chartPaidUnpaidInstance = new Chart(document.getElementById('chartPaidUnpaidASM'), {
+        type: 'bar',
+        data: { labels: asms.map(a => a.replace(' .', '')), datasets },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: { legend: { labels: { color: textColor, font: { size: 11 } } } },
+          scales: {
+            x: { stacked: true, ticks: { color: textColor, font: { size: 10 } }, grid: { display: false } },
+            y: { stacked: true, beginAtZero: true, ticks: { stepSize: 1, color: textColor }, grid: { color: gridColor } }
+          }
+        }
+      });
+
+      const unpaidBuckets = ['1-3', '4-6', '7-9', '>9'].map(b => getNovemberSA().filter(r => getDelayBucket(r) === b).length);
+      if (chartUnpaidDonutInstance) chartUnpaidDonutInstance.destroy();
+      chartUnpaidDonutInstance = new Chart(document.getElementById('chartUnpaidDonut'), {
+        type: 'doughnut',
+        data: {
+          labels: ['1-3 Hari', '4-6 Hari', '7-9 Hari', '>9 Hari'],
+          datasets: [{ data: unpaidBuckets, backgroundColor: ['#f59e0b', '#f97316', '#f43f5e', '#dc2626'], borderWidth: 0 }]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          cutout: '72%',
+          plugins: { legend: { position: 'bottom', labels: { color: textColor, font: { size: 11 }, boxWidth: 12 } } }
+        }
+      });
+    }
+
+    function setDelayFilter(val) {
+      delayFilter = val;
+      ['ALL', 'PAID', '1-3', '4-6', '7-9', '>9'].forEach(p => {
+        const el = document.getElementById('pill_' + p);
+        if (el) el.classList.toggle('ring-2', p === val);
+      });
+      renderTab2Table();
+    }
+
+    function renderTab2Table() {
+      const q = (document.getElementById('searchTab2').value || '').toLowerCase();
+      const body = document.getElementById('tab2TableBody');
+
+      const rows = getNovemberSA().filter(r => {
+        const b = getDelayBucket(r);
+        if (delayFilter === 'ALL_UNPAID' && b === 'PAID') return false;
+        if (delayFilter !== 'ALL' && delayFilter !== 'ALL_UNPAID' && b !== delayFilter) return false;
+        if (q) {
+          const hay = `${r.subscription_id} ${r.order_id} ${r.name} ${r.asm_name} ${r.sales_agent_name} ${r.clustername}`.toLowerCase();
+          if (!hay.includes(q)) return false;
+        }
+        return true;
+      }).sort((a, b) => (parseInt(b.unpaid_days) || 0) - (parseInt(a.unpaid_days) || 0));
+
+      body.innerHTML = rows.map(r => {
+        const bucket = getDelayBucket(r);
+        const days = parseInt(r.unpaid_days) || 0;
+        const statusBadge = bucket === 'PAID' 
+          ? `<span class="px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-emerald-500/15 text-emerald-500 border border-emerald-500/30">PAID</span>`
+          : `<span class="px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-rose-500/15 text-rose-500 border border-rose-500/30">UNPAID</span>`;
+
+        let delayBadge = `<span class="text-slate-400 text-[11px]">Lunas (0 Hari)</span>`;
+        if (bucket === '1-3') delayBadge = `<span class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-amber-500/15 text-amber-500 border border-amber-500/30">● ${days} Hari (1–3 Hari)</span>`;
+        else if (bucket === '4-6') delayBadge = `<span class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-orange-500/15 text-orange-500 border border-orange-500/30">● ${days} Hari (4–6 Hari)</span>`;
+        else if (bucket === '7-9') delayBadge = `<span class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-rose-500/15 text-rose-500 border border-rose-500/30">● ${days} Hari (7–9 Hari)</span>`;
+        else if (bucket === '>9') delayBadge = `<span class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-red-600 text-white">⚠ ${days} Hari (&gt;9 Hari)</span>`;
+
+        return `
+          <tr class="hover:bg-slate-50 dark:hover:bg-slate-800/40 transition">
+            <td class="py-3 px-3 font-mono">
+              <div class="font-bold text-indigo-500">${r.subscription_id}</div>
+              <div class="text-[10px] text-slate-400">${r.order_id}</div>
+            </td>
+            <td class="py-3 px-3">
+              <div class="font-semibold">${r.name}</div>
+              <div class="text-[10px] text-slate-400 truncate max-w-[200px]">${r.clustername || '-'}</div>
+            </td>
+            <td class="py-3 px-3">${r.branch}</td>
+            <td class="py-3 px-3">
+              <div class="font-semibold text-slate-700 dark:text-slate-200">${r.asm_name}</div>
+              <div class="text-[11px] text-slate-500 dark:text-slate-400">AE: ${r.sales_agent_name}</div>
+            </td>
+            <td class="py-3 px-3 font-medium">${r.plan}</td>
+            <td class="py-3 px-3 font-mono">${r.service_activation_date}</td>
+            <td class="py-3 px-3 text-right font-mono font-bold">${formatIDR(r.invoice_amount)}</td>
+            <td class="py-3 px-3 text-center">${statusBadge}</td>
+            <td class="py-3 px-3 text-center">${delayBadge}</td>
+          </tr>
+        `;
+      }).join('') || `<tr><td colspan="9" class="py-8 text-center text-slate-400">Tidak ada data sesuai filter.</td></tr>`;
+    }
+
+    function switchTab(tabNum) {
+      activeTab = tabNum;
+      document.getElementById('tabContent1').classList.toggle('hidden', tabNum !== 1);
+      document.getElementById('tabContent2').classList.toggle('hidden', tabNum !== 2);
+      document.getElementById('tabBtn1').className = tabNum === 1 ? 'px-4 py-2 rounded-lg text-xs sm:text-sm font-bold transition-all bg-indigo-600 text-white shadow' : 'px-4 py-2 rounded-lg text-xs sm:text-sm font-semibold text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white transition-all';
+      document.getElementById('tabBtn2').className = tabNum === 2 ? 'px-4 py-2 rounded-lg text-xs sm:text-sm font-bold transition-all bg-indigo-600 text-white shadow' : 'px-4 py-2 rounded-lg text-xs sm:text-sm font-semibold text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white transition-all';
+    }
+
+    function toggleTheme() {
+      const html = document.documentElement;
+      html.classList.toggle('dark');
+      const isDark = html.classList.contains('dark');
+      document.getElementById('themeIcon').textContent = isDark ? '☀️' : '🌙';
+      document.getElementById('themeLabel').textContent = isDark ? 'Light Mode' : 'Dark Mode';
+      renderTab1Charts();
+      renderTab2Charts();
+    }
+
+    function openSheetModal() { document.getElementById('sheetModal').classList.remove('hidden'); document.getElementById('sheetModal').classList.add('flex'); }
+    function closeSheetModal() { document.getElementById('sheetModal').classList.add('hidden'); document.getElementById('sheetModal').classList.remove('flex'); }
+
+    function normalizeRows(rows) {
+      return rows.filter(r => r.subscription_id || r.order_id || r.sales_agent_name).map(r => ({
+        subscription_id: String(r.subscription_id || '').trim(),
+        order_id: String(r.order_id || '').trim(),
+        name: String(r.name || '-').trim(),
+        branch: String(r.branch || 'Surabaya').trim(),
+        asm_name: String(r.asm_name || r.upline_name || 'Unknown ASM').trim(),
+        sales_agent_code: String(r.sales_agent_code || r.rep_id || '-').trim(),
+        sales_agent_name: String(r.sales_agent_name || 'Unknown AE').trim(),
+        plan: String(r.plan || '-').trim(),
+        clustername: String(r.clustername || '-').trim(),
+        service_activation_date: String(r.service_activation_date || r.order_date || '').trim(),
+        invoice_amount: parseFloat(String(r.invoice_amount || '0').replace(/[^0-9.-]/g, '')) || 0,
+        revenue_before_tax: parseFloat(String(r.revenue_before_tax || '0').replace(/[^0-9.-]/g, '')) || 0,
+        invoice_status: String(r.invoice_status || 'UNPAID').trim().toUpperCase(),
+        payment_method: String(r.payment_method || '-').trim(),
+        unpaid_days: parseInt(String(r['Unpaid Brp Hari'] || r.unpaid_days || '0').replace(/[^0-9]/g, ''), 10) || 0
+      }));
+    }
+
+    async function syncFromGoogleSheet(silent = false) {
+      const url = document.getElementById('gsheetUrlInput').value.trim();
+      let csvUrl = url;
+      const match = url.match(/\/d\/([a-zA-Z0-9-_]+)/);
+      const gidMatch = url.match(/gid=([0-9]+)/);
+      if (match) {
+        csvUrl = `https://docs.google.com/spreadsheets/d/${match[1]}/export?format=csv&gid=${gidMatch ? gidMatch[1] : '0'}`;
+      }
+      try {
+        const res = await fetch(csvUrl);
+        if (!res.ok) throw new Error('Gagal mengakses Google Sheet.');
+        const csvText = await res.text();
+        const parsed = Papa.parse(csvText, { header: true, skipEmptyLines: true });
+        const normalized = normalizeRows(parsed.data);
+        if (normalized.length === 0) throw new Error('Data kosong.');
+        rawData = normalized;
+        populateFilterDropdowns();
+        applyFilters();
+        document.getElementById('syncStatusBadge').textContent = `Live Sync: ${rawData.filter(isNovemberData).length} SA November`;
+        closeSheetModal();
+      } catch (err) {
+        if (!silent) alert('Gagal sinkronisasi: ' + err.message);
+      }
+    }
+
+    function importPastedData() {
+      const text = document.getElementById('pasteDataArea').value.trim();
+      if (!text) return alert('Tempelkan data terlebih dahulu.');
+      const parsed = Papa.parse(text, { header: true, skipEmptyLines: true });
+      const normalized = normalizeRows(parsed.data);
+      if (normalized.length === 0) return alert('Format header tidak dikenali.');
+      rawData = normalized;
+      populateFilterDropdowns();
+      applyFilters();
+      closeSheetModal();
+    }
+
+    function resetSampleData() {
+      rawData = [...SAMPLE_DATA];
+      populateFilterDropdowns();
+      applyFilters();
+      closeSheetModal();
+    }
+
+    function downloadCSV(filename, csvString) {
+      const blob = new Blob([csvString], { type: 'text/csv;charset=utf-8;' });
+      const link = document.createElement('a');
+      link.href = URL.createObjectURL(blob);
+      link.download = filename;
+      link.click();
+    }
+
+    function exportCSVTab1() {
+      const rows = getAEPerformanceRows().sort((a, b) => b.total - a.total);
+      const csv = Papa.unparse(rows.map(r => ({ AE_Name: r.ae, ASM_Name: r.asm, SA_Bulan_Ini: r.total, SA_Bulan_Lalu: r.prevMonth, Target: r.target, Paid: r.paid, Unpaid: r.unpaid })));
+      downloadCSV('Performa_AE_Bulan_Ini.csv', csv);
+    }
+
+    function exportCSVTab2() {
+      const csv = Papa.unparse(getNovemberSA().map(r => ({ Sub_ID: r.subscription_id, Nama: r.name, AE: r.sales_agent_name, Status: r.invoice_status })));
+      downloadCSV('Monitoring_Paid_Unpaid.csv', csv);
+    }
+
+    const weatherData = {
+      surabaya: { title: "Kota Surabaya", temp: "32°C", desc: "Cerah Berawan • Suhu 26°C - 34°C • Kelembapan 49% - 94%", icon: "⛅" },
+      sidoarjo: { title: "Kabupaten Sidoarjo", temp: "33°C", desc: "Berawan / Potensi Hujan • Suhu 26°C - 35°C • Kelembapan 47% - 95%", icon: "🌦️" }
+    };
+
+    function switchWeather(region) {
+      const data = weatherData[region];
+      if (!data) return;
+      document.getElementById('weatherLocationTitle').textContent = data.title;
+      document.getElementById('weatherTemp').textContent = data.temp;
+      document.getElementById('weatherDesc').textContent = data.desc;
+      document.getElementById('weatherIconBg').textContent = data.icon;
+      document.getElementById('weatherBtnSurabaya').className = region === 'surabaya' ? "px-3 py-1.5 rounded-lg text-xs font-bold transition bg-indigo-600 text-white shadow" : "px-3 py-1.5 rounded-lg text-xs font-semibold text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white transition";
+      document.getElementById('weatherBtnSidoarjo').className = region === 'sidoarjo' ? "px-3 py-1.5 rounded-lg text-xs font-bold transition bg-indigo-600 text-white shadow" : "px-3 py-1.5 rounded-lg text-xs font-semibold text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white transition";
+    }
+
+    function showWAToast(msg) {
+      const toast = document.getElementById('waToast');
+      document.getElementById('waToastMsg').textContent = msg;
+      toast.classList.remove('hidden');
+      toast.classList.add('flex');
+      setTimeout(() => { toast.classList.add('hidden'); toast.classList.remove('flex'); }, 3000);
+    }
+
+    function openWAModal(title, text) {
+      document.getElementById('waModalTitle').textContent = title;
+      document.getElementById('waPreviewText').value = text;
+      document.getElementById('waDirectLink').href = 'https://wa.me/?text=' + encodeURIComponent(text);
+      document.getElementById('waModal').classList.remove('hidden');
+      document.getElementById('waModal').classList.add('flex');
+      if (navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(text).then(() => showWAToast('Teks berhasil disalin!'));
+    }
+
+    function closeWAModal() { document.getElementById('waModal').classList.add('hidden'); document.getElementById('waModal').classList.remove('flex'); }
+    function reCopyWABox() { const ta = document.getElementById('waPreviewText'); ta.select(); navigator.clipboard.writeText(ta.value).then(() => showWAToast('Teks disalin ulang!')); }
+
+    function copyWAText(key) {
+      let text = `*Report Monitoring SA Surabaya 2*\nPeriode: November 2026`;
+      openWAModal('Report WhatsApp', text);
+    }
+
+    function setTab1View(mode) {
+      tab1ViewMode = mode;
+      document.getElementById('viewMatrixBtn').className = mode === 'matrix' ? 'px-3 py-1 rounded-lg text-xs font-semibold bg-indigo-600 text-white' : 'px-3 py-1 rounded-lg text-xs font-semibold text-slate-500 dark:text-slate-400';
+      document.getElementById('viewSummaryBtn').className = mode === 'summary' ? 'px-3 py-1 rounded-lg text-xs font-semibold bg-indigo-600 text-white' : 'px-3 py-1 rounded-lg text-xs font-semibold text-slate-500 dark:text-slate-400';
+      renderTab1Table();
+    }
+
+    populateFilterDropdowns();
+    applyFilters();
+    window.addEventListener('DOMContentLoaded', () => { syncFromGoogleSheet(true); });
+  </script>
+</body>
+</html>
