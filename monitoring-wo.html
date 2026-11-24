@@ -1,0 +1,2114 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard Monitoring Work Order (WO) - Surabaya & Sidoarjo</title>
+
+    <!-- Google Fonts: Inter -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['Inter', 'sans-serif'],
+                    }
+                }
+            }
+        };
+    </script>
+
+    <!-- Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+
+    <!-- SheetJS (XLSX) untuk membaca file Excel / CSV -->
+    <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+
+    <!-- Lucide Icons -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+
+    <style>
+        ::-webkit-scrollbar {
+            width: 6px;
+            height: 6px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #f1f5f9;
+            border-radius: 4px;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #cbd5e1;
+            border-radius: 4px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #94a3b8;
+        }
+        .fade-in {
+            animation: fadeIn 0.2s ease-out;
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(4px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+    </style>
+</head>
+<body class="bg-slate-50 text-slate-800 antialiased min-h-screen flex flex-col">
+
+    <!-- Toast Notification Container -->
+    <div id="toast-container" class="fixed bottom-5 right-5 z-[70] flex flex-col gap-2 pointer-events-none max-w-sm"></div>
+
+    <!-- Modal Detail Preview & Report WA -->
+    <div id="preview-wa-modal" class="fixed inset-0 z-50 hidden bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-3 sm:p-5">
+        <div class="bg-white rounded-2xl shadow-2xl max-w-5xl w-full overflow-hidden border border-slate-200 fade-in flex flex-col max-h-[92vh]">
+            <!-- Header Modal -->
+            <div class="px-5 sm:px-6 py-4 bg-slate-900 text-white flex items-center justify-between gap-3 shrink-0">
+                <div class="flex items-center gap-3 min-w-0">
+                    <div class="w-10 h-10 rounded-xl bg-emerald-500/20 text-emerald-300 flex items-center justify-center shrink-0">
+                        <i data-lucide="message-square-share" class="w-5 h-5"></i>
+                    </div>
+                    <div class="min-w-0">
+                        <h3 id="wa-modal-title" class="font-bold text-sm sm:text-base truncate">Detail Preview & Report WA</h3>
+                        <p id="wa-modal-subtitle" class="text-xs text-slate-300 truncate">Pratinjau data WO lengkap dengan ASM & AE beserta laporan WhatsApp</p>
+                    </div>
+                </div>
+                <button type="button" onclick="closePreviewWAModal()" class="text-slate-400 hover:text-white p-1.5 rounded-lg hover:bg-slate-800 transition shrink-0" aria-label="Tutup modal">
+                    <i data-lucide="x" class="w-5 h-5"></i>
+                </button>
+            </div>
+
+            <!-- Body Modal -->
+            <div class="p-4 sm:p-6 overflow-y-auto space-y-5 flex-1">
+                <!-- Ringkasan Konteks -->
+                <div class="grid grid-cols-1 sm:grid-cols-3 gap-3 bg-slate-50 p-4 rounded-xl border border-slate-200">
+                    <div>
+                        <span class="text-[11px] font-bold text-slate-500 uppercase tracking-wider">Jumlah Data Cocok</span>
+                        <p id="wa-modal-count" class="text-xl font-extrabold text-slate-900 mt-0.5">0 WO</p>
+                    </div>
+                    <div class="sm:col-span-2">
+                        <span class="text-[11px] font-bold text-slate-500 uppercase tracking-wider">Konteks & Filter Aktif</span>
+                        <p id="wa-modal-filters" class="text-xs sm:text-sm font-medium text-slate-700 mt-0.5">-</p>
+                    </div>
+                </div>
+
+                <!-- Tabel Preview Data -->
+                <div>
+                    <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 mb-2.5">
+                        <div class="flex items-center gap-2">
+                            <h4 class="text-xs sm:text-sm font-bold text-slate-800 uppercase tracking-wider flex items-center gap-1.5">
+                                <i data-lucide="table-2" class="w-4 h-4 text-blue-600"></i>
+                                <span>Preview Data Work Order</span>
+                            </h4>
+                            <span id="wa-preview-limit-note" class="text-xs text-slate-500"></span>
+                        </div>
+                        <div class="relative">
+                            <input type="text" id="wa-preview-search" oninput="renderPreviewWATable()" placeholder="Cari WO, Pelanggan, ASM, AE..." class="w-full sm:w-64 bg-slate-50 border border-slate-300 text-slate-800 text-xs rounded-lg pl-8 pr-3 py-1.5 focus:outline-none focus:ring-2 focus:ring-blue-500">
+                            <i data-lucide="search" class="w-3.5 h-3.5 text-slate-400 absolute left-2.5 top-2"></i>
+                        </div>
+                    </div>
+
+                    <div class="overflow-x-auto border border-slate-200 rounded-xl max-h-64">
+                        <table class="w-full text-left border-collapse whitespace-nowrap text-xs">
+                            <thead class="bg-slate-100 text-slate-700 font-bold uppercase sticky top-0 z-10 border-b border-slate-200">
+                                <tr>
+                                    <th class="py-2.5 px-3">WO Number</th>
+                                    <th class="py-2.5 px-3">Cust / End User</th>
+                                    <th class="py-2.5 px-3">Area</th>
+                                    <th class="py-2.5 px-3">Slot Time</th>
+                                    <th class="py-2.5 px-3">Status</th>
+                                    <th class="py-2.5 px-3">Nama ASM</th>
+                                    <th class="py-2.5 px-3">Nama AE</th>
+                                </tr>
+                            </thead>
+                            <tbody id="wa-preview-tbody" class="divide-y divide-slate-100 bg-white">
+                                <!-- Diisi JS -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <!-- Generator Pesan WhatsApp -->
+                <div>
+                    <div class="flex items-center justify-between mb-2">
+                        <label for="wa-report-textarea" class="text-xs sm:text-sm font-bold text-slate-800 uppercase tracking-wider flex items-center gap-1.5">
+                            <i data-lucide="file-text" class="w-4 h-4 text-emerald-600"></i>
+                            <span>Format Pesan WhatsApp (Dapat Diedit)</span>
+                        </label>
+                        <button type="button" onclick="regenerateWAReportText()" class="text-xs font-semibold text-blue-600 hover:text-blue-800 inline-flex items-center gap-1">
+                            <i data-lucide="refresh-cw" class="w-3.5 h-3.5"></i> Reset Teks WA
+                        </button>
+                    </div>
+                    <textarea id="wa-report-textarea" rows="9" class="w-full bg-emerald-50/40 border border-emerald-200 focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/30 rounded-xl p-3.5 text-xs font-mono text-slate-800 leading-relaxed focus:outline-none transition"></textarea>
+                </div>
+            </div>
+
+            <!-- Footer Modal -->
+            <div class="px-5 sm:px-6 py-3.5 bg-slate-50 border-t border-slate-200 flex flex-wrap items-center justify-between gap-2 shrink-0">
+                <button type="button" onclick="closePreviewWAModal()" class="px-4 py-2 bg-white border border-slate-300 text-slate-700 rounded-xl text-xs sm:text-sm font-semibold hover:bg-slate-100 transition">
+                    Tutup
+                </button>
+                <div class="flex flex-wrap items-center gap-2">
+                    <button type="button" onclick="copyWAReportText()" class="px-4 py-2 bg-slate-800 hover:bg-slate-900 text-white rounded-xl text-xs sm:text-sm font-semibold inline-flex items-center gap-1.5 transition">
+                        <i data-lucide="copy" class="w-4 h-4"></i>
+                        <span>Salin Teks WA</span>
+                    </button>
+                    <button type="button" onclick="openWhatsAppShare()" class="px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs sm:text-sm font-semibold shadow-sm inline-flex items-center gap-1.5 transition">
+                        <i data-lucide="external-link" class="w-4 h-4"></i>
+                        <span>Buka di WhatsApp</span>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal Detail Atribut Work Order -->
+    <div id="wo-modal" class="fixed inset-0 z-50 hidden bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4">
+        <div class="bg-white rounded-2xl shadow-2xl max-w-2xl w-full overflow-hidden border border-slate-200 fade-in">
+            <div class="px-6 py-4 bg-slate-900 text-white flex items-center justify-between">
+                <div class="flex items-center gap-2.5 min-w-0">
+                    <i data-lucide="file-text" class="w-5 h-5 text-blue-400 shrink-0"></i>
+                    <h3 id="modal-wo-number" class="font-bold text-sm sm:text-lg truncate">Detail Work Order</h3>
+                </div>
+                <button type="button" onclick="closeModal()" class="text-slate-400 hover:text-white p-1.5 rounded-lg hover:bg-slate-800 transition shrink-0">
+                    <i data-lucide="x" class="w-5 h-5"></i>
+                </button>
+            </div>
+            <div id="modal-content" class="p-6 max-h-[70vh] overflow-y-auto grid grid-cols-1 sm:grid-cols-2 gap-3.5 text-sm">
+                <!-- Diisi dinamis oleh JS -->
+            </div>
+            <div class="px-6 py-3.5 bg-slate-50 border-t border-slate-200 flex flex-wrap justify-end gap-2">
+                <button type="button" onclick="openSingleWOReportWA()" class="px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-semibold inline-flex items-center gap-1.5 transition">
+                    <i data-lucide="message-square-share" class="w-4 h-4"></i> Report WA WO Ini
+                </button>
+                <button type="button" onclick="copyModalWONumber()" class="px-4 py-2 bg-white border border-slate-300 text-slate-700 rounded-xl text-xs font-semibold hover:bg-slate-100 inline-flex items-center gap-1.5 transition">
+                    <i data-lucide="copy" class="w-4 h-4"></i> Salin No. WO
+                </button>
+                <button type="button" onclick="closeModal()" class="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-xl text-xs font-semibold transition">
+                    Tutup
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Header Aplikasi -->
+    <header class="bg-white border-b border-slate-200 sticky top-0 z-30 shadow-xs">
+        <div class="max-w-[1440px] mx-auto px-4 sm:px-6 lg:px-8 py-4">
+            <div class="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
+                <div class="flex items-start sm:items-center gap-3.5">
+                    <div class="w-11 h-11 rounded-xl bg-gradient-to-br from-blue-600 to-indigo-700 flex items-center justify-center text-white shadow-md shadow-blue-600/20 shrink-0">
+                        <i data-lucide="activity" class="w-6 h-6"></i>
+                    </div>
+                    <div>
+                        <div class="flex flex-wrap items-center gap-2">
+                            <h1 class="text-lg sm:text-xl font-extrabold text-slate-900 tracking-tight">
+                                Dashboard Monitoring Work Order (WO) - Surabaya & Sidoarjo
+                            </h1>
+                            <span id="data-source-badge" class="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200">
+                                <span class="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span>
+                                Sampel "Monitoring Surabaya 2"
+                            </span>
+                        </div>
+                        <p class="text-xs sm:text-sm text-slate-500 mt-0.5">
+                            Monitoring IKR, performa BSM/ASM/AE, area (<code class="text-blue-600 font-semibold bg-blue-50 px-1.5 py-0.5 rounded">area asli</code>), dan klasifikasi jadwal (<code class="text-blue-600 font-semibold bg-blue-50 px-1.5 py-0.5 rounded">slotTime</code>).
+                        </p>
+                    </div>
+                </div>
+
+                <!-- Tombol Impor Excel/CSV & Ekspor CSV -->
+                <div class="flex flex-wrap items-center gap-2.5">
+                    <label for="file-upload" class="cursor-pointer inline-flex items-center gap-2 px-4 py-2.5 bg-blue-600 hover:bg-blue-700 text-white text-xs sm:text-sm font-semibold rounded-xl shadow-sm transition active:scale-[0.99]">
+                        <i data-lucide="upload-cloud" class="w-4 h-4"></i>
+                        <span>Impor Excel / CSV ("data WO")</span>
+                    </label>
+                    <input id="file-upload" type="file" accept=".csv, .xlsx, .xls" class="hidden" onchange="handleFileUpload(event)" />
+
+                    <button type="button" id="btn-reset-sample" onclick="resetToSampleData()" class="hidden inline-flex items-center gap-1.5 px-3.5 py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs sm:text-sm font-semibold rounded-xl border border-slate-200 transition">
+                        <i data-lucide="database-backup" class="w-4 h-4"></i>
+                        <span>Data Sampel</span>
+                    </button>
+
+                    <button type="button" onclick="exportFilteredCSV()" class="inline-flex items-center gap-1.5 px-3.5 py-2.5 bg-white hover:bg-slate-50 text-slate-700 text-xs sm:text-sm font-semibold rounded-xl border border-slate-300 transition">
+                        <i data-lucide="download" class="w-4 h-4 text-slate-600"></i>
+                        <span>Ekspor CSV</span>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <!-- Konten Utama -->
+    <main class="flex-1 max-w-[1440px] w-full mx-auto px-4 sm:px-6 lg:px-8 py-6 space-y-6">
+
+        <!-- 1. FILTER GLOBAL (TANPA FILTER STATUS APPOINTMENT; DENGAN BSM, ASM, AE) -->
+        <section class="bg-white rounded-2xl border border-slate-200/90 shadow-xs p-4 sm:p-5">
+            <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 pb-3.5 mb-4 border-b border-slate-100">
+                <div class="flex items-center gap-2">
+                    <i data-lucide="sliders-horizontal" class="w-4 h-4 text-blue-600"></i>
+                    <h2 class="text-sm font-bold text-slate-800 uppercase tracking-wider">Filter Global & Pencarian Cepat</h2>
+                </div>
+                <div class="flex flex-wrap items-center gap-3">
+                    <span id="filter-status-text" class="text-xs text-slate-500 font-medium">Memuat data...</span>
+                    <button type="button" onclick="resetAllFilters()" class="text-xs font-semibold text-blue-600 hover:text-blue-800 hover:underline inline-flex items-center gap-1">
+                        <i data-lucide="rotate-ccw" class="w-3.5 h-3.5"></i> Reset Filter (Default BSM: BENNY HADIAWAN .)
+                    </button>
+                </div>
+            </div>
+
+            <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3.5">
+                <!-- Filter Nama BSM -->
+                <div>
+                    <label for="filter-bsm" class="block text-xs font-semibold text-slate-600 mb-1.5">Nama BSM (<code class="text-slate-500">bsmName</code>)</label>
+                    <div class="relative">
+                        <select id="filter-bsm" onchange="handleBSMChange()" class="w-full appearance-none bg-slate-50 border border-slate-300 text-slate-800 text-sm rounded-xl px-3.5 py-2.5 pr-8 focus:outline-none focus:ring-2 focus:ring-blue-500 transition">
+                            <option value="ALL">Semua BSM</option>
+                        </select>
+                        <i data-lucide="chevron-down" class="w-4 h-4 text-slate-400 absolute right-3 top-3 pointer-events-none"></i>
+                    </div>
+                </div>
+
+                <!-- Filter Nama ASM -->
+                <div>
+                    <label for="filter-asm" class="block text-xs font-semibold text-slate-600 mb-1.5">Nama ASM (<code class="text-slate-500">asmName</code>)</label>
+                    <div class="relative">
+                        <select id="filter-asm" onchange="handleASMChange()" class="w-full appearance-none bg-slate-50 border border-slate-300 text-slate-800 text-sm rounded-xl px-3.5 py-2.5 pr-8 focus:outline-none focus:ring-2 focus:ring-blue-500 transition">
+                            <option value="ALL">Semua ASM</option>
+                        </select>
+                        <i data-lucide="chevron-down" class="w-4 h-4 text-slate-400 absolute right-3 top-3 pointer-events-none"></i>
+                    </div>
+                </div>
+
+                <!-- Filter Nama AE -->
+                <div>
+                    <label for="filter-ae" class="block text-xs font-semibold text-slate-600 mb-1.5">Nama AE (<code class="text-slate-500">salesName</code>)</label>
+                    <div class="relative">
+                        <select id="filter-ae" onchange="applyFilters()" class="w-full appearance-none bg-slate-50 border border-slate-300 text-slate-800 text-sm rounded-xl px-3.5 py-2.5 pr-8 focus:outline-none focus:ring-2 focus:ring-blue-500 transition">
+                            <option value="ALL">Semua AE</option>
+                        </select>
+                        <i data-lucide="chevron-down" class="w-4 h-4 text-slate-400 absolute right-3 top-3 pointer-events-none"></i>
+                    </div>
+                </div>
+
+                <!-- Filter Area (area asli / area) -->
+                <div>
+                    <label for="filter-area" class="block text-xs font-semibold text-slate-600 mb-1.5">Area (<code class="text-slate-500">area asli</code>)</label>
+                    <div class="relative">
+                        <select id="filter-area" onchange="applyFilters()" class="w-full appearance-none bg-slate-50 border border-slate-300 text-slate-800 text-sm rounded-xl px-3.5 py-2.5 pr-8 focus:outline-none focus:ring-2 focus:ring-blue-500 transition">
+                            <option value="ALL">Semua Area</option>
+                        </select>
+                        <i data-lucide="chevron-down" class="w-4 h-4 text-slate-400 absolute right-3 top-3 pointer-events-none"></i>
+                    </div>
+                </div>
+
+                <!-- Filter Kontraktor / IKR -->
+                <div>
+                    <label for="filter-contractor" class="block text-xs font-semibold text-slate-600 mb-1.5">Kontraktor / IKR</label>
+                    <div class="relative">
+                        <select id="filter-contractor" onchange="applyFilters()" class="w-full appearance-none bg-slate-50 border border-slate-300 text-slate-800 text-sm rounded-xl px-3.5 py-2.5 pr-8 focus:outline-none focus:ring-2 focus:ring-blue-500 transition">
+                            <option value="ALL">Semua Kontraktor / IKR</option>
+                        </select>
+                        <i data-lucide="chevron-down" class="w-4 h-4 text-slate-400 absolute right-3 top-3 pointer-events-none"></i>
+                    </div>
+                </div>
+
+                <!-- Filter Slot Time -->
+                <div>
+                    <label for="filter-slottime" class="block text-xs font-semibold text-slate-600 mb-1.5">Klasifikasi Slot Time</label>
+                    <div class="relative">
+                        <select id="filter-slottime" onchange="handleSlotDropdownChange()" class="w-full appearance-none bg-slate-50 border border-slate-300 text-slate-800 text-sm rounded-xl px-3.5 py-2.5 pr-8 focus:outline-none focus:ring-2 focus:ring-blue-500 transition">
+                            <option value="ALL">Semua Slot Time</option>
+                            <option value="09:00 - 11:00">09:00 - 11:00 (Pagi)</option>
+                            <option value="11:01 - 13:00">11:01 - 13:00 (Siang 1)</option>
+                            <option value="13:01 - 15:00">13:01 - 15:00 (Siang 2)</option>
+                            <option value="15:01 - 17:00">15:01 - 17:00 (Sore)</option>
+                            <option value="17:01 - 19:00">17:01 - 19:00 (Petang)</option>
+                            <option value="19:01 - 21:00">19:01 - 21:00 (Malam)</option>
+                            <option value="Unassigned / Lainnya">Unassigned / Lainnya</option>
+                        </select>
+                        <i data-lucide="chevron-down" class="w-4 h-4 text-slate-400 absolute right-3 top-3 pointer-events-none"></i>
+                    </div>
+                </div>
+
+                <!-- Pencarian Cepat -->
+                <div class="sm:col-span-2">
+                    <label for="filter-search" class="block text-xs font-semibold text-slate-600 mb-1.5">Pencarian Cepat</label>
+                    <div class="relative">
+                        <input type="text" id="filter-search" oninput="applyFilters()" placeholder="Cari No. WO, Pelanggan, Cluster, BSM, ASM, AE, Kontraktor..." class="w-full bg-slate-50 border border-slate-300 text-slate-800 text-sm rounded-xl pl-9 pr-3.5 py-2.5 focus:outline-none focus:ring-2 focus:ring-blue-500 transition">
+                        <i data-lucide="search" class="w-4 h-4 text-slate-400 absolute left-3 top-3"></i>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- 2. KARTU KPI (ANGKA DAPAT DIKLIK UNTUK PREVIEW & REPORT WA) -->
+        <section class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
+            <!-- KPI 1: Total WO -->
+            <div class="bg-white rounded-2xl border border-slate-200/90 p-5 shadow-xs hover:shadow-md transition">
+                <div class="flex items-start justify-between">
+                    <div>
+                        <p class="text-xs font-bold text-slate-500 uppercase tracking-wider">Total WO</p>
+                        <button type="button" onclick="openKPIPreviewWA('TOTAL')" title="Klik untuk Preview & Report WA" class="text-left group mt-1.5 flex items-baseline gap-1.5">
+                            <span id="kpi-total" class="text-3xl font-extrabold text-slate-900 group-hover:text-blue-600 underline decoration-dotted decoration-slate-300 group-hover:decoration-blue-500 underline-offset-4 transition">0</span>
+                            <i data-lucide="message-square-text" class="w-4 h-4 text-slate-400 group-hover:text-blue-600 transition"></i>
+                        </button>
+                    </div>
+                    <div class="w-11 h-11 rounded-xl bg-blue-50 text-blue-600 flex items-center justify-center shrink-0">
+                        <i data-lucide="layers" class="w-5 h-5"></i>
+                    </div>
+                </div>
+                <div class="mt-4 pt-3 border-t border-slate-100 flex items-center justify-between text-xs">
+                    <span class="text-slate-500">Avg Repetition:</span>
+                    <span id="kpi-avg-rep" class="font-bold text-slate-800 bg-slate-100 px-2 py-0.5 rounded-md">0.00x</span>
+                </div>
+            </div>
+
+            <!-- KPI 2: WO Bersih (Completed/Successful + New + On Progress) -->
+            <div class="bg-gradient-to-br from-cyan-50/80 via-white to-blue-50/60 rounded-2xl border border-cyan-200/90 p-5 shadow-xs hover:shadow-md transition">
+                <div class="flex items-start justify-between">
+                    <div>
+                        <p class="text-xs font-bold text-cyan-800 uppercase tracking-wider">WO Bersih</p>
+                        <button type="button" onclick="openKPIPreviewWA('WO_BERSIH')" title="Klik untuk Preview & Report WA" class="text-left group mt-1.5 flex items-baseline gap-1.5">
+                            <span id="kpi-wo-bersih" class="text-3xl font-extrabold text-cyan-700 group-hover:text-cyan-900 underline decoration-dotted decoration-cyan-400 underline-offset-4 transition">0</span>
+                            <i data-lucide="message-square-text" class="w-4 h-4 text-cyan-500 group-hover:text-cyan-800 transition"></i>
+                        </button>
+                    </div>
+                    <div class="w-11 h-11 rounded-xl bg-cyan-100 text-cyan-700 flex items-center justify-center shrink-0">
+                        <i data-lucide="shield-check" class="w-5 h-5"></i>
+                    </div>
+                </div>
+                <div class="mt-4 pt-3 border-t border-cyan-100 flex items-center justify-between gap-1 text-xs">
+                    <span id="kpi-bersih-detail" class="text-slate-600 font-medium truncate">Succ: 0 + New: 0 + Prog: 0</span>
+                    <span id="kpi-bersih-pct" class="font-bold text-cyan-800 bg-cyan-100 px-2 py-0.5 rounded-md shrink-0">0.0%</span>
+                </div>
+            </div>
+
+            <!-- KPI 3: Completed / Successful -->
+            <div class="bg-white rounded-2xl border border-slate-200/90 p-5 shadow-xs hover:shadow-md transition">
+                <div class="flex items-start justify-between">
+                    <div>
+                        <p class="text-xs font-bold text-slate-500 uppercase tracking-wider">Completed / Successful</p>
+                        <button type="button" onclick="openKPIPreviewWA('COMPLETED')" title="Klik untuk Preview & Report WA" class="text-left group mt-1.5 flex items-baseline gap-1.5">
+                            <span id="kpi-completed" class="text-3xl font-extrabold text-emerald-600 group-hover:text-emerald-700 underline decoration-dotted decoration-emerald-300 underline-offset-4 transition">0</span>
+                            <i data-lucide="message-square-text" class="w-4 h-4 text-emerald-400 group-hover:text-emerald-600 transition"></i>
+                        </button>
+                    </div>
+                    <div class="w-11 h-11 rounded-xl bg-emerald-50 text-emerald-600 flex items-center justify-center shrink-0">
+                        <i data-lucide="check-circle-2" class="w-5 h-5"></i>
+                    </div>
+                </div>
+                <div class="mt-4 pt-3 border-t border-slate-100 flex items-center justify-between text-xs">
+                    <span class="text-slate-500">Success Rate:</span>
+                    <span id="kpi-success-rate" class="font-bold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded-md">0.0%</span>
+                </div>
+            </div>
+
+            <!-- KPI 4: New & On Progress -->
+            <div class="bg-white rounded-2xl border border-slate-200/90 p-5 shadow-xs hover:shadow-md transition">
+                <div class="flex items-start justify-between">
+                    <div>
+                        <p class="text-xs font-bold text-slate-500 uppercase tracking-wider">New & On Progress</p>
+                        <button type="button" onclick="openKPIPreviewWA('NEW_PROGRESS')" title="Klik untuk Preview & Report WA" class="text-left group mt-1.5 flex items-baseline gap-1.5">
+                            <span id="kpi-new-progress" class="text-3xl font-extrabold text-indigo-600 group-hover:text-indigo-700 underline decoration-dotted decoration-indigo-300 underline-offset-4 transition">0</span>
+                            <i data-lucide="message-square-text" class="w-4 h-4 text-indigo-400 group-hover:text-indigo-600 transition"></i>
+                        </button>
+                    </div>
+                    <div class="w-11 h-11 rounded-xl bg-indigo-50 text-indigo-600 flex items-center justify-center shrink-0">
+                        <i data-lucide="calendar-clock" class="w-5 h-5"></i>
+                    </div>
+                </div>
+                <div class="mt-4 pt-3 border-t border-slate-100 flex items-center justify-between text-xs">
+                    <span id="kpi-new-detail" class="text-slate-600 font-medium truncate">New: 0 | Progress: 0</span>
+                    <span id="kpi-new-pct" class="font-bold text-indigo-700 bg-indigo-50 px-2 py-0.5 rounded-md shrink-0">0.0%</span>
+                </div>
+            </div>
+
+            <!-- KPI 5: Unsuccessful / Reschedule -->
+            <div class="bg-white rounded-2xl border border-slate-200/90 p-5 shadow-xs hover:shadow-md transition sm:col-span-2 lg:col-span-1">
+                <div class="flex items-start justify-between">
+                    <div>
+                        <p class="text-xs font-bold text-slate-500 uppercase tracking-wider">Unsuccessful / Reschedule</p>
+                        <button type="button" onclick="openKPIPreviewWA('UNSUCCESSFUL')" title="Klik untuk Preview & Report WA" class="text-left group mt-1.5 flex items-baseline gap-1.5">
+                            <span id="kpi-unsuccessful" class="text-3xl font-extrabold text-rose-600 group-hover:text-rose-700 underline decoration-dotted decoration-rose-300 underline-offset-4 transition">0</span>
+                            <i data-lucide="message-square-text" class="w-4 h-4 text-rose-400 group-hover:text-rose-600 transition"></i>
+                        </button>
+                    </div>
+                    <div class="w-11 h-11 rounded-xl bg-rose-50 text-rose-600 flex items-center justify-center shrink-0">
+                        <i data-lucide="alert-triangle" class="w-5 h-5"></i>
+                    </div>
+                </div>
+                <div class="mt-4 pt-3 border-t border-slate-100 flex items-center justify-between text-xs">
+                    <span id="kpi-unsucc-detail" class="text-slate-600 font-medium truncate">Unsucc: 0 | Resch: 0</span>
+                    <span id="kpi-unsucc-pct" class="font-bold text-rose-700 bg-rose-50 px-2 py-0.5 rounded-md shrink-0">0.0%</span>
+                </div>
+            </div>
+        </section>
+
+        <!-- 3. TABEL KLASIFIKASI BERDASARKAN SLOT TIME -->
+        <section class="bg-white rounded-2xl border border-slate-200/90 shadow-xs overflow-hidden">
+            <div class="p-5 sm:px-6 border-b border-slate-200 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                <div>
+                    <div class="flex flex-wrap items-center gap-2">
+                        <i data-lucide="clock" class="w-5 h-5 text-blue-600"></i>
+                        <h2 class="text-base sm:text-lg font-extrabold text-slate-900">
+                            Klasifikasi Work Order Berdasarkan Slot Time (<code class="text-blue-600">slotTime</code>)
+                        </h2>
+                        <span id="active-slot-pill" class="hidden items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-bold bg-blue-600 text-white">
+                            <span>Slot: <strong id="active-slot-label"></strong></span>
+                            <button type="button" onclick="clearSlotSelection()" class="hover:text-blue-200 font-bold" title="Hapus filter slot">×</button>
+                        </span>
+                    </div>
+                    <p class="text-xs text-slate-500 mt-1">
+                        Klik angka pada sel untuk membuka <strong>Detail Preview & Report WA</strong>, atau klik baris untuk memfilter tabel detail WO.
+                    </p>
+                </div>
+                <div class="flex items-center gap-2">
+                    <button type="button" onclick="clearSlotSelection()" class="px-3 py-1.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-semibold transition">
+                        Reset Slot
+                    </button>
+                </div>
+            </div>
+
+            <div class="overflow-x-auto">
+                <table class="w-full text-left border-collapse">
+                    <thead>
+                        <tr class="bg-slate-100/80 text-slate-600 text-xs font-bold uppercase tracking-wider border-b border-slate-200">
+                            <th class="py-3.5 px-4 sm:px-6">Klasifikasi Slot Time</th>
+                            <th class="py-3.5 px-3 text-center">Total WO</th>
+                            <th class="py-3.5 px-3 text-center">WO Bersih</th>
+                            <th class="py-3.5 px-3 text-center">Completed</th>
+                            <th class="py-3.5 px-3 text-center">New & Prog</th>
+                            <th class="py-3.5 px-3 text-center">Unsucc / Resch</th>
+                            <th class="py-3.5 px-4 min-w-[160px]">Success Rate (%)</th>
+                            <th class="py-3.5 px-4 sm:px-6">Dominasi Area / Kontraktor</th>
+                        </tr>
+                    </thead>
+                    <tbody id="slot-summary-tbody" class="divide-y divide-slate-100 text-sm">
+                        <!-- Diisi secara dinamis oleh JS -->
+                    </tbody>
+                    <tfoot id="slot-summary-tfoot" class="bg-slate-900 text-white text-sm font-bold">
+                        <!-- Grand Total -->
+                    </tfoot>
+                </table>
+            </div>
+        </section>
+
+        <!-- 4. VISUALISASI GRAFIK (3 CHART.JS) -->
+        <section class="grid grid-cols-1 lg:grid-cols-12 gap-6">
+            <!-- Chart 1: Stacked Bar Status per Slot Time -->
+            <div class="lg:col-span-7 bg-white rounded-2xl border border-slate-200/90 p-5 sm:p-6 shadow-xs flex flex-col">
+                <div class="flex items-center justify-between mb-4">
+                    <div>
+                        <h3 class="text-base font-bold text-slate-900">Distribusi Status WO per Slot Time</h3>
+                        <p class="text-xs text-slate-500">Perbandingan Completed, On Progress, New, dan Unsuccessful/Reschedule</p>
+                    </div>
+                    <div class="w-9 h-9 rounded-lg bg-blue-50 text-blue-600 flex items-center justify-center shrink-0">
+                        <i data-lucide="bar-chart-3" class="w-5 h-5"></i>
+                    </div>
+                </div>
+                <div class="relative flex-1 min-h-[300px] w-full">
+                    <canvas id="slotChart"></canvas>
+                </div>
+            </div>
+
+            <!-- Chart 2 & 3 -->
+            <div class="lg:col-span-5 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-1 gap-6">
+                <!-- Chart 2: Bar Performa Kontraktor / IKR -->
+                <div class="bg-white rounded-2xl border border-slate-200/90 p-5 shadow-xs flex flex-col">
+                    <div class="flex items-center justify-between mb-3">
+                        <div>
+                            <h3 class="text-sm font-bold text-slate-900">Volume WO per Kontraktor / IKR</h3>
+                            <p class="text-xs text-slate-500">Distribusi beban kerja mitra IKR</p>
+                        </div>
+                        <i data-lucide="hard-hat" class="w-4 h-4 text-amber-500"></i>
+                    </div>
+                    <div class="relative h-[185px] w-full">
+                        <canvas id="contractorChart"></canvas>
+                    </div>
+                </div>
+
+                <!-- Chart 3: Doughnut Kategori Kendala -->
+                <div class="bg-white rounded-2xl border border-slate-200/90 p-5 shadow-xs flex flex-col">
+                    <div class="flex items-center justify-between mb-3">
+                        <div>
+                            <h3 class="text-sm font-bold text-slate-900">Kategori Kendala (<code class="text-rose-600">unsuccessfulCategory</code>)</h3>
+                            <p class="text-xs text-slate-500">Rincian kategori kendala lapangan / reschedule</p>
+                        </div>
+                        <i data-lucide="pie-chart" class="w-4 h-4 text-rose-500"></i>
+                    </div>
+                    <div class="relative h-[185px] w-full">
+                        <canvas id="unsuccessfulChart"></canvas>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- 5. TABEL DETAIL DAFTAR WORK ORDER -->
+        <section id="detail-table-section" class="bg-white rounded-2xl border border-slate-200/90 shadow-xs overflow-hidden">
+            <div class="p-5 sm:px-6 border-b border-slate-200 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                <div>
+                    <div class="flex flex-wrap items-center gap-2">
+                        <h2 class="text-base sm:text-lg font-extrabold text-slate-900">Detail Daftar Work Order</h2>
+                        <span id="detail-count-badge" class="px-2.5 py-0.5 rounded-full bg-slate-100 text-slate-700 text-xs font-bold">0 WO</span>
+                    </div>
+                    <p class="text-xs text-slate-500 mt-0.5">Klik baris untuk melihat detail atribut lengkap, atau klik ikon WA untuk laporan satuan.</p>
+                </div>
+
+                <div class="flex items-center gap-2">
+                    <label for="rows-per-page" class="text-xs font-semibold text-slate-600">Tampilkan:</label>
+                    <select id="rows-per-page" onchange="changePageSize()" class="bg-slate-50 border border-slate-300 text-slate-800 text-xs font-semibold rounded-lg px-2.5 py-1.5 focus:outline-none focus:ring-2 focus:ring-blue-500">
+                        <option value="10">10 baris</option>
+                        <option value="20" selected>20 baris</option>
+                        <option value="50">50 baris</option>
+                        <option value="100">100 baris</option>
+                    </select>
+                </div>
+            </div>
+
+            <div class="overflow-x-auto">
+                <table class="w-full text-left border-collapse whitespace-nowrap">
+                    <thead>
+                        <tr class="bg-slate-50 text-slate-600 text-xs font-bold uppercase tracking-wider border-b border-slate-200 select-none">
+                            <th onclick="sortTable('workOrderNumber')" class="py-3.5 px-4 cursor-pointer hover:bg-slate-100 transition">
+                                <div class="flex items-center gap-1">No. WO <i data-lucide="arrow-up-down" class="w-3 h-3 text-slate-400"></i></div>
+                            </th>
+                            <th onclick="sortTable('endUserName')" class="py-3.5 px-4 cursor-pointer hover:bg-slate-100 transition">
+                                <div class="flex items-center gap-1">Pelanggan <i data-lucide="arrow-up-down" class="w-3 h-3 text-slate-400"></i></div>
+                            </th>
+                            <th onclick="sortTable('asmName')" class="py-3.5 px-4 cursor-pointer hover:bg-slate-100 transition">
+                                <div class="flex items-center gap-1">Nama ASM <i data-lucide="arrow-up-down" class="w-3 h-3 text-slate-400"></i></div>
+                            </th>
+                            <th onclick="sortTable('salesName')" class="py-3.5 px-4 cursor-pointer hover:bg-slate-100 transition">
+                                <div class="flex items-center gap-1">Nama AE <i data-lucide="arrow-up-down" class="w-3 h-3 text-slate-400"></i></div>
+                            </th>
+                            <th onclick="sortTable('area')" class="py-3.5 px-4 cursor-pointer hover:bg-slate-100 transition">
+                                <div class="flex items-center gap-1">Area (<code class="text-[10px] text-slate-500">area asli</code>) <i data-lucide="arrow-up-down" class="w-3 h-3 text-slate-400"></i></div>
+                            </th>
+                            <th onclick="sortTable('contractorName')" class="py-3.5 px-4 cursor-pointer hover:bg-slate-100 transition">
+                                <div class="flex items-center gap-1">Kontraktor / IKR <i data-lucide="arrow-up-down" class="w-3 h-3 text-slate-400"></i></div>
+                            </th>
+                            <th onclick="sortTable('slotTime')" class="py-3.5 px-4 cursor-pointer hover:bg-slate-100 transition">
+                                <div class="flex items-center gap-1">Slot Time <i data-lucide="arrow-up-down" class="w-3 h-3 text-slate-400"></i></div>
+                            </th>
+                            <th onclick="sortTable('appointmentStatus')" class="py-3.5 px-4 cursor-pointer hover:bg-slate-100 transition">
+                                <div class="flex items-center gap-1">Status <i data-lucide="arrow-up-down" class="w-3 h-3 text-slate-400"></i></div>
+                            </th>
+                            <th onclick="sortTable('woRepitation')" class="py-3.5 px-4 text-center cursor-pointer hover:bg-slate-100 transition">
+                                <div class="flex items-center justify-center gap-1">Rep. <i data-lucide="arrow-up-down" class="w-3 h-3 text-slate-400"></i></div>
+                            </th>
+                            <th class="py-3.5 px-4">Kendala</th>
+                            <th class="py-3.5 px-4 text-center">Aksi</th>
+                        </tr>
+                    </thead>
+                    <tbody id="detail-tbody" class="divide-y divide-slate-100 text-xs sm:text-sm">
+                        <!-- Diisi oleh JS -->
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- Pagination Footer -->
+            <div class="px-5 py-3.5 bg-slate-50 border-t border-slate-200 flex flex-col sm:flex-row items-center justify-between gap-3">
+                <p id="pagination-info" class="text-xs text-slate-600 font-medium">Menampilkan 0 data</p>
+                <div id="pagination-controls" class="flex items-center gap-1.5">
+                    <!-- Tombol pagination -->
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <!-- Footer -->
+    <footer class="bg-white border-t border-slate-200 py-4 mt-8">
+        <div class="max-w-[1440px] mx-auto px-4 sm:px-6 lg:px-8 flex flex-col sm:flex-row items-center justify-between text-xs text-slate-500 gap-2">
+            <p>© 2026 Dashboard Monitoring Work Order (WO) — Regional Surabaya & Sidoarjo</p>
+            <p>Kompatibel dengan Sheet <code class="text-blue-600 font-semibold">"data WO"</code> • Prioritas <code class="text-blue-600 font-semibold">area asli</code> (Kolom CD / Indeks 81)</p>
+        </div>
+    </footer>
+
+    <script>
+        // ============================================================================
+        // 1. KONSTANTA & DATA SAMPEL
+        // ============================================================================
+        const DEFAULT_BSM_NAME = 'BENNY HADIAWAN .';
+
+        const STANDARD_SLOTS = [
+            { key: '09:00 - 11:00', session: 'Pagi', badgeClass: 'bg-amber-50 text-amber-700 border-amber-200', dotColor: '#f59e0b' },
+            { key: '11:01 - 13:00', session: 'Siang 1', badgeClass: 'bg-sky-50 text-sky-700 border-sky-200', dotColor: '#0284c7' },
+            { key: '13:01 - 15:00', session: 'Siang 2', badgeClass: 'bg-blue-50 text-blue-700 border-blue-200', dotColor: '#2563eb' },
+            { key: '15:01 - 17:00', session: 'Sore', badgeClass: 'bg-indigo-50 text-indigo-700 border-indigo-200', dotColor: '#4f46e5' },
+            { key: '17:01 - 19:00', session: 'Petang', badgeClass: 'bg-purple-50 text-purple-700 border-purple-200', dotColor: '#7c3aed' },
+            { key: '19:01 - 21:00', session: 'Malam', badgeClass: 'bg-slate-100 text-slate-700 border-slate-300', dotColor: '#334155' },
+            { key: 'Unassigned / Lainnya', session: 'Tidak Terjadwal', badgeClass: 'bg-rose-50 text-rose-700 border-rose-200', dotColor: '#e11d48' }
+        ];
+
+        function generateSampleData() {
+            const contractors = [
+                'Karunia Indah Cahaya PT',
+                'Media Akses Indonesia PT',
+                'Infrastruktur Telekomunikasi Nusantara PT',
+                'Cahaya Fiberindo Utama PT'
+            ];
+            const vendors = ['Huawei FTTH', 'ZTE OLT', 'FiberHome', 'Nokia GPON'];
+            const plans = ['FastNet 50 Mbps', 'UltraNet 100 Mbps', 'GamerPro 150 Mbps', 'BizLite 200 Mbps'];
+            const surabayaClusters = ['Rungkut Asri', 'Darmo Permai', 'Citraland Utara', 'Wiyung Indah', 'Sukolilo Regency', 'Gubeng Kertajaya'];
+            const sidoarjoClusters = ['Pondok Tjandra', 'Kahuripan Nirwana', 'Taman Pinang Indah', 'Deltasari Baru', 'Buduran Residence'];
+            const bsms = ['BENNY HADIAWAN .', 'AGUS SALIM .', 'DEWI LESTARI .'];
+            const asms = [
+                'TRIYONO FIRMANSYAH .',
+                'MOH. HASAN BASRI .',
+                'HIMAMI HAYATUN NUFUS .',
+                'SAIFUL ANAM .',
+                'ABDUL KADIR MUHAMMAD .'
+            ];
+            const aes = [
+                'Kevin Pratama', 'Nadia Kusuma', 'Rama Wijaya', 'Aulia Rahmah',
+                'Bagas Saputra', 'Intan Permata', 'Yoga Aditya', 'Salma Azzahra',
+                'Farhan Hakim', 'Tiara Maharani'
+            ];
+            const customerNames = [
+                'Ahmad Fauzi', 'Siti Nurhaliza', 'Bambang Pamungkas', 'Rina Marlina',
+                'Dedi Setiawan', 'Yuni Shara', 'Hendro Siswanto', 'Ratna Sari',
+                'Andi Wijaya', 'Mega Utami', 'Rizky Febian', 'Nadia Vega',
+                'Ayu Tingting', 'Gading Marten', 'Citra Kirana', 'Reza Rahadian',
+                'Dian Sastro', 'Nicholas Saputra', 'Maudy Ayunda', 'Afgan Syahreza',
+                'Raisa Andriana', 'Isyana Sarasvati', 'Tulus Rusydi', 'Nadin Amizah'
+            ];
+            const slotPool = [
+                '09:00 - 11:00', '09:00 - 11:00',
+                '11:01 - 13:00', '11:01 - 13:00',
+                '13:01 - 15:00', '13:01 - 15:00',
+                '15:01 - 17:00',
+                '17:01 - 19:00',
+                '19:01 - 21:00',
+                ''
+            ];
+            const unsuccOptions = [
+                { cat: 'Customer', sub: 'Pelanggan tidak di rumah' },
+                { cat: 'Technical', sub: 'FAT Full / Port ODP Penuh' },
+                { cat: 'Network', sub: 'Redaman Tinggi / LOS' },
+                { cat: 'Customer', sub: 'Minta jadwal ulang' }
+            ];
+            const statuses = [
+                'Completed', 'Successful', 'Done',
+                'New', 'On Progress',
+                'Unsuccessful', 'Reschedule'
+            ];
+
+            const rows = [];
+            for (let i = 0; i < 60; i++) {
+                const isSurabaya = i % 3 !== 0;
+                const areaAsli = isSurabaya ? 'Surabaya' : 'Sidoarjo';
+                const areaFallback = isSurabaya ? 'Surabaya Timur' : 'Sidoarjo Utara';
+                const clusters = isSurabaya ? surabayaClusters : sidoarjoClusters;
+                const rawStatus = statuses[(i * 3 + 1) % statuses.length];
+                const normStat = normalizeStatus(rawStatus);
+                const slotTime = slotPool[(i * 4 + 1) % slotPool.length];
+
+                let unsuccCat = '-';
+                let unsuccSub = '-';
+                let woRep = 1;
+                if (normStat === 'Unsuccessful' || normStat === 'Reschedule') {
+                    const pick = unsuccOptions[i % unsuccOptions.length];
+                    unsuccCat = pick.cat;
+                    unsuccSub = pick.sub;
+                    woRep = (i % 3) + 2;
+                } else if (normStat === 'Completed') {
+                    woRep = (i % 6 === 0) ? 2 : 1;
+                }
+
+                // Pastikan BSM 'BENNY HADIAWAN .' memiliki porsi data yang cukup banyak
+                const bsmName = (i % 4 !== 3) ? 'BENNY HADIAWAN .' : bsms[i % bsms.length];
+
+                rows.push({
+                    workOrderNumber: `WO-SBY2-${String(2611101 + i)}`,
+                    customerId: `CUST-${String(900100 + i * 11)}`,
+                    endUserName: customerNames[i % customerNames.length],
+                    salesName: aes[i % aes.length],
+                    areaAsli: areaAsli,
+                    area: areaFallback,
+                    clusterName: clusters[i % clusters.length],
+                    contractorName: contractors[i % contractors.length],
+                    vendorName: vendors[i % vendors.length],
+                    plan: plans[i % plans.length],
+                    serviceStatus: normStat === 'Completed' ? 'Active' : 'Pending',
+                    appointmentDate: `2026-11-${String(18 + (i % 7)).padStart(2, '0')}`,
+                    slotTime: slotTime,
+                    appointmentStatus: rawStatus,
+                    unsuccessfulCategory: unsuccCat,
+                    unsucessfulSubCategory: unsuccSub,
+                    woRepitation: woRep,
+                    asmName: asms[i % asms.length],
+                    bsmName: bsmName,
+                    statusWO: normStat === 'Completed' ? 'Closed - Completed' : 'Open',
+                    serviceAgingMaintenance: `${(i % 5) + 1} Hari`
+                });
+            }
+            return rows;
+        }
+
+        // ============================================================================
+        // 2. STATE GLOBAL
+        // ============================================================================
+        let rawWorkOrders = generateSampleData();
+        let filteredWorkOrders = [];
+        let selectedSlotFromTable = null;
+        let sortConfig = { key: 'workOrderNumber', direction: 'asc' };
+        let currentPage = 1;
+        let rowsPerPage = 20;
+        let currentModalWO = null;
+        let previewWAState = { title: '', subtitle: '', filterSummary: '', records: [] };
+        let slotChartInstance = null;
+        let contractorChartInstance = null;
+        let unsuccessfulChartInstance = null;
+
+        // ============================================================================
+        // 3. HELPER NORMALISASI & AREA ASLI (PRIORITAS KOLOM CD / INDEKS 81)
+        // ============================================================================
+        function cleanText(val) {
+            if (val === null || val === undefined) return '';
+            return String(val).trim().replace(/\s+/g, ' ');
+        }
+
+        function normalizePersonKey(name) {
+            return cleanText(name).toLowerCase().replace(/\s*\.\s*$/, '').replace(/\s+/g, ' ');
+        }
+
+        function getEffectiveArea(wo) {
+            if (!wo) return 'Tidak Diketahui';
+            const asli = cleanText(wo.areaAsli);
+            if (asli && asli !== '-' && asli.toLowerCase() !== 'null' && asli.toLowerCase() !== 'nan') {
+                return asli;
+            }
+            const fallback = cleanText(wo.area);
+            return fallback || 'Tidak Diketahui';
+        }
+
+        function normalizeSlotTime(rawSlot) {
+            const cleaned = cleanText(rawSlot);
+            if (!cleaned || cleaned === '-' || ['null', 'nan', 'unassigned'].includes(cleaned.toLowerCase())) {
+                return 'Unassigned / Lainnya';
+            }
+            const normalizedCheck = cleaned.replace(/\./g, ':');
+            for (const s of STANDARD_SLOTS) {
+                if (s.key !== 'Unassigned / Lainnya') {
+                    const startTime = s.key.substring(0, 5);
+                    const altStart = startTime.replace(':01', ':00');
+                    if (normalizedCheck.includes(startTime) || normalizedCheck.includes(altStart)) {
+                        return s.key;
+                    }
+                }
+            }
+            return 'Unassigned / Lainnya';
+        }
+
+        function normalizeStatus(rawStatus) {
+            const s = cleanText(rawStatus).toLowerCase();
+            if (!s) return 'New';
+            if (s.includes('comp') || s.includes('succ') || s.includes('done') || s.includes('selesai') || s.includes('active')) {
+                return 'Completed';
+            }
+            if (s.includes('prog') || s.includes('jalan') || s.includes('otw') || s.includes('start') || s.includes('assign') || s.includes('en route') || s.includes('arriv')) {
+                return 'On Progress';
+            }
+            if (s.includes('unsucc') || s.includes('fail') || s.includes('gagal') || s.includes('cancel') || s.includes('batal')) {
+                return 'Unsuccessful';
+            }
+            if (s.includes('resch') || s.includes('ulang') || s.includes('pending')) {
+                return 'Reschedule';
+            }
+            return 'New';
+        }
+
+        // ============================================================================
+        // 4. FILTER CASCADING (BSM -> ASM -> AE) & DEFAULT 'BENNY HADIAWAN .'
+        // ============================================================================
+        function resolveDefaultBSMValue() {
+            const bsmSelect = document.getElementById('filter-bsm');
+            if (!bsmSelect) return 'ALL';
+            const options = Array.from(bsmSelect.options).map(o => o.value).filter(v => v !== 'ALL');
+            if (options.length === 0) return 'ALL';
+
+            const targetKey = normalizePersonKey(DEFAULT_BSM_NAME);
+            const exactMatch = options.find(opt => cleanText(opt) === DEFAULT_BSM_NAME);
+            if (exactMatch) return exactMatch;
+
+            const normalizedMatch = options.find(opt => normalizePersonKey(opt) === targetKey);
+            if (normalizedMatch) return normalizedMatch;
+
+            const partialMatch = options.find(opt => normalizePersonKey(opt).includes('benny hadiawan'));
+            if (partialMatch) return partialMatch;
+
+            return 'ALL';
+        }
+
+        function populateFilterOptions(preferredBSM = null, preferredASM = 'ALL', preferredAE = 'ALL') {
+            const bsmSelect = document.getElementById('filter-bsm');
+            const asmSelect = document.getElementById('filter-asm');
+            const aeSelect = document.getElementById('filter-ae');
+            const areaSelect = document.getElementById('filter-area');
+            const contractorSelect = document.getElementById('filter-contractor');
+
+            // 1. Populasi BSM dari seluruh data
+            const allBSMs = [...new Set(rawWorkOrders.map(d => cleanText(d.bsmName)).filter(Boolean))].sort((a, b) => a.localeCompare(b, 'id'));
+            if (bsmSelect) {
+                bsmSelect.innerHTML = `<option value="ALL">Semua BSM (${allBSMs.length})</option>`;
+                allBSMs.forEach(name => {
+                    const opt = document.createElement('option');
+                    opt.value = name;
+                    opt.textContent = name;
+                    bsmSelect.appendChild(opt);
+                });
+
+                if (preferredBSM !== null && preferredBSM !== undefined) {
+                    if (preferredBSM === 'DEFAULT_BENNY') {
+                        bsmSelect.value = resolveDefaultBSMValue();
+                    } else if ([...bsmSelect.options].some(o => o.value === preferredBSM)) {
+                        bsmSelect.value = preferredBSM;
+                    } else {
+                        bsmSelect.value = 'ALL';
+                    }
+                }
+            }
+
+            const activeBSM = bsmSelect ? bsmSelect.value : 'ALL';
+
+            // 2. Populasi ASM berdasarkan BSM terpilih (cascading)
+            const asmSource = rawWorkOrders.filter(d => {
+                if (activeBSM === 'ALL') return true;
+                return normalizePersonKey(d.bsmName) === normalizePersonKey(activeBSM);
+            });
+            const allASMs = [...new Set(asmSource.map(d => cleanText(d.asmName)).filter(Boolean))].sort((a, b) => a.localeCompare(b, 'id'));
+            if (asmSelect) {
+                asmSelect.innerHTML = `<option value="ALL">Semua ASM (${allASMs.length})</option>`;
+                allASMs.forEach(name => {
+                    const opt = document.createElement('option');
+                    opt.value = name;
+                    opt.textContent = name;
+                    asmSelect.appendChild(opt);
+                });
+                asmSelect.value = [...asmSelect.options].some(o => o.value === preferredASM) ? preferredASM : 'ALL';
+            }
+
+            const activeASM = asmSelect ? asmSelect.value : 'ALL';
+
+            // 3. Populasi AE berdasarkan BSM & ASM terpilih (cascading)
+            const aeSource = asmSource.filter(d => {
+                if (activeASM === 'ALL') return true;
+                return normalizePersonKey(d.asmName) === normalizePersonKey(activeASM);
+            });
+            const allAEs = [...new Set(aeSource.map(d => cleanText(d.salesName)).filter(Boolean))].sort((a, b) => a.localeCompare(b, 'id'));
+            if (aeSelect) {
+                aeSelect.innerHTML = `<option value="ALL">Semua AE (${allAEs.length})</option>`;
+                allAEs.forEach(name => {
+                    const opt = document.createElement('option');
+                    opt.value = name;
+                    opt.textContent = name;
+                    aeSelect.appendChild(opt);
+                });
+                aeSelect.value = [...aeSelect.options].some(o => o.value === preferredAE) ? preferredAE : 'ALL';
+            }
+
+            // 4. Populasi Area (area asli / area) & Kontraktor
+            const prevArea = areaSelect ? areaSelect.value : 'ALL';
+            const allAreas = [...new Set(rawWorkOrders.map(d => getEffectiveArea(d)).filter(Boolean))].sort((a, b) => a.localeCompare(b, 'id'));
+            if (areaSelect) {
+                areaSelect.innerHTML = `<option value="ALL">Semua Area (${allAreas.length})</option>`;
+                allAreas.forEach(area => {
+                    const opt = document.createElement('option');
+                    opt.value = area;
+                    opt.textContent = area;
+                    areaSelect.appendChild(opt);
+                });
+                areaSelect.value = [...areaSelect.options].some(o => o.value === prevArea) ? prevArea : 'ALL';
+            }
+
+            const prevCont = contractorSelect ? contractorSelect.value : 'ALL';
+            const allContractors = [...new Set(rawWorkOrders.map(d => cleanText(d.contractorName)).filter(Boolean))].sort((a, b) => a.localeCompare(b, 'id'));
+            if (contractorSelect) {
+                contractorSelect.innerHTML = `<option value="ALL">Semua Kontraktor / IKR (${allContractors.length})</option>`;
+                allContractors.forEach(c => {
+                    const opt = document.createElement('option');
+                    opt.value = c;
+                    opt.textContent = c;
+                    contractorSelect.appendChild(opt);
+                });
+                contractorSelect.value = [...contractorSelect.options].some(o => o.value === prevCont) ? prevCont : 'ALL';
+            }
+        }
+
+        function handleBSMChange() {
+            const bsmVal = document.getElementById('filter-bsm')?.value || 'ALL';
+            populateFilterOptions(bsmVal, 'ALL', 'ALL');
+            applyFilters();
+        }
+
+        function handleASMChange() {
+            const bsmVal = document.getElementById('filter-bsm')?.value || 'ALL';
+            const asmVal = document.getElementById('filter-asm')?.value || 'ALL';
+            populateFilterOptions(bsmVal, asmVal, 'ALL');
+            applyFilters();
+        }
+
+        function handleSlotDropdownChange() {
+            const slotDropdown = document.getElementById('filter-slottime');
+            const val = slotDropdown ? slotDropdown.value : 'ALL';
+            selectedSlotFromTable = val !== 'ALL' ? val : null;
+            syncSlotPill();
+            applyFilters();
+        }
+
+        function syncSlotPill() {
+            const pill = document.getElementById('active-slot-pill');
+            const label = document.getElementById('active-slot-label');
+            if (!pill || !label) return;
+            if (selectedSlotFromTable) {
+                pill.classList.remove('hidden');
+                pill.classList.add('inline-flex');
+                label.textContent = selectedSlotFromTable;
+            } else {
+                pill.classList.add('hidden');
+                pill.classList.remove('inline-flex');
+                label.textContent = '';
+            }
+        }
+
+        function clearSlotSelection() {
+            selectedSlotFromTable = null;
+            const slotSelect = document.getElementById('filter-slottime');
+            if (slotSelect) slotSelect.value = 'ALL';
+            syncSlotPill();
+            applyFilters();
+        }
+
+        function resetAllFilters(showNotification = true) {
+            selectedSlotFromTable = null;
+            populateFilterOptions('DEFAULT_BENNY', 'ALL', 'ALL');
+
+            const areaEl = document.getElementById('filter-area');
+            const contEl = document.getElementById('filter-contractor');
+            const slotEl = document.getElementById('filter-slottime');
+            const searchEl = document.getElementById('filter-search');
+
+            if (areaEl) areaEl.value = 'ALL';
+            if (contEl) contEl.value = 'ALL';
+            if (slotEl) slotEl.value = 'ALL';
+            if (searchEl) searchEl.value = '';
+
+            syncSlotPill();
+            applyFilters();
+            if (showNotification) {
+                const currentBSM = document.getElementById('filter-bsm')?.value || 'ALL';
+                showToast(`Filter direset • BSM aktif: ${currentBSM}`, 'info');
+            }
+        }
+
+        // ============================================================================
+        // 5. LOGIKA FILTERING UTAMA
+        // ============================================================================
+        function getFilterCriteria() {
+            return {
+                bsm: document.getElementById('filter-bsm')?.value || 'ALL',
+                asm: document.getElementById('filter-asm')?.value || 'ALL',
+                ae: document.getElementById('filter-ae')?.value || 'ALL',
+                area: document.getElementById('filter-area')?.value || 'ALL',
+                contractor: document.getElementById('filter-contractor')?.value || 'ALL',
+                slot: selectedSlotFromTable || ((document.getElementById('filter-slottime')?.value || 'ALL') !== 'ALL' ? document.getElementById('filter-slottime').value : null),
+                search: cleanText(document.getElementById('filter-search')?.value || '').toLowerCase()
+            };
+        }
+
+        function matchesCriteria(item, crit, ignoreSlot = false) {
+            if (crit.bsm !== 'ALL' && normalizePersonKey(item.bsmName) !== normalizePersonKey(crit.bsm)) {
+                return false;
+            }
+            if (crit.asm !== 'ALL' && normalizePersonKey(item.asmName) !== normalizePersonKey(crit.asm)) {
+                return false;
+            }
+            if (crit.ae !== 'ALL' && normalizePersonKey(item.salesName) !== normalizePersonKey(crit.ae)) {
+                return false;
+            }
+            if (crit.area !== 'ALL' && getEffectiveArea(item) !== crit.area) {
+                return false;
+            }
+            if (crit.contractor !== 'ALL' && cleanText(item.contractorName) !== crit.contractor) {
+                return false;
+            }
+            if (!ignoreSlot && crit.slot && normalizeSlotTime(item.slotTime) !== crit.slot) {
+                return false;
+            }
+            if (crit.search) {
+                const haystack = [
+                    item.workOrderNumber,
+                    item.customerId,
+                    item.endUserName,
+                    item.salesName,
+                    item.asmName,
+                    item.bsmName,
+                    getEffectiveArea(item),
+                    item.clusterName,
+                    item.contractorName,
+                    item.appointmentStatus
+                ].join(' ').toLowerCase();
+                if (!haystack.includes(crit.search)) return false;
+            }
+            return true;
+        }
+
+        function applyFilters() {
+            const crit = getFilterCriteria();
+            filteredWorkOrders = rawWorkOrders.filter(item => matchesCriteria(item, crit, false));
+
+            const statusTextEl = document.getElementById('filter-status-text');
+            if (statusTextEl) {
+                statusTextEl.innerHTML = `Menampilkan <strong class="text-blue-600">${filteredWorkOrders.length}</strong> dari ${rawWorkOrders.length} Work Order • BSM: <strong class="text-slate-800">${crit.bsm === 'ALL' ? 'Semua' : crit.bsm}</strong>`;
+            }
+
+            currentPage = 1;
+            renderAllComponents();
+        }
+
+        function toggleSlotRowFilter(slotKey) {
+            if (selectedSlotFromTable === slotKey) {
+                clearSlotSelection();
+                return;
+            }
+            selectedSlotFromTable = slotKey;
+            const slotSelect = document.getElementById('filter-slottime');
+            if (slotSelect) slotSelect.value = slotKey;
+            syncSlotPill();
+            applyFilters();
+            showToast(`Memfilter tabel detail pada Slot Time: ${slotKey}`, 'info');
+        }
+
+        // ============================================================================
+        // 6. RENDER KPI, TABEL SLOT TIME, CHARTS & TABEL DETAIL
+        // ============================================================================
+        function renderAllComponents() {
+            renderKPICards();
+            renderSlotClassificationTable();
+            renderCharts();
+            renderDetailTable();
+            if (window.lucide && typeof window.lucide.createIcons === 'function') {
+                window.lucide.createIcons();
+            }
+        }
+
+        function renderKPICards() {
+            const total = filteredWorkOrders.length;
+            let cNew = 0;
+            let cProg = 0;
+            let cComp = 0;
+            let cUnsucc = 0;
+            let cResch = 0;
+            let totalRep = 0;
+
+            filteredWorkOrders.forEach(wo => {
+                const st = normalizeStatus(wo.appointmentStatus);
+                if (st === 'New') cNew++;
+                else if (st === 'On Progress') cProg++;
+                else if (st === 'Completed') cComp++;
+                else if (st === 'Unsuccessful') cUnsucc++;
+                else if (st === 'Reschedule') cResch++;
+
+                totalRep += Number(wo.woRepitation) || 1;
+            });
+
+            const avgRep = total > 0 ? (totalRep / total).toFixed(2) : '0.00';
+            const woBersih = cComp + cNew + cProg;
+            const woBersihPct = total > 0 ? ((woBersih / total) * 100).toFixed(1) : '0.0';
+            const successRate = total > 0 ? ((cComp / total) * 100).toFixed(1) : '0.0';
+            const newAndProg = cNew + cProg;
+            const newAndProgPct = total > 0 ? ((newAndProg / total) * 100).toFixed(1) : '0.0';
+            const unsuccAndResch = cUnsucc + cResch;
+            const unsuccPct = total > 0 ? ((unsuccAndResch / total) * 100).toFixed(1) : '0.0';
+
+            const setText = (id, text) => {
+                const el = document.getElementById(id);
+                if (el) el.textContent = text;
+            };
+
+            setText('kpi-total', total.toLocaleString('id-ID'));
+            setText('kpi-avg-rep', `${avgRep}x`);
+
+            setText('kpi-wo-bersih', woBersih.toLocaleString('id-ID'));
+            setText('kpi-bersih-detail', `Succ: ${cComp} + New: ${cNew} + Prog: ${cProg}`);
+            setText('kpi-bersih-pct', `${woBersihPct}%`);
+
+            setText('kpi-completed', cComp.toLocaleString('id-ID'));
+            setText('kpi-success-rate', `${successRate}%`);
+
+            setText('kpi-new-progress', newAndProg.toLocaleString('id-ID'));
+            setText('kpi-new-detail', `New: ${cNew} | Progress: ${cProg}`);
+            setText('kpi-new-pct', `${newAndProgPct}%`);
+
+            setText('kpi-unsuccessful', unsuccAndResch.toLocaleString('id-ID'));
+            setText('kpi-unsucc-detail', `Unsucc: ${cUnsucc} | Resch: ${cResch}`);
+            setText('kpi-unsucc-pct', `${unsuccPct}%`);
+        }
+
+        function renderSlotClassificationTable() {
+            const tbody = document.getElementById('slot-summary-tbody');
+            const tfoot = document.getElementById('slot-summary-tfoot');
+            if (!tbody || !tfoot) return;
+
+            const crit = getFilterCriteria();
+            const baseForSlots = rawWorkOrders.filter(item => matchesCriteria(item, crit, true));
+
+            let grandTotal = 0;
+            let grandBersih = 0;
+            let grandComp = 0;
+            let grandNewProg = 0;
+            let grandUnsucc = 0;
+
+            let rowsHTML = '';
+
+            STANDARD_SLOTS.forEach(slotObj => {
+                const itemsInSlot = baseForSlots.filter(d => normalizeSlotTime(d.slotTime) === slotObj.key);
+                const total = itemsInSlot.length;
+                let cNew = 0, cProg = 0, cComp = 0, cUnsucc = 0;
+                const areaCounts = {};
+                const contCounts = {};
+
+                itemsInSlot.forEach(wo => {
+                    const st = normalizeStatus(wo.appointmentStatus);
+                    if (st === 'New') cNew++;
+                    else if (st === 'On Progress') cProg++;
+                    else if (st === 'Completed') cComp++;
+                    else if (st === 'Unsuccessful' || st === 'Reschedule') cUnsucc++;
+
+                    const effArea = getEffectiveArea(wo);
+                    areaCounts[effArea] = (areaCounts[effArea] || 0) + 1;
+
+                    const cont = cleanText(wo.contractorName);
+                    if (cont) contCounts[cont] = (contCounts[cont] || 0) + 1;
+                });
+
+                const bersih = cComp + cNew + cProg;
+                const newProg = cNew + cProg;
+
+                grandTotal += total;
+                grandBersih += bersih;
+                grandComp += cComp;
+                grandNewProg += newProg;
+                grandUnsucc += cUnsucc;
+
+                const successRate = total > 0 ? ((cComp / total) * 100).toFixed(1) : '0.0';
+                const barWidth = total > 0 ? Math.min(100, Math.round((cComp / total) * 100)) : 0;
+
+                let barColor = 'bg-emerald-500';
+                if (Number(successRate) < 40) barColor = 'bg-rose-500';
+                else if (Number(successRate) < 70) barColor = 'bg-amber-500';
+
+                const topArea = Object.entries(areaCounts).sort((a, b) => b[1] - a[1])[0];
+                const topCont = Object.entries(contCounts).sort((a, b) => b[1] - a[1])[0];
+
+                let dominanceHTML = '<span class="text-slate-400 text-xs italic">Tidak ada data</span>';
+                if (topArea || topCont) {
+                    const areaLine = topArea ? `<span class="font-semibold text-slate-800">${topArea[0]}</span> (${topArea[1]})` : '';
+                    const contShort = topCont ? (topCont[0].replace(/\s*PT$/i, '').slice(0, 22) + (topCont[0].length > 22 ? '...' : '')) : '';
+                    const contLine = topCont ? `<span class="text-slate-500 text-xs block truncate" title="${topCont[0]}">IKR: ${contShort} (${topCont[1]})</span>` : '';
+                    dominanceHTML = `<div class="leading-tight">${areaLine}${contLine}</div>`;
+                }
+
+                const isSelected = selectedSlotFromTable === slotObj.key;
+                const rowClass = isSelected
+                    ? 'bg-blue-50/90 ring-2 ring-inset ring-blue-500 cursor-pointer transition'
+                    : 'hover:bg-slate-50/90 cursor-pointer transition';
+
+                const safeSlot = encodeURIComponent(slotObj.key);
+
+                rowsHTML += `
+                    <tr onclick="toggleSlotRowFilter(decodeURIComponent('${safeSlot}'))" class="${rowClass}">
+                        <td class="py-3.5 px-4 sm:px-6">
+                            <div class="flex items-center gap-3">
+                                <span class="w-2.5 h-2.5 rounded-full shrink-0" style="background-color: ${slotObj.dotColor}"></span>
+                                <div>
+                                    <div class="font-bold text-slate-900 flex items-center gap-2">
+                                        <span>${slotObj.key}</span>
+                                        ${isSelected ? '<span class="text-[10px] px-1.5 py-0.5 rounded bg-blue-600 text-white font-semibold">Aktif</span>' : ''}
+                                    </div>
+                                    <span class="inline-block mt-0.5 text-[11px] font-medium px-2 py-0.5 rounded-md border ${slotObj.badgeClass}">
+                                        Sesi ${slotObj.session}
+                                    </span>
+                                </div>
+                            </div>
+                        </td>
+                        <td class="py-3.5 px-3 text-center">
+                            <button type="button" onclick="event.stopPropagation(); openSlotCellPreviewWA('${safeSlot}', 'TOTAL')" class="font-extrabold text-slate-900 hover:text-blue-600 underline decoration-dotted underline-offset-4 px-2 py-1 rounded-lg hover:bg-blue-50 transition">${total}</button>
+                        </td>
+                        <td class="py-3.5 px-3 text-center">
+                            <button type="button" onclick="event.stopPropagation(); openSlotCellPreviewWA('${safeSlot}', 'WO_BERSIH')" class="inline-flex items-center justify-center min-w-[32px] px-2 py-1 rounded-md text-xs font-extrabold bg-cyan-50 text-cyan-800 border border-cyan-200 hover:bg-cyan-100 transition">${bersih}</button>
+                        </td>
+                        <td class="py-3.5 px-3 text-center">
+                            <button type="button" onclick="event.stopPropagation(); openSlotCellPreviewWA('${safeSlot}', 'COMPLETED')" class="inline-flex items-center justify-center min-w-[32px] px-2 py-1 rounded-md text-xs font-bold bg-emerald-50 text-emerald-700 hover:bg-emerald-100 transition">${cComp}</button>
+                        </td>
+                        <td class="py-3.5 px-3 text-center">
+                            <button type="button" onclick="event.stopPropagation(); openSlotCellPreviewWA('${safeSlot}', 'NEW_PROGRESS')" class="inline-flex items-center justify-center min-w-[32px] px-2 py-1 rounded-md text-xs font-bold bg-indigo-50 text-indigo-700 hover:bg-indigo-100 transition">${newProg}</button>
+                        </td>
+                        <td class="py-3.5 px-3 text-center">
+                            <button type="button" onclick="event.stopPropagation(); openSlotCellPreviewWA('${safeSlot}', 'UNSUCCESSFUL')" class="inline-flex items-center justify-center min-w-[32px] px-2 py-1 rounded-md text-xs font-bold bg-rose-50 text-rose-700 hover:bg-rose-100 transition">${cUnsucc}</button>
+                        </td>
+                        <td class="py-3.5 px-4">
+                            <div class="flex items-center gap-2.5">
+                                <div class="flex-1 h-2 bg-slate-200 rounded-full overflow-hidden">
+                                    <div class="h-full ${barColor} rounded-full transition-all duration-300" style="width: ${barWidth}%"></div>
+                                </div>
+                                <span class="text-xs font-bold text-slate-700 w-12 text-right">${successRate}%</span>
+                            </div>
+                        </td>
+                        <td class="py-3.5 px-4 sm:px-6">${dominanceHTML}</td>
+                    </tr>
+                `;
+            });
+
+            tbody.innerHTML = rowsHTML;
+
+            const grandSuccessRate = grandTotal > 0 ? ((grandComp / grandTotal) * 100).toFixed(1) : '0.0';
+            tfoot.innerHTML = `
+                <tr>
+                    <td class="py-4 px-4 sm:px-6 uppercase tracking-wider text-xs sm:text-sm">
+                        <div class="flex items-center gap-2">
+                            <i data-lucide="sigma" class="w-4 h-4 text-blue-400"></i>
+                            <span>Grand Total Seluruh Slot Time</span>
+                        </div>
+                    </td>
+                    <td class="py-4 px-3 text-center">
+                        <button type="button" onclick="openSlotCellPreviewWA('${encodeURIComponent('ALL')}', 'TOTAL')" class="text-base text-blue-300 hover:text-white underline decoration-dotted underline-offset-4">${grandTotal}</button>
+                    </td>
+                    <td class="py-4 px-3 text-center">
+                        <button type="button" onclick="openSlotCellPreviewWA('${encodeURIComponent('ALL')}', 'WO_BERSIH')" class="text-cyan-300 hover:text-white underline decoration-dotted underline-offset-4">${grandBersih}</button>
+                    </td>
+                    <td class="py-4 px-3 text-center">
+                        <button type="button" onclick="openSlotCellPreviewWA('${encodeURIComponent('ALL')}', 'COMPLETED')" class="text-emerald-300 hover:text-white underline decoration-dotted underline-offset-4">${grandComp}</button>
+                    </td>
+                    <td class="py-4 px-3 text-center">
+                        <button type="button" onclick="openSlotCellPreviewWA('${encodeURIComponent('ALL')}', 'NEW_PROGRESS')" class="text-indigo-300 hover:text-white underline decoration-dotted underline-offset-4">${grandNewProg}</button>
+                    </td>
+                    <td class="py-4 px-3 text-center">
+                        <button type="button" onclick="openSlotCellPreviewWA('${encodeURIComponent('ALL')}', 'UNSUCCESSFUL')" class="text-rose-300 hover:text-white underline decoration-dotted underline-offset-4">${grandUnsucc}</button>
+                    </td>
+                    <td class="py-4 px-4">
+                        <div class="flex items-center gap-2.5">
+                            <div class="flex-1 h-2 bg-slate-700 rounded-full overflow-hidden">
+                                <div class="h-full bg-emerald-400 rounded-full" style="width: ${Math.min(100, Number(grandSuccessRate))}%"></div>
+                            </div>
+                            <span class="text-xs font-bold text-emerald-300 w-12 text-right">${grandSuccessRate}%</span>
+                        </div>
+                    </td>
+                    <td class="py-4 px-4 sm:px-6 text-xs font-normal text-slate-300">
+                        Klik angka untuk Preview & Report WA
+                    </td>
+                </tr>
+            `;
+        }
+
+        function renderCharts() {
+            if (typeof Chart === 'undefined') return;
+
+            // 1. Stacked Bar Status per Slot Time
+            const slotCanvas = document.getElementById('slotChart');
+            if (slotCanvas) {
+                const slotLabels = STANDARD_SLOTS.map(s => s.key === 'Unassigned / Lainnya' ? 'Unassigned' : s.key);
+                const dComp = [], dProg = [], dNew = [], dUnsucc = [];
+
+                STANDARD_SLOTS.forEach(s => {
+                    const items = filteredWorkOrders.filter(w => normalizeSlotTime(w.slotTime) === s.key);
+                    dComp.push(items.filter(w => normalizeStatus(w.appointmentStatus) === 'Completed').length);
+                    dProg.push(items.filter(w => normalizeStatus(w.appointmentStatus) === 'On Progress').length);
+                    dNew.push(items.filter(w => normalizeStatus(w.appointmentStatus) === 'New').length);
+                    dUnsucc.push(items.filter(w => ['Unsuccessful', 'Reschedule'].includes(normalizeStatus(w.appointmentStatus))).length);
+                });
+
+                if (slotChartInstance) {
+                    slotChartInstance.destroy();
+                    slotChartInstance = null;
+                }
+                slotChartInstance = new Chart(slotCanvas.getContext('2d'), {
+                    type: 'bar',
+                    data: {
+                        labels: slotLabels,
+                        datasets: [
+                            { label: 'Completed / Successful', data: dComp, backgroundColor: '#10b981', borderRadius: 4 },
+                            { label: 'On Progress', data: dProg, backgroundColor: '#f59e0b', borderRadius: 4 },
+                            { label: 'New', data: dNew, backgroundColor: '#3b82f6', borderRadius: 4 },
+                            { label: 'Unsuccessful / Reschedule', data: dUnsucc, backgroundColor: '#f43f5e', borderRadius: 4 }
+                        ]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: {
+                            legend: {
+                                position: 'top',
+                                labels: { usePointStyle: true, boxWidth: 8, font: { family: 'Inter', size: 11, weight: '600' } }
+                            },
+                            tooltip: { mode: 'index', intersect: false }
+                        },
+                        scales: {
+                            x: { stacked: true, grid: { display: false }, ticks: { font: { family: 'Inter', size: 11 } } },
+                            y: { stacked: true, beginAtZero: true, ticks: { stepSize: 1, font: { family: 'Inter', size: 11 } }, grid: { color: '#f1f5f9' } }
+                        }
+                    }
+                });
+            }
+
+            // 2. Bar Performa Kontraktor / IKR
+            const contCanvas = document.getElementById('contractorChart');
+            if (contCanvas) {
+                const contMap = {};
+                filteredWorkOrders.forEach(w => {
+                    const name = cleanText(w.contractorName) || 'Tidak Diketahui';
+                    contMap[name] = (contMap[name] || 0) + 1;
+                });
+                const sortedCont = Object.entries(contMap).sort((a, b) => b[1] - a[1]);
+
+                if (contractorChartInstance) {
+                    contractorChartInstance.destroy();
+                    contractorChartInstance = null;
+                }
+                contractorChartInstance = new Chart(contCanvas.getContext('2d'), {
+                    type: 'bar',
+                    data: {
+                        labels: sortedCont.length ? sortedCont.map(c => c[0].replace(/\s*PT$/i, '')) : ['Tidak Ada Data'],
+                        datasets: [{
+                            label: 'Jumlah WO',
+                            data: sortedCont.length ? sortedCont.map(c => c[1]) : [0],
+                            backgroundColor: ['#2563eb', '#4f46e5', '#0284c7', '#0d9488', '#d97706'],
+                            borderRadius: 6,
+                            barThickness: 16
+                        }]
+                    },
+                    options: {
+                        indexAxis: 'y',
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: { legend: { display: false } },
+                        scales: {
+                            x: { beginAtZero: true, ticks: { stepSize: 1, font: { size: 10 } }, grid: { color: '#f1f5f9' } },
+                            y: { ticks: { font: { size: 10, weight: '600' } }, grid: { display: false } }
+                        }
+                    }
+                });
+            }
+
+            // 3. Doughnut Kategori Kendala (unsuccessfulCategory)
+            const unsuccCanvas = document.getElementById('unsuccessfulChart');
+            if (unsuccCanvas) {
+                const catMap = {};
+                filteredWorkOrders.forEach(w => {
+                    const st = normalizeStatus(w.appointmentStatus);
+                    const rawCat = cleanText(w.unsuccessfulCategory);
+                    if (st === 'Unsuccessful' || st === 'Reschedule' || (rawCat && rawCat !== '-')) {
+                        const label = (rawCat && rawCat !== '-') ? rawCat : 'Lainnya';
+                        catMap[label] = (catMap[label] || 0) + 1;
+                    }
+                });
+                const entries = Object.entries(catMap);
+
+                if (unsuccessfulChartInstance) {
+                    unsuccessfulChartInstance.destroy();
+                    unsuccessfulChartInstance = null;
+                }
+                unsuccessfulChartInstance = new Chart(unsuccCanvas.getContext('2d'), {
+                    type: 'doughnut',
+                    data: {
+                        labels: entries.length ? entries.map(e => e[0]) : ['Tidak Ada Kendala'],
+                        datasets: [{
+                            data: entries.length ? entries.map(e => e[1]) : [1],
+                            backgroundColor: entries.length ? ['#f43f5e', '#f59e0b', '#8b5cf6', '#06b6d4', '#64748b'] : ['#e2e8f0'],
+                            borderWidth: 2,
+                            borderColor: '#ffffff'
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        cutout: '62%',
+                        plugins: {
+                            legend: {
+                                position: 'right',
+                                labels: { usePointStyle: true, boxWidth: 8, font: { family: 'Inter', size: 11 } }
+                            }
+                        }
+                    }
+                });
+            }
+        }
+
+        function sortTable(key) {
+            if (sortConfig.key === key) {
+                sortConfig.direction = sortConfig.direction === 'asc' ? 'desc' : 'asc';
+            } else {
+                sortConfig.key = key;
+                sortConfig.direction = 'asc';
+            }
+            renderDetailTable();
+            if (window.lucide && typeof window.lucide.createIcons === 'function') {
+                window.lucide.createIcons();
+            }
+        }
+
+        function changePageSize() {
+            const sel = document.getElementById('rows-per-page');
+            rowsPerPage = sel ? Number(sel.value) || 20 : 20;
+            currentPage = 1;
+            renderDetailTable();
+            if (window.lucide && typeof window.lucide.createIcons === 'function') {
+                window.lucide.createIcons();
+            }
+        }
+
+        function goToPage(page) {
+            currentPage = page;
+            renderDetailTable();
+            if (window.lucide && typeof window.lucide.createIcons === 'function') {
+                window.lucide.createIcons();
+            }
+        }
+
+        function getStatusBadge(rawStatus) {
+            const norm = normalizeStatus(rawStatus);
+            const label = cleanText(rawStatus) || norm;
+            if (norm === 'Completed') {
+                return `<span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-bold bg-emerald-50 text-emerald-700 border border-emerald-200"><span class="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>${label}</span>`;
+            }
+            if (norm === 'On Progress') {
+                return `<span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-bold bg-amber-50 text-amber-700 border border-amber-200"><span class="w-1.5 h-1.5 rounded-full bg-amber-500"></span>${label}</span>`;
+            }
+            if (norm === 'Unsuccessful') {
+                return `<span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-bold bg-rose-50 text-rose-700 border border-rose-200"><span class="w-1.5 h-1.5 rounded-full bg-rose-500"></span>${label}</span>`;
+            }
+            if (norm === 'Reschedule') {
+                return `<span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-bold bg-purple-50 text-purple-700 border border-purple-200"><span class="w-1.5 h-1.5 rounded-full bg-purple-500"></span>${label}</span>`;
+            }
+            return `<span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-bold bg-sky-50 text-sky-700 border border-sky-200"><span class="w-1.5 h-1.5 rounded-full bg-sky-500"></span>${label}</span>`;
+        }
+
+        function getSlotBadge(rawSlot) {
+            const norm = normalizeSlotTime(rawSlot);
+            const found = STANDARD_SLOTS.find(s => s.key === norm) || STANDARD_SLOTS[STANDARD_SLOTS.length - 1];
+            return `<span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-semibold border ${found.badgeClass}">
+                <span class="w-1.5 h-1.5 rounded-full" style="background-color:${found.dotColor}"></span>
+                ${norm}
+            </span>`;
+        }
+
+        function renderDetailTable() {
+            const tbody = document.getElementById('detail-tbody');
+            const badge = document.getElementById('detail-count-badge');
+            const pageInfo = document.getElementById('pagination-info');
+            const pageControls = document.getElementById('pagination-controls');
+            if (!tbody || !badge || !pageInfo || !pageControls) return;
+
+            badge.textContent = `${filteredWorkOrders.length} WO`;
+
+            const sorted = [...filteredWorkOrders].sort((a, b) => {
+                let valA = sortConfig.key === 'area' ? getEffectiveArea(a) : (a[sortConfig.key] ?? '');
+                let valB = sortConfig.key === 'area' ? getEffectiveArea(b) : (b[sortConfig.key] ?? '');
+                if (typeof valA === 'number' && typeof valB === 'number') {
+                    return sortConfig.direction === 'asc' ? valA - valB : valB - valA;
+                }
+                valA = String(valA).toLowerCase();
+                valB = String(valB).toLowerCase();
+                if (valA < valB) return sortConfig.direction === 'asc' ? -1 : 1;
+                if (valA > valB) return sortConfig.direction === 'asc' ? 1 : -1;
+                return 0;
+            });
+
+            const totalItems = sorted.length;
+            const totalPages = Math.max(1, Math.ceil(totalItems / rowsPerPage));
+            if (currentPage > totalPages) currentPage = totalPages;
+
+            const startIdx = (currentPage - 1) * rowsPerPage;
+            const endIdx = Math.min(startIdx + rowsPerPage, totalItems);
+            const slice = sorted.slice(startIdx, endIdx);
+
+            if (slice.length === 0) {
+                tbody.innerHTML = `
+                    <tr>
+                        <td colspan="11" class="py-12 text-center text-slate-500">
+                            <div class="flex flex-col items-center justify-center gap-2">
+                                <i data-lucide="search-x" class="w-8 h-8 text-slate-400"></i>
+                                <p class="font-semibold text-slate-700">Tidak ada Work Order yang cocok dengan filter saat ini.</p>
+                                <button type="button" onclick="resetAllFilters()" class="mt-1 px-3.5 py-1.5 bg-blue-600 text-white rounded-lg text-xs font-semibold hover:bg-blue-700 transition">
+                                    Reset Filter
+                                </button>
+                            </div>
+                        </td>
+                    </tr>
+                `;
+                pageInfo.textContent = 'Menampilkan 0 data';
+                pageControls.innerHTML = '';
+                return;
+            }
+
+            tbody.innerHTML = slice.map(wo => {
+                const effArea = getEffectiveArea(wo);
+                const repNum = Number(wo.woRepitation) || 1;
+                const repBadge = repNum > 1
+                    ? `<span class="inline-flex items-center justify-center px-2 py-0.5 rounded-md text-xs font-extrabold bg-rose-100 text-rose-700">${repNum}x</span>`
+                    : `<span class="text-xs font-semibold text-slate-600">${repNum}x</span>`;
+
+                const kendalaText = (wo.unsucessfulSubCategory && wo.unsucessfulSubCategory !== '-')
+                    ? `<span class="text-xs text-rose-700 font-medium bg-rose-50 px-2 py-0.5 rounded border border-rose-100">${wo.unsucessfulSubCategory}</span>`
+                    : `<span class="text-xs text-slate-400">-</span>`;
+
+                const encodedWO = encodeURIComponent(wo.workOrderNumber);
+
+                return `
+                    <tr onclick="openWOModal(decodeURIComponent('${encodedWO}'))" class="hover:bg-blue-50/50 cursor-pointer transition">
+                        <td class="py-3 px-4 font-bold text-blue-700">${wo.workOrderNumber}</td>
+                        <td class="py-3 px-4">
+                            <div class="font-semibold text-slate-900">${wo.endUserName || '-'}</div>
+                            <div class="text-[11px] text-slate-500">${wo.customerId || '-'}</div>
+                        </td>
+                        <td class="py-3 px-4 font-semibold text-slate-800">${wo.asmName || '-'}</td>
+                        <td class="py-3 px-4 font-semibold text-indigo-700">${wo.salesName || '-'}</td>
+                        <td class="py-3 px-4">
+                            <div class="font-bold text-slate-800">${effArea}</div>
+                            <div class="text-xs text-slate-500">${wo.clusterName || '-'}</div>
+                        </td>
+                        <td class="py-3 px-4">
+                            <div class="font-medium text-slate-800">${wo.contractorName || '-'}</div>
+                            <div class="text-[11px] text-slate-500">${wo.vendorName || '-'}</div>
+                        </td>
+                        <td class="py-3 px-4">${getSlotBadge(wo.slotTime)}</td>
+                        <td class="py-3 px-4">${getStatusBadge(wo.appointmentStatus)}</td>
+                        <td class="py-3 px-4 text-center">${repBadge}</td>
+                        <td class="py-3 px-4">${kendalaText}</td>
+                        <td class="py-3 px-4 text-center">
+                            <div class="inline-flex items-center gap-1">
+                                <button type="button" onclick="event.stopPropagation(); openSingleWOReportWAByNumber(decodeURIComponent('${encodedWO}'))" class="p-1.5 rounded-lg text-emerald-600 hover:bg-emerald-50 transition" title="Report WA WO Ini">
+                                    <i data-lucide="message-square-share" class="w-4 h-4"></i>
+                                </button>
+                                <button type="button" onclick="event.stopPropagation(); openWOModal(decodeURIComponent('${encodedWO}'))" class="p-1.5 rounded-lg text-slate-500 hover:text-blue-600 hover:bg-blue-50 transition" title="Lihat Detail">
+                                    <i data-lucide="eye" class="w-4 h-4"></i>
+                                </button>
+                            </div>
+                        </td>
+                    </tr>
+                `;
+            }).join('');
+
+            pageInfo.textContent = `Menampilkan ${startIdx + 1} - ${endIdx} dari ${totalItems} Work Order`;
+
+            let ctrlHTML = `
+                <button type="button" onclick="goToPage(${Math.max(1, currentPage - 1)})" ${currentPage === 1 ? 'disabled' : ''} class="px-2.5 py-1.5 rounded-lg border border-slate-300 bg-white text-xs font-semibold text-slate-700 hover:bg-slate-100 disabled:opacity-40 disabled:cursor-not-allowed transition">
+                    Prev
+                </button>
+            `;
+            for (let p = 1; p <= totalPages; p++) {
+                if (p === 1 || p === totalPages || (p >= currentPage - 1 && p <= currentPage + 1)) {
+                    const cls = p === currentPage
+                        ? 'bg-blue-600 text-white border-blue-600'
+                        : 'bg-white text-slate-700 border-slate-300 hover:bg-slate-100';
+                    ctrlHTML += `<button type="button" onclick="goToPage(${p})" class="px-3 py-1.5 rounded-lg border text-xs font-bold transition ${cls}">${p}</button>`;
+                } else if (p === currentPage - 2 || p === currentPage + 2) {
+                    ctrlHTML += `<span class="px-1 text-slate-400 text-xs">...</span>`;
+                }
+            }
+            ctrlHTML += `
+                <button type="button" onclick="goToPage(${Math.min(totalPages, currentPage + 1)})" ${currentPage === totalPages ? 'disabled' : ''} class="px-2.5 py-1.5 rounded-lg border border-slate-300 bg-white text-xs font-semibold text-slate-700 hover:bg-slate-100 disabled:opacity-40 disabled:cursor-not-allowed transition">
+                    Next
+                </button>
+            `;
+            pageControls.innerHTML = ctrlHTML;
+        }
+
+        // ============================================================================
+        // 7. MODAL DETAIL WO & MODAL PREVIEW + REPORT WA
+        // ============================================================================
+        function matchesMetricType(wo, metricType) {
+            const st = normalizeStatus(wo.appointmentStatus);
+            if (!metricType || metricType === 'TOTAL') return true;
+            if (metricType === 'WO_BERSIH') return ['Completed', 'New', 'On Progress'].includes(st);
+            if (metricType === 'COMPLETED') return st === 'Completed';
+            if (metricType === 'NEW_PROGRESS') return ['New', 'On Progress'].includes(st);
+            if (metricType === 'UNSUCCESSFUL') return ['Unsuccessful', 'Reschedule'].includes(st);
+            return true;
+        }
+
+        function getMetricTitle(metricType) {
+            const labels = {
+                TOTAL: 'Total WO',
+                WO_BERSIH: 'WO Bersih (Completed + New + On Progress)',
+                COMPLETED: 'Completed / Successful',
+                NEW_PROGRESS: 'New & On Progress',
+                UNSUCCESSFUL: 'Unsuccessful / Reschedule'
+            };
+            return labels[metricType] || metricType;
+        }
+
+        function formatFilterSummary(extra = '') {
+            const crit = getFilterCriteria();
+            const parts = [];
+            if (crit.bsm !== 'ALL') parts.push(`BSM: ${crit.bsm}`);
+            if (crit.asm !== 'ALL') parts.push(`ASM: ${crit.asm}`);
+            if (crit.ae !== 'ALL') parts.push(`AE: ${crit.ae}`);
+            if (crit.area !== 'ALL') parts.push(`Area: ${crit.area}`);
+            if (crit.contractor !== 'ALL') parts.push(`IKR: ${crit.contractor}`);
+            if (crit.search) parts.push(`Cari: "${crit.search}"`);
+            if (extra) parts.unshift(extra);
+            return parts.length ? parts.join(' • ') : 'Semua Data';
+        }
+
+        function openKPIPreviewWA(metricType) {
+            const matched = filteredWorkOrders.filter(wo => matchesMetricType(wo, metricType));
+            const label = getMetricTitle(metricType);
+            openPreviewWAModal({
+                title: `KPI: ${label}`,
+                subtitle: `Pratinjau ${matched.length} Work Order & Generator Laporan WhatsApp`,
+                filterSummary: formatFilterSummary(`Metrik: ${label}`),
+                records: matched
+            });
+        }
+
+        function openSlotCellPreviewWA(encodedSlotKey, metricType) {
+            const slotKey = decodeURIComponent(encodedSlotKey);
+            const crit = getFilterCriteria();
+            const label = getMetricTitle(metricType);
+
+            const matched = rawWorkOrders.filter(wo => {
+                if (!matchesCriteria(wo, crit, true)) return false;
+                if (slotKey !== 'ALL' && normalizeSlotTime(wo.slotTime) !== slotKey) return false;
+                return matchesMetricType(wo, metricType);
+            });
+
+            const slotText = slotKey === 'ALL' ? 'Semua Slot Time' : slotKey;
+            openPreviewWAModal({
+                title: `Slot ${slotText} — ${label}`,
+                subtitle: `Klasifikasi Slot Time ${slotText} (${matched.length} WO)`,
+                filterSummary: formatFilterSummary(`Slot: ${slotText} • Metrik: ${label}`),
+                records: matched
+            });
+        }
+
+        function openSingleWOReportWA() {
+            if (!currentModalWO) return;
+            openSingleWOReportWAByNumber(currentModalWO.workOrderNumber);
+        }
+
+        function openSingleWOReportWAByNumber(woNumber) {
+            const wo = rawWorkOrders.find(item => item.workOrderNumber === woNumber);
+            if (!wo) return;
+            openPreviewWAModal({
+                title: `Report WA — ${wo.workOrderNumber}`,
+                subtitle: `${wo.endUserName || '-'} • ${getEffectiveArea(wo)} • ${normalizeSlotTime(wo.slotTime)}`,
+                filterSummary: `WO: ${wo.workOrderNumber} • BSM: ${wo.bsmName || '-'} • ASM: ${wo.asmName || '-'} • AE: ${wo.salesName || '-'}`,
+                records: [wo]
+            });
+        }
+
+        function openPreviewWAModal(ctx) {
+            previewWAState = ctx;
+            const modal = document.getElementById('preview-wa-modal');
+            if (!modal) return;
+
+            const titleEl = document.getElementById('wa-modal-title');
+            const subEl = document.getElementById('wa-modal-subtitle');
+            const cntEl = document.getElementById('wa-modal-count');
+            const fltEl = document.getElementById('wa-modal-filters');
+            const searchEl = document.getElementById('wa-preview-search');
+
+            if (titleEl) titleEl.textContent = ctx.title;
+            if (subEl) subEl.textContent = ctx.subtitle;
+            if (cntEl) cntEl.textContent = `${ctx.records.length} WO`;
+            if (fltEl) fltEl.textContent = ctx.filterSummary;
+            if (searchEl) searchEl.value = '';
+
+            renderPreviewWATable();
+            regenerateWAReportText();
+
+            modal.classList.remove('hidden');
+            if (window.lucide && typeof window.lucide.createIcons === 'function') {
+                window.lucide.createIcons();
+            }
+        }
+
+        function closePreviewWAModal() {
+            const modal = document.getElementById('preview-wa-modal');
+            if (modal) modal.classList.add('hidden');
+        }
+
+        function renderPreviewWATable() {
+            const tbody = document.getElementById('wa-preview-tbody');
+            const noteEl = document.getElementById('wa-preview-limit-note');
+            if (!tbody) return;
+
+            const query = cleanText(document.getElementById('wa-preview-search')?.value || '').toLowerCase();
+            const list = (previewWAState.records || []).filter(wo => {
+                if (!query) return true;
+                return [
+                    wo.workOrderNumber,
+                    wo.customerId,
+                    wo.endUserName,
+                    getEffectiveArea(wo),
+                    normalizeSlotTime(wo.slotTime),
+                    wo.appointmentStatus,
+                    wo.asmName,
+                    wo.salesName
+                ].join(' ').toLowerCase().includes(query);
+            });
+
+            if (noteEl) {
+                noteEl.textContent = list.length > 60
+                    ? `(Menampilkan 60 dari ${list.length} baris)`
+                    : `(${list.length} baris)`;
+            }
+
+            if (list.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="7" class="py-8 text-center text-slate-400 italic">Tidak ada data WO yang sesuai.</td></tr>`;
+                return;
+            }
+
+            tbody.innerHTML = list.slice(0, 60).map(wo => `
+                <tr class="hover:bg-blue-50/40">
+                    <td class="py-2 px-3 font-bold text-blue-700">${wo.workOrderNumber}</td>
+                    <td class="py-2 px-3">
+                        <div class="font-semibold text-slate-800">${wo.endUserName || '-'}</div>
+                        <div class="text-[11px] text-slate-500">${wo.customerId || '-'}</div>
+                    </td>
+                    <td class="py-2 px-3 font-medium text-slate-700">${getEffectiveArea(wo)}</td>
+                    <td class="py-2 px-3 text-slate-700">${normalizeSlotTime(wo.slotTime)}</td>
+                    <td class="py-2 px-3 font-semibold text-slate-800">${wo.appointmentStatus || '-'}</td>
+                    <td class="py-2 px-3 font-semibold text-slate-800">${wo.asmName || '-'}</td>
+                    <td class="py-2 px-3 font-semibold text-indigo-700">${wo.salesName || '-'}</td>
+                </tr>
+            `).join('');
+        }
+
+        function regenerateWAReportText() {
+            const ta = document.getElementById('wa-report-textarea');
+            if (!ta) return;
+
+            const records = previewWAState.records || [];
+            const nowStr = new Date().toLocaleString('id-ID', { dateStyle: 'medium', timeStyle: 'short' });
+
+            const lines = [
+                `*REPORT MONITORING WO — SURABAYA & SIDOARJO*`,
+                `Waktu: ${nowStr}`,
+                `Kategori: *${previewWAState.title || 'Preview WO'}*`,
+                `Filter: ${previewWAState.filterSummary || '-'}`,
+                `Total WO: *${records.length}*`,
+                ``
+            ];
+
+            if (records.length === 0) {
+                lines.push(`_Tidak ada data WO pada pilihan ini._`);
+            } else {
+                const maxShow = 25;
+                records.slice(0, maxShow).forEach((wo, idx) => {
+                    const area = getEffectiveArea(wo);
+                    const slot = normalizeSlotTime(wo.slotTime);
+                    const cust = wo.endUserName || '-';
+                    const asm = wo.asmName || '-';
+                    const ae = wo.salesName || '-';
+                    const st = wo.appointmentStatus || '-';
+                    lines.push(`${idx + 1}. *${wo.workOrderNumber}* | ${cust} | Area: ${area} | Slot: ${slot} | Status: *${st}* | ASM: ${asm} | AE: ${ae}`);
+                });
+
+                if (records.length > maxShow) {
+                    lines.push(``);
+                    lines.push(`_...dan ${records.length - maxShow} WO lainnya._`);
+                }
+            }
+
+            ta.value = lines.join('\n');
+        }
+
+        function copyWAReportText() {
+            const ta = document.getElementById('wa-report-textarea');
+            if (!ta) return;
+            ta.select();
+            document.execCommand('copy');
+            showToast('Pesan WhatsApp berhasil disalin ke clipboard!', 'success');
+        }
+
+        function openWhatsAppShare() {
+            const ta = document.getElementById('wa-report-textarea');
+            const text = ta ? ta.value.trim() : '';
+            if (!text) {
+                showToast('Pesan WhatsApp masih kosong.', 'error');
+                return;
+            }
+            const url = `https://wa.me/?text=${encodeURIComponent(text)}`;
+            window.open(url, '_blank', 'noopener,noreferrer');
+        }
+
+        function openWOModal(woNumber) {
+            const wo = rawWorkOrders.find(item => item.workOrderNumber === woNumber);
+            if (!wo) return;
+            currentModalWO = wo;
+
+            const modal = document.getElementById('wo-modal');
+            const titleEl = document.getElementById('modal-wo-number');
+            const contentEl = document.getElementById('modal-content');
+            if (!modal || !titleEl || !contentEl) return;
+
+            titleEl.textContent = `${wo.workOrderNumber} — ${wo.endUserName || '-'}`;
+
+            const items = [
+                { label: 'Work Order Number', value: wo.workOrderNumber },
+                { label: 'Customer ID', value: wo.customerId },
+                { label: 'Cust / End User', value: wo.endUserName },
+                { label: 'Area (area asli)', value: getEffectiveArea(wo) },
+                { label: 'Area Fallback (area)', value: wo.area },
+                { label: 'Cluster Name', value: wo.clusterName },
+                { label: 'Nama BSM (bsmName)', value: wo.bsmName },
+                { label: 'Nama ASM (asmName)', value: wo.asmName },
+                { label: 'Nama AE (salesName)', value: wo.salesName },
+                { label: 'Kontraktor / IKR', value: wo.contractorName },
+                { label: 'Vendor Perangkat', value: wo.vendorName },
+                { label: 'Paket Layanan (plan)', value: wo.plan },
+                { label: 'Tanggal Appointment', value: wo.appointmentDate },
+                { label: 'Slot Time (slotTime)', value: normalizeSlotTime(wo.slotTime) },
+                { label: 'Appointment Status', value: wo.appointmentStatus },
+                { label: 'WO Repetition', value: `${Number(wo.woRepitation) || 1}x` },
+                { label: 'Unsuccessful Category', value: wo.unsuccessfulCategory },
+                { label: 'Unsuccessful Sub-Category', value: wo.unsucessfulSubCategory }
+            ];
+
+            contentEl.innerHTML = items.map(it => `
+                <div class="bg-slate-50 p-3 rounded-xl border border-slate-200/80">
+                    <div class="text-[11px] font-semibold text-slate-500 uppercase tracking-wider">${it.label}</div>
+                    <div class="text-sm font-bold text-slate-900 mt-0.5 break-words">${cleanText(it.value) || '-'}</div>
+                </div>
+            `).join('');
+
+            modal.classList.remove('hidden');
+            if (window.lucide && typeof window.lucide.createIcons === 'function') {
+                window.lucide.createIcons();
+            }
+        }
+
+        function closeModal() {
+            const modal = document.getElementById('wo-modal');
+            if (modal) modal.classList.add('hidden');
+        }
+
+        function copyModalWONumber() {
+            if (!currentModalWO) return;
+            const tmp = document.createElement('input');
+            tmp.value = currentModalWO.workOrderNumber;
+            document.body.appendChild(tmp);
+            tmp.select();
+            document.execCommand('copy');
+            document.body.removeChild(tmp);
+            showToast(`No. WO ${currentModalWO.workOrderNumber} disalin!`, 'success');
+        }
+
+        // ============================================================================
+        // 8. IMPOR EXCEL / CSV (SHEET "data WO" & KOLOM CD / INDEKS 81) + EKSPOR CSV
+        // ============================================================================
+        function getFieldFlexible(row, rowArray, exactIndex, candidates) {
+            // Prioritas indeks kolom langsung jika tersedia (misal kolom CD = indeks 81)
+            if (Array.isArray(rowArray) && typeof exactIndex === 'number' && exactIndex >= 0 && exactIndex < rowArray.length) {
+                const cellVal = rowArray[exactIndex];
+                if (cellVal !== undefined && cellVal !== null && cleanText(cellVal) !== '') {
+                    return cellVal;
+                }
+            }
+
+            if (row && typeof row === 'object') {
+                const keys = Object.keys(row);
+                for (const cand of candidates) {
+                    const target = cand.toLowerCase().replace(/[\s_-]+/g, ' ').trim();
+                    const matchKey = keys.find(k => k.toLowerCase().replace(/[\s_-]+/g, ' ').trim() === target);
+                    if (matchKey !== undefined && row[matchKey] !== undefined && row[matchKey] !== null && cleanText(row[matchKey]) !== '') {
+                        return row[matchKey];
+                    }
+                }
+            }
+            return '';
+        }
+
+        function handleFileUpload(event) {
+            const inputEl = event?.target;
+            const file = inputEl?.files?.[0];
+            if (!file) return;
+
+            if (typeof XLSX === 'undefined') {
+                showToast('Library SheetJS (XLSX) belum termuat.', 'error');
+                return;
+            }
+
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                try {
+                    const bytes = new Uint8Array(e.target.result);
+                    const workbook = XLSX.read(bytes, { type: 'array' });
+
+                    const sheetName = workbook.SheetNames.find(n => cleanText(n).toLowerCase() === 'data wo') || workbook.SheetNames[0];
+                    const worksheet = workbook.Sheets[sheetName];
+                    if (!worksheet) {
+                        showToast('Sheet tidak ditemukan di dalam file.', 'error');
+                        return;
+                    }
+
+                    const jsonRows = XLSX.utils.sheet_to_json(worksheet, { defval: '' });
+                    const matrixRows = XLSX.utils.sheet_to_json(worksheet, { header: 1, defval: '' });
+
+                    if (!jsonRows.length) {
+                        showToast('Sheet kosong atau tidak memiliki data WO.', 'error');
+                        return;
+                    }
+
+                    const mapped = jsonRows.map((row, idx) => {
+                        const rowArray = matrixRows[idx + 1] || [];
+
+                        let rawDate = getFieldFlexible(row, rowArray, -1, ['appointmentDate', 'Appointment Date', 'Tanggal Appointment']);
+                        if (typeof rawDate === 'number' && rawDate > 20000) {
+                            const epoch = new Date(Date.UTC(1899, 11, 30));
+                            rawDate = new Date(epoch.getTime() + rawDate * 86400000).toISOString().split('T')[0];
+                        }
+
+                        // Kolom CD = indeks 81 (0-based) untuk 'area asli'
+                        const areaAsliVal = getFieldFlexible(row, rowArray, 81, ['area asli', 'area_asli', 'areaAsli', 'Area Asli']);
+                        const areaVal = getFieldFlexible(row, rowArray, -1, ['area', 'Area', 'Kota', 'City']);
+
+                        return {
+                            workOrderNumber: cleanText(getFieldFlexible(row, rowArray, -1, ['workOrderNumber', 'Work Order Number', 'WO Number', 'No WO'])) || `WO-IMP-${idx + 1}`,
+                            customerId: cleanText(getFieldFlexible(row, rowArray, -1, ['customerId', 'Customer ID', 'Cust ID'])) || '-',
+                            endUserName: cleanText(getFieldFlexible(row, rowArray, -1, ['endUserName', 'End User Name', 'Customer Name', 'Nama Pelanggan'])) || '-',
+                            salesName: cleanText(getFieldFlexible(row, rowArray, -1, ['salesName', 'Sales Name', 'AE', 'Nama AE'])) || '-',
+                            areaAsli: cleanText(areaAsliVal),
+                            area: cleanText(areaVal),
+                            clusterName: cleanText(getFieldFlexible(row, rowArray, -1, ['clusterName', 'Cluster Name', 'Cluster'])) || '-',
+                            contractorName: cleanText(getFieldFlexible(row, rowArray, -1, ['contractorName', 'IKR', 'Contractor Name', 'Kontraktor'])) || 'Tidak Diketahui',
+                            vendorName: cleanText(getFieldFlexible(row, rowArray, -1, ['vendorName', 'Vendor Name', 'Vendor'])) || '-',
+                            plan: cleanText(getFieldFlexible(row, rowArray, -1, ['plan', 'Plan', 'Paket'])) || '-',
+                            serviceStatus: cleanText(getFieldFlexible(row, rowArray, -1, ['serviceStatus', 'Service Status'])) || '-',
+                            appointmentDate: cleanText(rawDate) || '-',
+                            slotTime: cleanText(getFieldFlexible(row, rowArray, -1, ['slotTime', 'Slot Time', 'Time Slot', 'Slot'])),
+                            appointmentStatus: cleanText(getFieldFlexible(row, rowArray, -1, ['appointmentStatus', 'Appointment Status', 'Status'])) || 'New',
+                            unsuccessfulCategory: cleanText(getFieldFlexible(row, rowArray, -1, ['unsuccessfulCategory', 'Unsuccessful Category'])) || '-',
+                            unsucessfulSubCategory: cleanText(getFieldFlexible(row, rowArray, -1, ['unsucessfulSubCategory', 'unsuccessfulSubCategory', 'Unsuccessful Sub Category'])) || '-',
+                            woRepitation: Number(getFieldFlexible(row, rowArray, -1, ['woRepitation', 'woRepetition', 'WO Repetition', 'Repetition'])) || 1,
+                            asmName: cleanText(getFieldFlexible(row, rowArray, -1, ['asmName', 'ASM Name', 'ASM', 'Nama ASM'])) || '-',
+                            bsmName: cleanText(getFieldFlexible(row, rowArray, -1, ['bsmName', 'BSM Name', 'BSM', 'Nama BSM'])) || '-'
+                        };
+                    });
+
+                    rawWorkOrders = mapped;
+
+                    const badge = document.getElementById('data-source-badge');
+                    if (badge) {
+                        badge.innerHTML = `<span class="w-1.5 h-1.5 rounded-full bg-blue-600"></span> ${file.name} [Sheet: ${sheetName}] (${mapped.length} WO)`;
+                        badge.className = 'inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-blue-50 text-blue-700 border border-blue-200';
+                    }
+
+                    const resetSampleBtn = document.getElementById('btn-reset-sample');
+                    if (resetSampleBtn) resetSampleBtn.classList.remove('hidden');
+
+                    resetAllFilters(false);
+                    showToast(`Berhasil mengimpor ${mapped.length} baris dari sheet "${sheetName}".`, 'success');
+                } catch (err) {
+                    console.error('Error impor file:', err);
+                    showToast('Gagal memproses file Excel/CSV. Pastikan format file valid.', 'error');
+                }
+            };
+            reader.readAsArrayBuffer(file);
+            if (inputEl) inputEl.value = '';
+        }
+
+        function resetToSampleData() {
+            rawWorkOrders = generateSampleData();
+
+            const badge = document.getElementById('data-source-badge');
+            if (badge) {
+                badge.innerHTML = `<span class="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span> Sampel "Monitoring Surabaya 2"`;
+                badge.className = 'inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200';
+            }
+
+            const resetSampleBtn = document.getElementById('btn-reset-sample');
+            if (resetSampleBtn) resetSampleBtn.classList.add('hidden');
+
+            resetAllFilters(true);
+        }
+
+        function exportFilteredCSV() {
+            if (!filteredWorkOrders.length) {
+                showToast('Tidak ada data terfilter untuk diekspor.', 'error');
+                return;
+            }
+
+            const headers = [
+                'workOrderNumber', 'customerId', 'endUserName', 'bsmName', 'asmName', 'salesName',
+                'area asli', 'area', 'clusterName', 'contractorName', 'slotTime',
+                'appointmentStatus', 'unsuccessfulCategory', 'unsucessfulSubCategory', 'woRepitation'
+            ];
+
+            const csvLines = [headers.join(',')];
+            filteredWorkOrders.forEach(wo => {
+                const rowVals = headers.map(h => {
+                    let val = '';
+                    if (h === 'area asli') val = getEffectiveArea(wo);
+                    else val = wo[h] ?? '';
+                    return `"${String(val).replace(/"/g, '""')}"`;
+                });
+                csvLines.push(rowVals.join(','));
+            });
+
+            const blob = new Blob([csvLines.join('\n')], { type: 'text/csv;charset=utf-8;' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `Monitoring_WO_${new Date().toISOString().slice(0, 10)}.csv`;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+
+            showToast(`Berhasil mengekspor ${filteredWorkOrders.length} data WO ke CSV.`, 'success');
+        }
+
+        // ============================================================================
+        // 9. TOAST NOTIFICATION
+        // ============================================================================
+        function showToast(message, type = 'info') {
+            const container = document.getElementById('toast-container');
+            if (!container) return;
+
+            const toast = document.createElement('div');
+            let styleClass = 'bg-slate-900 text-white border-slate-700';
+            let iconName = 'info';
+            if (type === 'success') {
+                styleClass = 'bg-emerald-700 text-white border-emerald-600';
+                iconName = 'check-circle';
+            } else if (type === 'error') {
+                styleClass = 'bg-rose-700 text-white border-rose-600';
+                iconName = 'alert-circle';
+            }
+
+            toast.className = `pointer-events-auto flex items-center gap-2.5 px-4 py-3 rounded-xl shadow-lg border text-xs sm:text-sm font-semibold fade-in ${styleClass}`;
+            toast.innerHTML = `<i data-lucide="${iconName}" class="w-4 h-4 shrink-0"></i><span>${message}</span>`;
+
+            container.appendChild(toast);
+            if (window.lucide && typeof window.lucide.createIcons === 'function') {
+                window.lucide.createIcons();
+            }
+
+            setTimeout(() => {
+                toast.style.opacity = '0';
+                toast.style.transform = 'translateY(6px)';
+                toast.style.transition = 'all 0.25s ease';
+                setTimeout(() => toast.remove(), 260);
+            }, 3000);
+        }
+
+        // ============================================================================
+        // 10. INISIALISASI AWAL
+        // ============================================================================
+        window.addEventListener('DOMContentLoaded', () => {
+            try {
+                resetAllFilters(false);
+            } catch (err) {
+                console.error('Gagal menginisialisasi dashboard:', err);
+                showToast('Terjadi kesalahan saat memuat dashboard.', 'error');
+            }
+        });
+    </script>
+</body>
+</html>
