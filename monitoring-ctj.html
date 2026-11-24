@@ -1,0 +1,2125 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Dashboard Monitoring Cluster Tanggung Jawab (CTJ)</title>
+
+  <!-- Google Fonts: Plus Jakarta Sans & Inter -->
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@600;700;800&display=swap" rel="stylesheet" />
+
+  <!-- Tailwind CSS via CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+
+  <!-- Font Awesome 6 -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" />
+
+  <!-- PapaParse for CSV Parsing -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js"></script>
+
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          fontFamily: {
+            sans: ['Inter', 'sans-serif'],
+            display: ['Plus Jakarta Sans', 'sans-serif'],
+          },
+          colors: {
+            whatsapp: '#25D366',
+            whatsappDark: '#1EBE5D',
+          },
+          boxShadow: {
+            soft: '0 4px 20px -2px rgba(15, 23, 42, 0.06)',
+            card: '0 10px 25px -5px rgba(15, 23, 42, 0.05), 0 8px 10px -6px rgba(15, 23, 42, 0.02)',
+          }
+        }
+      }
+    };
+  </script>
+
+  <style>
+    body {
+      background-color: #f1f5f9;
+      color: #0f172a;
+      overflow-x: hidden;
+    }
+    /* Custom scrollbar */
+    ::-webkit-scrollbar {
+      width: 6px;
+      height: 6px;
+    }
+    ::-webkit-scrollbar-track {
+      background: #f1f5f9;
+    }
+    ::-webkit-scrollbar-thumb {
+      background: #cbd5e1;
+      border-radius: 9999px;
+    }
+    ::-webkit-scrollbar-thumb:hover {
+      background: #94a3b8;
+    }
+    .pulse-ring {
+      animation: pulseRing 2s infinite;
+    }
+    @keyframes pulseRing {
+      0% { box-shadow: 0 0 0 0 rgba(37, 211, 102, 0.55); }
+      70% { box-shadow: 0 0 0 12px rgba(37, 211, 102, 0); }
+      100% { box-shadow: 0 0 0 0 rgba(37, 211, 102, 0); }
+    }
+  </style>
+</head>
+<body class="antialiased min-h-screen flex flex-col">
+
+  <!-- Toast Notification -->
+  <div id="toast" class="fixed bottom-6 left-1/2 -translate-x-1/2 z-50 hidden items-center gap-2.5 bg-slate-900 text-white px-5 py-3 rounded-full shadow-2xl text-sm font-medium transition-all duration-300">
+    <i id="toast-icon" class="fa-solid fa-circle-check text-emerald-400"></i>
+    <span id="toast-message">Berhasil disalin!</span>
+  </div>
+
+  <!-- Executive Header (Dark Slate Hybrid) -->
+  <header class="bg-gradient-to-r from-slate-950 via-slate-900 to-indigo-950 text-white border-b border-slate-800 sticky top-0 z-30">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
+      <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+        <!-- Brand & Title -->
+        <div class="flex items-center gap-3.5">
+          <div class="w-11 h-11 rounded-2xl bg-gradient-to-br from-indigo-500 to-emerald-500 flex items-center justify-center shadow-lg shrink-0">
+            <i class="fa-solid fa-network-wired text-white text-lg"></i>
+          </div>
+          <div>
+            <div class="flex items-center gap-2 flex-wrap">
+              <h1 class="font-display text-lg sm:text-xl font-extrabold tracking-tight text-white">
+                Monitoring Cluster Tanggung Jawab (CTJ)
+              </h1>
+              <span id="data-source-badge" class="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[11px] font-semibold bg-amber-500/20 text-amber-300 border border-amber-500/30">
+                <span class="w-1.5 h-1.5 rounded-full bg-amber-400 animate-ping"></span>
+                Memuat Data...
+              </span>
+            </div>
+            <p class="text-xs text-slate-400 mt-0.5 flex flex-wrap items-center gap-x-3 gap-y-1">
+              <span><i class="fa-regular fa-calendar mr-1 text-indigo-400"></i>Selasa, 24 November 2026 (Week 4)</span>
+              <span class="hidden sm:inline text-slate-600">•</span>
+              <span>Target Minimal: <strong class="text-emerald-400">20 Visit MTD</strong></span>
+            </p>
+          </div>
+        </div>
+
+        <!-- Action Controls & Iconic Green WA Button -->
+        <div class="flex items-center gap-2.5 self-start md:self-auto">
+          <button onclick="fetchGoogleSheetData(true)" title="Muat Ulang Data dari Google Sheets" class="inline-flex items-center gap-2 px-3.5 py-2.5 rounded-xl bg-slate-800/90 hover:bg-slate-700 text-slate-200 text-xs font-semibold border border-slate-700 transition cursor-pointer">
+            <i id="refresh-icon" class="fa-solid fa-rotate"></i>
+            <span class="hidden sm:inline">Refresh Live</span>
+          </button>
+
+          <button onclick="openDataModal()" title="Import CSV / Atur Sumber Data" class="inline-flex items-center gap-2 px-3.5 py-2.5 rounded-xl bg-slate-800/90 hover:bg-slate-700 text-slate-200 text-xs font-semibold border border-slate-700 transition cursor-pointer">
+            <i class="fa-solid fa-file-csv text-indigo-400"></i>
+            <span class="hidden sm:inline">Sumber / CSV</span>
+          </button>
+
+          <!-- Tombol Report WA: Hanya Logo WA Hijau Gambar Telepon -->
+          <button
+            onclick="openWhatsAppModal()"
+            title="Generate Report WhatsApp (Sesuai Filter Aktif)"
+            aria-label="Generate Report WhatsApp"
+            class="w-11 h-11 rounded-full bg-[#25D366] hover:bg-[#1EBE5D] active:scale-95 text-white flex items-center justify-center shadow-lg pulse-ring transition-all cursor-pointer shrink-0"
+          >
+            <!-- SVG Logo WhatsApp (Lingkaran Hijau dengan Gagang Telepon Putih) -->
+            <svg class="w-6 h-6 fill-current" viewBox="0 0 448 512" aria-hidden="true">
+              <path d="M380.9 97.1C339 55.1 283.2 32 223.9 32c-122.4 0-222 99.6-222 222 0 39.1 10.2 77.3 29.6 111L0 480l117.7-30.9c32.4 17.7 68.9 27 106.1 27h.1c122.3 0 224.1-99.6 224.1-222 0-59.3-25.2-115-67.1-157zm-157 341.6c-33.2 0-65.7-8.9-94-25.7l-6.7-4-69.8 18.3L72 359.2l-4.4-7c-18.5-29.4-28.2-63.3-28.2-98.2 0-101.7 82.8-184.5 184.6-184.5 49.3 0 95.6 19.2 130.4 54.1 34.8 34.9 56.2 81.2 56.1 130.5 0 101.8-84.9 184.6-186.6 184.6zm101.2-138.2c-5.5-2.8-32.8-16.2-37.9-18-5.1-1.9-8.8-2.8-12.5 2.8-3.7 5.6-14.3 18-17.6 21.8-3.2 3.7-6.5 4.2-12 1.4-32.6-16.3-54-29.1-75.5-66-5.7-9.8 5.7-9.1 16.3-30.3 1.8-3.7.9-6.9-.5-9.7-1.4-2.8-12.5-30.1-17.1-41.2-4.5-10.8-9.1-9.3-12.5-9.5-3.2-.2-6.9-.2-10.6-.2-3.7 0-9.7 1.4-14.8 6.9-5.1 5.6-19.4 19-19.4 46.3 0 27.3 19.9 53.7 22.6 57.4 2.8 3.7 39.1 59.7 94.8 83.8 35.2 15.2 49 16.5 66.6 13.9 10.7-1.6 32.8-13.4 37.4-26.4 4.6-13 4.6-24.1 3.2-26.4-1.3-2.5-5-3.9-10.5-6.6z"/>
+            </svg>
+          </button>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <!-- Main Content -->
+  <main class="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-6 space-y-6">
+
+    <!-- Filter & Parameter Bar -->
+    <section class="bg-white rounded-2xl shadow-card border border-slate-200/80 p-4 sm:p-5">
+      <div class="flex flex-col lg:flex-row lg:items-center justify-between gap-3 pb-3.5 mb-4 border-b border-slate-100">
+        <div class="flex items-center gap-2">
+          <span class="w-7 h-7 rounded-lg bg-indigo-50 text-indigo-600 flex items-center justify-center text-xs">
+            <i class="fa-solid fa-sliders"></i>
+          </span>
+          <h2 class="font-display font-bold text-sm text-slate-800">Filter Monitoring & Acuan Target Week 4</h2>
+        </div>
+
+        <!-- Parameter Week & Sisa Hari Bulan Ini -->
+        <div class="flex flex-wrap items-center gap-2.5 text-xs">
+          <div class="flex items-center gap-1.5 bg-slate-50 border border-slate-200 rounded-xl px-3 py-1.5">
+            <label for="week-target-select" class="font-semibold text-slate-600">Acuan Week:</label>
+            <select id="week-target-select" onchange="applyFilters()" class="bg-transparent font-bold text-indigo-700 focus:outline-none cursor-pointer">
+              <option value="5">Week 1 (Tgl 1–7 | Min. 5 Visit)</option>
+              <option value="10">Week 2 (Tgl 8–14 | Min. 10 Visit)</option>
+              <option value="15">Week 3 (Tgl 15–21 | Min. 15 Visit)</option>
+              <option value="20" selected>Week 4 (Tgl 22–Akhir Bln | Min. 20 Visit)</option>
+            </select>
+          </div>
+
+          <div class="flex items-center gap-1.5 bg-amber-50/70 border border-amber-200/80 rounded-xl px-3 py-1.5" title="Jumlah hari tersisa sampai akhir bulan (24 Nov - 30 Nov = 7 hari)">
+            <label for="remaining-days-input" class="font-semibold text-amber-900">Sisa Hari Bln Ini:</label>
+            <input id="remaining-days-input" type="number" min="1" max="31" value="7" onchange="applyFilters()" class="w-12 text-center font-bold text-amber-800 bg-white border border-amber-300 rounded-lg py-0.5 focus:outline-none focus:ring-2 focus:ring-amber-400" />
+            <span class="text-amber-800 font-medium">hari</span>
+          </div>
+
+          <button onclick="resetFilters()" class="px-3 py-1.5 rounded-xl text-slate-500 hover:text-slate-800 hover:bg-slate-100 font-semibold transition cursor-pointer">
+            <i class="fa-solid fa-rotate-left mr-1"></i>Reset Filter
+          </button>
+        </div>
+      </div>
+
+      <!-- Dropdown Filters Grid -->
+      <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-6 gap-3">
+        <!-- BM Filter (Default Benny Hadiawan) -->
+        <div>
+          <label class="block text-[11px] font-bold uppercase tracking-wider text-slate-500 mb-1">Business Manager (BM)</label>
+          <select id="filter-bm" onchange="onBMChange()" class="w-full rounded-xl border border-slate-200 bg-slate-50/60 hover:bg-white focus:bg-white px-3 py-2 text-xs font-semibold text-slate-800 focus:outline-none focus:ring-2 focus:ring-indigo-500 transition">
+            <option value="BENNY HADIAWAN">BENNY HADIAWAN</option>
+          </select>
+        </div>
+
+        <!-- ASM Filter -->
+        <div>
+          <label class="block text-[11px] font-bold uppercase tracking-wider text-slate-500 mb-1">ASM</label>
+          <select id="filter-asm" onchange="onASMChange()" class="w-full rounded-xl border border-slate-200 bg-slate-50/60 hover:bg-white focus:bg-white px-3 py-2 text-xs font-semibold text-slate-800 focus:outline-none focus:ring-2 focus:ring-indigo-500 transition">
+            <option value="ALL">Semua ASM</option>
+          </select>
+        </div>
+
+        <!-- AE Filter -->
+        <div>
+          <label class="block text-[11px] font-bold uppercase tracking-wider text-slate-500 mb-1">Account Executive (AE)</label>
+          <select id="filter-ae" onchange="applyFilters()" class="w-full rounded-xl border border-slate-200 bg-slate-50/60 hover:bg-white focus:bg-white px-3 py-2 text-xs font-semibold text-slate-800 focus:outline-none focus:ring-2 focus:ring-indigo-500 transition">
+            <option value="ALL">Semua AE</option>
+          </select>
+        </div>
+
+        <!-- Kota / Area Filter -->
+        <div>
+          <label class="block text-[11px] font-bold uppercase tracking-wider text-slate-500 mb-1">Kota / Area</label>
+          <select id="filter-city" onchange="applyFilters()" class="w-full rounded-xl border border-slate-200 bg-slate-50/60 hover:bg-white focus:bg-white px-3 py-2 text-xs font-semibold text-slate-800 focus:outline-none focus:ring-2 focus:ring-indigo-500 transition">
+            <option value="ALL">Semua Kota / Area</option>
+          </select>
+        </div>
+
+        <!-- RFS Classification Filter -->
+        <div>
+          <label class="block text-[11px] font-bold uppercase tracking-wider text-slate-500 mb-1">RFS Classification</label>
+          <select id="filter-rfs" onchange="applyFilters()" class="w-full rounded-xl border border-slate-200 bg-slate-50/60 hover:bg-white focus:bg-white px-3 py-2 text-xs font-semibold text-slate-800 focus:outline-none focus:ring-2 focus:ring-indigo-500 transition">
+            <option value="ALL">Semua RFS Class</option>
+          </select>
+        </div>
+
+        <!-- Status SA Filter -->
+        <div>
+          <label class="block text-[11px] font-bold uppercase tracking-wider text-slate-500 mb-1">Status SA</label>
+          <select id="filter-sa" onchange="applyFilters()" class="w-full rounded-xl border border-slate-200 bg-slate-50/60 hover:bg-white focus:bg-white px-3 py-2 text-xs font-semibold text-slate-800 focus:outline-none focus:ring-2 focus:ring-indigo-500 transition">
+            <option value="ALL">Semua Status SA</option>
+            <option value="ZONK">ZONK SA (0 SA)</option>
+            <option value="ADA">Ada SA (&ge; 1 SA)</option>
+          </select>
+        </div>
+
+        <!-- Search Box -->
+        <div>
+          <label class="block text-[11px] font-bold uppercase tracking-wider text-slate-500 mb-1">Cari Cluster / Kec.</label>
+          <div class="relative">
+            <i class="fa-solid fa-magnifying-glass absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-xs"></i>
+            <input id="filter-search" type="text" oninput="applyFilters()" placeholder="ID, Nama Cluster, Kec..." class="w-full rounded-xl border border-slate-200 bg-slate-50/60 hover:bg-white focus:bg-white pl-8 pr-3 py-2 text-xs font-medium text-slate-800 focus:outline-none focus:ring-2 focus:ring-indigo-500 transition" />
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- 4 KPI Cards Utama -->
+    <section class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+      <!-- KPI 1: Total Cluster CTJ -->
+      <div onclick="switchTab('all')" class="bg-white rounded-2xl p-5 shadow-card border border-slate-200/80 hover:border-indigo-300 transition cursor-pointer group relative overflow-hidden">
+        <div class="flex items-start justify-between">
+          <div>
+            <p class="text-xs font-bold uppercase tracking-wider text-slate-400">Total Cluster CTJ</p>
+            <h3 id="kpi-total-cluster" class="font-display text-3xl font-extrabold text-slate-900 mt-1.5">0</h3>
+          </div>
+          <div class="w-11 h-11 rounded-2xl bg-indigo-50 text-indigo-600 flex items-center justify-center group-hover:scale-110 transition">
+            <i class="fa-solid fa-layer-group text-lg"></i>
+          </div>
+        </div>
+        <div class="mt-3 pt-3 border-t border-slate-100 flex items-center justify-between text-xs">
+          <span id="kpi-bm-label" class="font-semibold text-indigo-600 truncate max-w-[180px]">BM: BENNY HADIAWAN</span>
+          <span id="kpi-total-hp" class="text-slate-500 font-medium">0 HP</span>
+        </div>
+      </div>
+
+      <!-- KPI 2: Total Cluster ZONK SA (Clickable for Detail Modal) -->
+      <div onclick="openZonkModal()" class="bg-white rounded-2xl p-5 shadow-card border-2 border-rose-200/90 hover:border-rose-500 hover:shadow-lg transition cursor-pointer group relative overflow-hidden">
+        <div class="absolute top-0 right-0 bg-rose-500 text-white text-[10px] font-bold px-2.5 py-0.5 rounded-bl-xl">
+          <i class="fa-solid fa-hand-pointer mr-1"></i>Klik Detail
+        </div>
+        <div class="flex items-start justify-between">
+          <div>
+            <p class="text-xs font-bold uppercase tracking-wider text-rose-600">Total Cluster ZONK SA</p>
+            <div class="flex items-baseline gap-2 mt-1.5">
+              <h3 id="kpi-zonk-count" class="font-display text-3xl font-extrabold text-rose-600">0</h3>
+              <span id="kpi-zonk-pct" class="text-xs font-bold text-rose-500 bg-rose-50 px-2 py-0.5 rounded-full">0%</span>
+            </div>
+          </div>
+          <div class="w-11 h-11 rounded-2xl bg-rose-50 text-rose-600 flex items-center justify-center group-hover:scale-110 transition mt-2">
+            <i class="fa-solid fa-triangle-exclamation text-lg"></i>
+          </div>
+        </div>
+        <div class="mt-3 pt-3 border-t border-rose-100/70 flex items-center justify-between text-xs">
+          <span class="font-semibold text-rose-700 group-hover:underline">Lihat daftar detail ZONK SA &rarr;</span>
+          <span id="kpi-zonk-hp" class="text-slate-500 font-medium">0 HP Avail</span>
+        </div>
+      </div>
+
+      <!-- KPI 3: Visit Belum Sesuai Target (< 20 Visit MTD) -->
+      <div onclick="openUnderVisitModal('UNDER')" class="bg-white rounded-2xl p-5 shadow-card border-2 border-amber-200/90 hover:border-amber-500 hover:shadow-lg transition cursor-pointer group relative overflow-hidden">
+        <div class="absolute top-0 right-0 bg-amber-500 text-white text-[10px] font-bold px-2.5 py-0.5 rounded-bl-xl">
+          <i class="fa-solid fa-hand-pointer mr-1"></i>Klik Detail
+        </div>
+        <div class="flex items-start justify-between">
+          <div>
+            <p class="text-xs font-bold uppercase tracking-wider text-amber-700">Visit &lt; Target (<span id="kpi-target-num">20</span>)</p>
+            <div class="flex items-baseline gap-2 mt-1.5" onclick="event.stopPropagation(); openUnderVisitModal('UNDER')" title="Klik untuk melihat seluruh cluster kurang target">
+              <h3 id="kpi-under-visit" class="font-display text-3xl font-extrabold text-amber-600 hover:underline decoration-2 underline-offset-4">0</h3>
+              <span id="kpi-under-pct" class="text-xs font-bold text-amber-700 bg-amber-50 px-2 py-0.5 rounded-full">0%</span>
+            </div>
+          </div>
+          <div class="w-11 h-11 rounded-2xl bg-amber-50 text-amber-600 flex items-center justify-center group-hover:scale-110 transition mt-2">
+            <i class="fa-solid fa-person-walking-arrow-right text-lg"></i>
+          </div>
+        </div>
+        <div class="mt-3 pt-3 border-t border-amber-100/70 flex items-center justify-between text-[11px] gap-2">
+          <button type="button" onclick="event.stopPropagation(); openUnderVisitModal('DAILY')" title="Klik untuk melihat detail cluster Wajib Visit Tiap Hari" class="font-bold text-amber-800 hover:bg-amber-100 px-2 py-1 rounded-lg transition cursor-pointer flex items-center gap-1">
+            <span>Wajib Tiap Hari: <strong id="kpi-daily-must" class="underline decoration-amber-500">0</strong></span>
+          </button>
+          <button type="button" onclick="event.stopPropagation(); openUnderVisitModal('CRITICAL')" title="Klik untuk melihat detail cluster Kritis (>1x/Hari)" class="font-bold text-rose-600 hover:bg-rose-50 px-2 py-1 rounded-lg transition cursor-pointer flex items-center gap-1">
+            <span>Kritis: <strong id="kpi-critical-visit" class="underline decoration-rose-400">0</strong></span>
+          </button>
+        </div>
+      </div>
+
+      <!-- KPI 4: Visit On-Target (>= 20 Visit MTD) -->
+      <div onclick="switchTab('all')" class="bg-white rounded-2xl p-5 shadow-card border border-slate-200/80 hover:border-emerald-300 transition cursor-pointer group relative overflow-hidden">
+        <div class="flex items-start justify-between">
+          <div>
+            <p class="text-xs font-bold uppercase tracking-wider text-emerald-700">Visit On-Target (&ge;<span id="kpi-ontarget-num">20</span>)</p>
+            <div class="flex items-baseline gap-2 mt-1.5">
+              <h3 id="kpi-on-target" class="font-display text-3xl font-extrabold text-emerald-600">0</h3>
+              <span id="kpi-ontarget-pct" class="text-xs font-bold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded-full">0%</span>
+            </div>
+          </div>
+          <div class="w-11 h-11 rounded-2xl bg-emerald-50 text-emerald-600 flex items-center justify-center group-hover:scale-110 transition">
+            <i class="fa-solid fa-circle-check text-lg"></i>
+          </div>
+        </div>
+        <div class="mt-3 pt-3 border-t border-slate-100 flex items-center justify-between text-xs">
+          <span class="font-semibold text-emerald-700">Total SA Tercapai</span>
+          <span id="kpi-total-sa" class="font-extrabold text-indigo-700">0 SA</span>
+        </div>
+      </div>
+    </section>
+
+    <!-- Legenda Acuan Target Mingguan (Week 1 - Week 4) -->
+    <section class="bg-white rounded-2xl shadow-soft border border-slate-200/80 px-4 py-3 flex flex-col sm:flex-row sm:items-center justify-between gap-2.5">
+      <div class="text-xs font-semibold text-slate-600 flex items-center gap-2">
+        <i class="fa-solid fa-bullseye text-indigo-600"></i>
+        <span>Acuan Target Visit MTD (Minimal 5 Visit / Minggu):</span>
+      </div>
+      <div class="grid grid-cols-2 sm:grid-cols-4 gap-2 text-[11px]">
+        <div class="px-3 py-1.5 rounded-xl bg-slate-100 text-slate-600 border border-slate-200 flex items-center justify-between gap-2">
+          <span>W1 (1–7)</span>
+          <strong class="text-slate-800">Min. 5</strong>
+        </div>
+        <div class="px-3 py-1.5 rounded-xl bg-slate-100 text-slate-600 border border-slate-200 flex items-center justify-between gap-2">
+          <span>W2 (8–14)</span>
+          <strong class="text-slate-800">Min. 10</strong>
+        </div>
+        <div class="px-3 py-1.5 rounded-xl bg-slate-100 text-slate-600 border border-slate-200 flex items-center justify-between gap-2">
+          <span>W3 (15–21)</span>
+          <strong class="text-slate-800">Min. 15</strong>
+        </div>
+        <div class="px-3 py-1.5 rounded-xl bg-indigo-600 text-white border border-indigo-700 shadow-sm flex items-center justify-between gap-2">
+          <span>W4 (22–Akhir)</span>
+          <strong>Min. 20</strong>
+        </div>
+      </div>
+    </section>
+
+    <!-- Tabel Ringkasan Informasi RFS Classification -->
+    <section class="bg-white rounded-2xl shadow-card border border-slate-200/80 p-4 sm:p-5 space-y-4">
+      <div class="flex flex-col md:flex-row md:items-center justify-between gap-3 border-b border-slate-100 pb-3.5">
+        <div class="flex items-center gap-2.5">
+          <div class="w-9 h-9 rounded-xl bg-indigo-50 text-indigo-600 flex items-center justify-center text-sm shrink-0">
+            <i class="fa-solid fa-layer-group"></i>
+          </div>
+          <div>
+            <div class="flex items-center gap-2 flex-wrap">
+              <h2 class="font-display font-bold text-sm sm:text-base text-slate-900">
+                Ringkasan Informasi RFS Classification
+              </h2>
+              <span id="rfs-active-filter-badge" class="hidden px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-indigo-100 text-indigo-800 border border-indigo-200">
+                Filter RFS Aktif
+              </span>
+            </div>
+            <p class="text-xs text-slate-500">
+              Rekap dinamis per kategori umur RFS (P0, P1, P2, P3, P4, P5, dll.) sesuai filter aktif &bull; <span class="text-indigo-600 font-semibold">Klik baris untuk menyaring / reset filter RFS</span>
+            </p>
+          </div>
+        </div>
+
+        <div class="flex items-center gap-2 self-start md:self-auto">
+          <button id="btn-clear-rfs-filter" onclick="clearRFSFilter()" class="hidden px-3 py-1.5 rounded-xl bg-indigo-50 hover:bg-indigo-100 text-indigo-700 border border-indigo-200 text-xs font-bold transition cursor-pointer">
+            <i class="fa-solid fa-filter-circle-xmark mr-1"></i>Tampilkan Semua RFS
+          </button>
+          <span id="rfs-class-count-badge" class="px-3 py-1.5 rounded-xl bg-slate-100 text-slate-700 text-xs font-bold">
+            0 Kategori RFS
+          </span>
+        </div>
+      </div>
+
+      <div class="overflow-x-auto rounded-xl border border-slate-200">
+        <table class="w-full text-left border-collapse">
+          <thead>
+            <tr class="bg-slate-900 text-white text-[11px] uppercase tracking-wider">
+              <th class="py-3 px-3.5 font-bold">RFS Classification</th>
+              <th class="py-3 px-3.5 font-bold text-center">Total Cluster</th>
+              <th class="py-3 px-3.5 font-bold text-center text-rose-300">ZONK SA</th>
+              <th class="py-3 px-3.5 font-bold text-center text-amber-300">Belum Target (&lt;20)</th>
+              <th class="py-3 px-3.5 font-bold text-center text-amber-200">Wajib Visit Harian</th>
+              <th class="py-3 px-3.5 font-bold text-right">Total HP</th>
+              <th class="py-3 px-3.5 font-bold text-right">Total Subs</th>
+              <th class="py-3 px-3.5 font-bold text-center">Pen Rate %</th>
+              <th class="py-3 px-3.5 font-bold text-center">Visit MTD (Total / Avg)</th>
+            </tr>
+          </thead>
+          <tbody id="tbody-rfs-summary" class="divide-y divide-slate-100 text-xs">
+            <!-- Populated by JS -->
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <!-- Navigation Tabs -->
+    <section class="bg-white rounded-2xl shadow-card border border-slate-200/80 overflow-hidden">
+      <div class="border-b border-slate-200 bg-slate-50/70 px-4 pt-3 flex flex-wrap items-center justify-between gap-3">
+        <div class="flex items-center gap-1.5 overflow-x-auto">
+          <button id="tab-btn-visit" onclick="switchTab('visit')" class="tab-btn px-4 py-2.5 rounded-t-xl text-xs sm:text-sm font-bold border-b-2 border-indigo-600 text-indigo-700 bg-white flex items-center gap-2 transition cursor-pointer whitespace-nowrap">
+            <i class="fa-solid fa-route"></i>
+            <span>Kurang Target & Wajib Visit Harian</span>
+            <span id="badge-tab-visit" class="px-2 py-0.5 text-[11px] rounded-full bg-amber-100 text-amber-800">0</span>
+          </button>
+
+          <button id="tab-btn-zonk" onclick="switchTab('zonk')" class="tab-btn px-4 py-2.5 rounded-t-xl text-xs sm:text-sm font-semibold border-b-2 border-transparent text-slate-500 hover:text-slate-800 flex items-center gap-2 transition cursor-pointer whitespace-nowrap">
+            <i class="fa-solid fa-circle-exclamation text-rose-500"></i>
+            <span>Cluster ZONK SA</span>
+            <span id="badge-tab-zonk" class="px-2 py-0.5 text-[11px] rounded-full bg-rose-100 text-rose-700">0</span>
+          </button>
+
+          <button id="tab-btn-all" onclick="switchTab('all')" class="tab-btn px-4 py-2.5 rounded-t-xl text-xs sm:text-sm font-semibold border-b-2 border-transparent text-slate-500 hover:text-slate-800 flex items-center gap-2 transition cursor-pointer whitespace-nowrap">
+            <i class="fa-solid fa-table-list"></i>
+            <span>Semua Cluster & Rekap ASM/AE</span>
+            <span id="badge-tab-all" class="px-2 py-0.5 text-[11px] rounded-full bg-slate-200 text-slate-700">0</span>
+          </button>
+        </div>
+
+        <!-- Quick WA Report Trigger inside Tab Header -->
+        <div class="pb-2 flex items-center gap-2">
+          <button onclick="openWhatsAppModal()" class="inline-flex items-center gap-2 px-3 py-1.5 rounded-xl bg-emerald-50 hover:bg-emerald-100 text-emerald-800 border border-emerald-200 text-xs font-bold transition cursor-pointer">
+            <span class="w-5 h-5 rounded-full bg-[#25D366] text-white flex items-center justify-center">
+              <i class="fa-solid fa-phone text-[10px]"></i>
+            </span>
+            <span>Preview Text Report WA</span>
+          </button>
+        </div>
+      </div>
+
+      <!-- TAB 1: MONITORING VISIT & WAJIB VISIT HARIAN -->
+      <div id="tab-content-visit" class="p-4 sm:p-6 space-y-4">
+        <!-- Info Banner & Sub-filter -->
+        <div class="flex flex-col lg:flex-row lg:items-center justify-between gap-3 bg-amber-50/70 border border-amber-200/80 rounded-2xl p-4">
+          <div class="space-y-1">
+            <h3 class="font-display font-bold text-sm text-amber-950 flex items-center gap-2">
+              <i class="fa-solid fa-fire text-amber-600"></i>
+              Daftar Cluster Kurang Target Visit & Wajib Visit Setiap Hari
+            </h3>
+            <p class="text-xs text-amber-800 leading-relaxed">
+              Target minimal saat ini <strong id="info-target-visit">20</strong> visit MTD. Dengan sisa <strong id="info-sisa-hari">7</strong> hari sampai akhir bulan, cluster dengan kekurangan <strong>&le; <span id="info-sisa-hari-2">7</span> visit</strong> masuk kategori <span class="px-1.5 py-0.5 rounded bg-amber-200/80 font-bold text-amber-950">WAJIB VISIT TIAP HARI</span> agar target 20 visit terpenuhi!
+            </p>
+          </div>
+
+          <!-- Sub-filter pills -->
+          <div class="flex flex-wrap items-center gap-1.5 shrink-0">
+            <button onclick="setVisitSubFilter('UNDER')" id="subfilter-UNDER" class="visit-sub-btn px-3 py-1.5 rounded-xl text-xs font-bold bg-slate-900 text-white shadow-sm cursor-pointer transition">
+              Semua Kurang Target (<span id="count-sub-under">0</span>)
+            </button>
+            <button onclick="setVisitSubFilter('DAILY')" id="subfilter-DAILY" class="visit-sub-btn px-3 py-1.5 rounded-xl text-xs font-semibold bg-white text-amber-800 border border-amber-300 hover:bg-amber-100 cursor-pointer transition">
+              Wajib Visit Tiap Hari (<span id="count-sub-daily">0</span>)
+            </button>
+            <button onclick="setVisitSubFilter('CRITICAL')" id="subfilter-CRITICAL" class="visit-sub-btn px-3 py-1.5 rounded-xl text-xs font-semibold bg-white text-rose-700 border border-rose-300 hover:bg-rose-50 cursor-pointer transition">
+              Kritis / &gt;1 Visit/Hari (<span id="count-sub-critical">0</span>)
+            </button>
+          </div>
+        </div>
+
+        <!-- Table Visit -->
+        <div class="overflow-x-auto rounded-xl border border-slate-200">
+          <table class="w-full text-left border-collapse">
+            <thead>
+              <tr class="bg-slate-900 text-white text-[11px] uppercase tracking-wider">
+                <th class="py-3 px-3.5 font-bold">No</th>
+                <th class="py-3 px-3.5 font-bold">Cluster Info</th>
+                <th class="py-3 px-3.5 font-bold">Kecamatan / Kota</th>
+                <th class="py-3 px-3.5 font-bold">ASM / AE</th>
+                <th class="py-3 px-3.5 font-bold text-center">Visit MTD</th>
+                <th class="py-3 px-3.5 font-bold text-center">Kurang</th>
+                <th class="py-3 px-3.5 font-bold text-center">Kebutuhan / Hari</th>
+                <th class="py-3 px-3.5 font-bold">Status Kejar Target</th>
+                <th class="py-3 px-3.5 font-bold text-center">SA</th>
+              </tr>
+            </thead>
+            <tbody id="tbody-visit" class="divide-y divide-slate-100 text-xs">
+              <!-- Populated by JS -->
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- TAB 2: DETAIL CLUSTER ZONK SA -->
+      <div id="tab-content-zonk" class="hidden p-4 sm:p-6 space-y-4">
+        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-rose-50/80 border border-rose-200 rounded-2xl p-4">
+          <div>
+            <h3 class="font-display font-bold text-sm text-rose-950 flex items-center gap-2">
+              <i class="fa-solid fa-triangle-exclamation text-rose-600"></i>
+              Detail Cluster ZONK SA (0 Sales Activation)
+            </h3>
+            <p class="text-xs text-rose-800 mt-0.5">
+              Daftar cluster tanggung jawab yang masih belum menghasilkan SA. Prioritaskan cluster dengan <strong>HP Available tinggi</strong>.
+            </p>
+          </div>
+          <div class="flex items-center gap-2">
+            <label class="text-xs font-semibold text-rose-900">Urutkan:</label>
+            <select id="zonk-sort" onchange="renderZonkTable()" class="rounded-xl border border-rose-300 bg-white px-3 py-1.5 text-xs font-bold text-rose-900 focus:outline-none">
+              <option value="hp_desc">HP Available Terbesar</option>
+              <option value="visit_asc">Visit MTD Paling Sedikit</option>
+              <option value="visit_desc">Visit MTD Terbanyak (Sudah sering divisit tapi ZONK)</option>
+              <option value="name_asc">Nama Cluster (A-Z)</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="overflow-x-auto rounded-xl border border-slate-200">
+          <table class="w-full text-left border-collapse">
+            <thead>
+              <tr class="bg-rose-950 text-white text-[11px] uppercase tracking-wider">
+                <th class="py-3 px-3.5 font-bold">No</th>
+                <th class="py-3 px-3.5 font-bold">Cluster ID & Nama</th>
+                <th class="py-3 px-3.5 font-bold">Kecamatan / Kota</th>
+                <th class="py-3 px-3.5 font-bold">RFS Class</th>
+                <th class="py-3 px-3.5 font-bold text-right">HP Total</th>
+                <th class="py-3 px-3.5 font-bold text-right">HP Avail</th>
+                <th class="py-3 px-3.5 font-bold text-center">Visit MTD</th>
+                <th class="py-3 px-3.5 font-bold">Status SA</th>
+                <th class="py-3 px-3.5 font-bold">ASM / AE</th>
+              </tr>
+            </thead>
+            <tbody id="tbody-zonk" class="divide-y divide-slate-100 text-xs">
+              <!-- Populated by JS -->
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- TAB 3: SEMUA CLUSTER & REKAP PER ASM/AE -->
+      <div id="tab-content-all" class="hidden p-4 sm:p-6 space-y-6">
+        <!-- Rekap Summary per ASM / AE -->
+        <div>
+          <h3 class="font-display font-bold text-sm text-slate-800 mb-3 flex items-center gap-2">
+            <i class="fa-solid fa-users-viewfinder text-indigo-600"></i>
+            Ringkasan Performa per ASM & AE (Sesuai Filter Aktif)
+          </h3>
+          <div class="overflow-x-auto rounded-xl border border-slate-200">
+            <table class="w-full text-left border-collapse">
+              <thead>
+                <tr class="bg-slate-100 text-slate-700 text-[11px] uppercase tracking-wider border-b border-slate-200">
+                  <th class="py-2.5 px-3.5 font-bold">ASM</th>
+                  <th class="py-2.5 px-3.5 font-bold">AE</th>
+                  <th class="py-2.5 px-3.5 font-bold text-center">Total Cluster</th>
+                  <th class="py-2.5 px-3.5 font-bold text-center text-rose-700">ZONK SA</th>
+                  <th class="py-2.5 px-3.5 font-bold text-center text-amber-700">Visit &lt; Target</th>
+                  <th class="py-2.5 px-3.5 font-bold text-center text-amber-800">Wajib Tiap Hari</th>
+                  <th class="py-2.5 px-3.5 font-bold text-center text-emerald-700">Visit On-Target</th>
+                  <th class="py-2.5 px-3.5 font-bold text-center text-indigo-700">Total SA</th>
+                </tr>
+              </thead>
+              <tbody id="tbody-summary-team" class="divide-y divide-slate-100 text-xs">
+                <!-- Populated by JS -->
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- Full Master Table -->
+        <div>
+          <div class="flex items-center justify-between mb-3">
+            <h3 class="font-display font-bold text-sm text-slate-800 flex items-center gap-2">
+              <i class="fa-solid fa-database text-indigo-600"></i>
+              Seluruh Data Cluster CTJ (<span id="all-table-count">0</span> Cluster)
+            </h3>
+          </div>
+          <div class="overflow-x-auto rounded-xl border border-slate-200 max-h-[540px]">
+            <table class="w-full text-left border-collapse">
+              <thead class="sticky top-0 z-10">
+                <tr class="bg-slate-900 text-white text-[11px] uppercase tracking-wider">
+                  <th class="py-3 px-3.5 font-bold">No</th>
+                  <th class="py-3 px-3.5 font-bold">Cluster ID</th>
+                  <th class="py-3 px-3.5 font-bold">Cluster Name</th>
+                  <th class="py-3 px-3.5 font-bold">Kecamatan / Kota</th>
+                  <th class="py-3 px-3.5 font-bold text-right">HP Avail</th>
+                  <th class="py-3 px-3.5 font-bold text-center">Visit MTD</th>
+                  <th class="py-3 px-3.5 font-bold">Status Visit</th>
+                  <th class="py-3 px-3.5 font-bold text-center">Total SA</th>
+                  <th class="py-3 px-3.5 font-bold">Status SA</th>
+                  <th class="py-3 px-3.5 font-bold">ASM / AE / BM</th>
+                </tr>
+              </thead>
+              <tbody id="tbody-all" class="divide-y divide-slate-100 text-xs">
+                <!-- Populated by JS -->
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <!-- Footer -->
+  <footer class="bg-white border-t border-slate-200 py-4 mt-8">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex flex-col sm:flex-row items-center justify-between gap-2 text-xs text-slate-500">
+      <p>Dashboard Monitoring Cluster Tanggung Jawab (CTJ) &bull; Live Sync Google Sheets</p>
+      <p id="footer-last-sync">Status: Menunggu sinkronisasi data...</p>
+    </div>
+  </footer>
+
+  <!-- ===================================================================== -->
+  <!-- MODAL 1: DETAIL CLUSTER ZONK SA (Muncul saat angka ZONK SA di-klik)   -->
+  <!-- ===================================================================== -->
+  <div id="modal-zonk" class="fixed inset-0 z-50 hidden items-center justify-center bg-slate-950/70 backdrop-blur-sm p-3 sm:p-5">
+    <div class="bg-white rounded-3xl shadow-2xl border border-slate-200 w-full max-w-5xl max-h-[90vh] flex flex-col overflow-hidden animate-fadeIn">
+      <!-- Modal Header -->
+      <div class="bg-gradient-to-r from-rose-700 to-rose-600 text-white px-6 py-4 flex items-center justify-between">
+        <div class="flex items-center gap-3">
+          <div class="w-10 h-10 rounded-2xl bg-white/15 flex items-center justify-center">
+            <i class="fa-solid fa-triangle-exclamation text-lg"></i>
+          </div>
+          <div>
+            <h3 class="font-display font-extrabold text-base sm:text-lg">Detail Data Cluster ZONK SA</h3>
+            <p id="modal-zonk-subtitle" class="text-xs text-rose-100">Filter aktif: BM BENNY HADIAWAN</p>
+          </div>
+        </div>
+        <button onclick="closeZonkModal()" class="w-9 h-9 rounded-full bg-white/15 hover:bg-white/25 text-white flex items-center justify-center transition cursor-pointer">
+          <i class="fa-solid fa-xmark"></i>
+        </button>
+      </div>
+
+      <!-- Modal Summary Strip -->
+      <div class="bg-rose-50 border-b border-rose-100 px-6 py-3 flex flex-wrap items-center justify-between gap-3 text-xs">
+        <div class="flex flex-wrap items-center gap-4">
+          <span class="text-rose-900 font-semibold">Total Cluster ZONK: <strong id="modal-zonk-total" class="text-rose-700 text-sm">0</strong></span>
+          <span class="text-rose-900 font-semibold">Total HP Available di Cluster ZONK: <strong id="modal-zonk-hp" class="text-rose-700 text-sm">0</strong></span>
+        </div>
+        <button onclick="copyZonkListToClipboard()" class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-rose-600 hover:bg-rose-700 text-white font-bold transition cursor-pointer">
+          <i class="fa-regular fa-copy"></i>
+          <span>Salin Daftar ZONK SA</span>
+        </button>
+      </div>
+
+      <!-- Modal Body Table -->
+      <div class="p-4 sm:p-6 overflow-y-auto flex-1">
+        <div class="overflow-x-auto rounded-xl border border-slate-200">
+          <table class="w-full text-left border-collapse">
+            <thead>
+              <tr class="bg-slate-900 text-white text-[11px] uppercase tracking-wider">
+                <th class="py-3 px-3 font-bold">No</th>
+                <th class="py-3 px-3 font-bold">Cluster ID</th>
+                <th class="py-3 px-3 font-bold">Nama Cluster</th>
+                <th class="py-3 px-3 font-bold">Kecamatan / Kota</th>
+                <th class="py-3 px-3 font-bold">RFS Class</th>
+                <th class="py-3 px-3 font-bold text-right">HP Total</th>
+                <th class="py-3 px-3 font-bold text-right">HP Avail</th>
+                <th class="py-3 px-3 font-bold text-center">Visit MTD</th>
+                <th class="py-3 px-3 font-bold">ASM / AE</th>
+              </tr>
+            </thead>
+            <tbody id="modal-zonk-tbody" class="divide-y divide-slate-100 text-xs">
+              <!-- Populated by JS -->
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- Modal Footer -->
+      <div class="bg-slate-50 border-t border-slate-200 px-6 py-3 flex justify-end">
+        <button onclick="closeZonkModal()" class="px-5 py-2 rounded-xl bg-slate-800 hover:bg-slate-900 text-white text-xs font-bold transition cursor-pointer">
+          Tutup Detail
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===================================================================== -->
+  <!-- MODAL 2: REPORT WHATSAPP GENERATOR (Dinamis Sesuai Filter Aktif)      -->
+  <!-- ===================================================================== -->
+  <div id="modal-wa" class="fixed inset-0 z-50 hidden items-center justify-center bg-slate-950/70 backdrop-blur-sm p-3 sm:p-5">
+    <div class="bg-white rounded-3xl shadow-2xl border border-slate-200 w-full max-w-2xl max-h-[92vh] flex flex-col overflow-hidden">
+      <!-- Header -->
+      <div class="bg-gradient-to-r from-[#128C7E] to-[#25D366] text-white px-6 py-4 flex items-center justify-between">
+        <div class="flex items-center gap-3">
+          <div class="w-10 h-10 rounded-full bg-white text-[#25D366] flex items-center justify-center shadow">
+            <i class="fa-solid fa-phone text-lg"></i>
+          </div>
+          <div>
+            <h3 class="font-display font-extrabold text-base sm:text-lg">Report Text WhatsApp (CTJ)</h3>
+            <p class="text-xs text-emerald-50">Otomatis menyesuaikan filter BM, ASM, AE & Kota yang aktif</p>
+          </div>
+        </div>
+        <button onclick="closeWhatsAppModal()" class="w-9 h-9 rounded-full bg-white/15 hover:bg-white/25 text-white flex items-center justify-center transition cursor-pointer">
+          <i class="fa-solid fa-xmark"></i>
+        </button>
+      </div>
+
+      <!-- Options Strip -->
+      <div class="bg-emerald-50/80 border-b border-emerald-100 px-6 py-2.5 flex flex-wrap items-center justify-between gap-2 text-xs">
+        <label class="inline-flex items-center gap-2 font-semibold text-emerald-950 cursor-pointer">
+          <input type="checkbox" id="wa-include-rfs" checked onchange="generateWhatsAppText()" class="rounded text-emerald-600 focus:ring-emerald-500" />
+          <span>Sertakan Ringkasan RFS Classification</span>
+        </label>
+        <label class="inline-flex items-center gap-2 font-semibold text-emerald-950 cursor-pointer">
+          <input type="checkbox" id="wa-include-zonk" checked onchange="generateWhatsAppText()" class="rounded text-emerald-600 focus:ring-emerald-500" />
+          <span>Sertakan Detail Cluster ZONK SA</span>
+        </label>
+        <label class="inline-flex items-center gap-2 font-semibold text-emerald-950 cursor-pointer">
+          <input type="checkbox" id="wa-include-undervisit" checked onchange="generateWhatsAppText()" class="rounded text-emerald-600 focus:ring-emerald-500" />
+          <span>Sertakan Wajib Visit & Kurang Target</span>
+        </label>
+      </div>
+
+      <!-- Textarea Preview -->
+      <div class="p-5 flex-1 overflow-y-auto space-y-2">
+        <div class="flex items-center justify-between text-xs text-slate-500">
+          <span>Preview Pesan (dapat diedit sebelum dikirim):</span>
+          <span id="wa-char-count" class="font-mono">0 karakter</span>
+        </div>
+        <textarea id="wa-report-textarea" rows="15" oninput="updateWACharCount()" class="w-full rounded-2xl border border-slate-300 bg-slate-50 focus:bg-white p-4 font-mono text-xs text-slate-800 leading-relaxed focus:outline-none focus:ring-2 focus:ring-[#25D366]"></textarea>
+      </div>
+
+      <!-- Actions -->
+      <div class="bg-slate-50 border-t border-slate-200 px-6 py-4 flex flex-col sm:flex-row items-center justify-end gap-2.5">
+        <button onclick="copyWhatsAppText()" class="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-5 py-2.5 rounded-xl bg-slate-800 hover:bg-slate-900 text-white text-xs font-bold transition cursor-pointer">
+          <i class="fa-regular fa-copy"></i>
+          <span>Salin Teks WA</span>
+        </button>
+        <button onclick="sendToWhatsAppApp()" class="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-5 py-2.5 rounded-xl bg-[#25D366] hover:bg-[#1EBE5D] text-white text-xs font-bold shadow-md transition cursor-pointer">
+          <i class="fa-solid fa-paper-plane"></i>
+          <span>Buka & Kirim via WhatsApp</span>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===================================================================== -->
+  <!-- MODAL 4: DETAIL CLUSTER VISIT < TARGET / WAJIB TIAP HARI / KRITIS     -->
+  <!-- ===================================================================== -->
+  <div id="modal-under-visit" class="fixed inset-0 z-50 hidden items-center justify-center bg-slate-950/70 backdrop-blur-sm p-3 sm:p-5">
+    <div class="bg-white rounded-3xl shadow-2xl border border-slate-200 w-full max-w-6xl max-h-[90vh] flex flex-col overflow-hidden">
+      <!-- Modal Header -->
+      <div class="bg-gradient-to-r from-amber-600 to-orange-600 text-white px-6 py-4 flex items-center justify-between">
+        <div class="flex items-center gap-3">
+          <div class="w-10 h-10 rounded-2xl bg-white/15 flex items-center justify-center">
+            <i class="fa-solid fa-person-walking-arrow-right text-lg"></i>
+          </div>
+          <div>
+            <h3 id="modal-uv-title" class="font-display font-extrabold text-base sm:text-lg">Detail Cluster Visit &lt; Target</h3>
+            <p id="modal-uv-subtitle" class="text-xs text-amber-100">Filter aktif: BM BENNY HADIAWAN</p>
+          </div>
+        </div>
+        <button onclick="closeUnderVisitModal()" class="w-9 h-9 rounded-full bg-white/15 hover:bg-white/25 text-white flex items-center justify-center transition cursor-pointer">
+          <i class="fa-solid fa-xmark"></i>
+        </button>
+      </div>
+
+      <!-- Modal Summary & Category Switcher Strip -->
+      <div class="bg-amber-50 border-b border-amber-100 px-6 py-3 flex flex-col md:flex-row md:items-center justify-between gap-3 text-xs">
+        <div class="flex flex-wrap items-center gap-1.5">
+          <button type="button" id="modal-uv-tab-UNDER" onclick="switchUnderVisitModalMode('UNDER')" class="px-3 py-1.5 rounded-xl font-bold bg-slate-900 text-white shadow-sm transition cursor-pointer">
+            Semua Kurang Target (<span id="modal-uv-count-under">0</span>)
+          </button>
+          <button type="button" id="modal-uv-tab-DAILY" onclick="switchUnderVisitModalMode('DAILY')" class="px-3 py-1.5 rounded-xl font-semibold bg-white text-amber-900 border border-amber-300 hover:bg-amber-100 transition cursor-pointer">
+            Wajib Tiap Hari (<span id="modal-uv-count-daily">0</span>)
+          </button>
+          <button type="button" id="modal-uv-tab-CRITICAL" onclick="switchUnderVisitModalMode('CRITICAL')" class="px-3 py-1.5 rounded-xl font-semibold bg-white text-rose-700 border border-rose-300 hover:bg-rose-50 transition cursor-pointer">
+            Kritis / &gt;1x Hari (<span id="modal-uv-count-critical">0</span>)
+          </button>
+        </div>
+
+        <button type="button" onclick="copyUnderVisitListToClipboard()" class="inline-flex items-center justify-center gap-1.5 px-3.5 py-1.5 rounded-xl bg-amber-600 hover:bg-amber-700 text-white font-bold transition cursor-pointer self-start md:self-auto">
+          <i class="fa-regular fa-copy"></i>
+          <span>Salin Daftar Cluster Ini</span>
+        </button>
+      </div>
+
+      <!-- Modal Body Table -->
+      <div class="p-4 sm:p-6 overflow-y-auto flex-1">
+        <div class="overflow-x-auto rounded-xl border border-slate-200">
+          <table class="w-full text-left border-collapse">
+            <thead>
+              <tr class="bg-slate-900 text-white text-[11px] uppercase tracking-wider">
+                <th class="py-3 px-3 font-bold">No</th>
+                <th class="py-3 px-3 font-bold">Cluster ID &amp; Nama</th>
+                <th class="py-3 px-3 font-bold">Kecamatan / Kota</th>
+                <th class="py-3 px-3 font-bold">ASM / AE</th>
+                <th class="py-3 px-3 font-bold text-center">Visit MTD</th>
+                <th class="py-3 px-3 font-bold text-center">Kurang</th>
+                <th class="py-3 px-3 font-bold text-center">Kebutuhan / Hari</th>
+                <th class="py-3 px-3 font-bold">Status Kejar Target</th>
+                <th class="py-3 px-3 font-bold text-center">SA</th>
+              </tr>
+            </thead>
+            <tbody id="modal-uv-tbody" class="divide-y divide-slate-100 text-xs">
+              <!-- Populated by JS -->
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- Modal Footer -->
+      <div class="bg-slate-50 border-t border-slate-200 px-6 py-3 flex items-center justify-between text-xs">
+        <span id="modal-uv-footer-note" class="text-slate-500 font-medium">Menampilkan detail cluster sesuai kategori terpilih</span>
+        <button onclick="closeUnderVisitModal()" class="px-5 py-2 rounded-xl bg-slate-800 hover:bg-slate-900 text-white font-bold transition cursor-pointer">
+          Tutup Detail
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===================================================================== -->
+  <!-- JAVASCRIPT LOGIC                                                      -->
+  <!-- ===================================================================== -->
+  <script>
+    // Konfigurasi Google Sheet ID & Endpoints
+    const SHEET_ID = '1p7IheHnt4xPdBMRMgF1DPiu4_NluZLKS4MY3Ktb0OGE';
+    const SHEET_URLS = [
+      `https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?tqx=out:csv&sheet=${encodeURIComponent('data update')}`,
+      `https://docs.google.com/spreadsheets/d/${SHEET_ID}/export?format=csv&gid=0`
+    ];
+
+    // State Aplikasi
+    let rawClusterData = [];
+    let filteredClusterData = [];
+    let currentTab = 'visit';
+    let visitSubFilter = 'UNDER'; // 'UNDER' | 'DAILY' | 'CRITICAL'
+    let underVisitModalMode = 'UNDER'; // 'UNDER' | 'DAILY' | 'CRITICAL'
+    let initialDefaultApplied = false;
+
+    // Helper: Bersihkan teks nama BM / ASM / AE (hapus spasi berlebih & titik di akhir)
+    function cleanName(val) {
+      if (val === null || val === undefined) return '-';
+      let str = String(val).trim();
+      str = str.replace(/[\.\s]+$/, '').trim();
+      return str === '' ? '-' : str;
+    }
+
+    // Helper: Parsing angka dengan aman
+    function parseNum(val) {
+      if (val === null || val === undefined || val === '') return 0;
+      if (typeof val === 'number') return isNaN(val) ? 0 : val;
+      const cleaned = String(val).replace(/[^0-9.-]+/g, '');
+      const num = parseFloat(cleaned);
+      return isNaN(num) ? 0 : num;
+    }
+
+    // Helper: Parsing persentase Pen Rate (mendukung "24.5%" atau 0.245 atau 24.5)
+    function parsePenRate(val) {
+      if (val === null || val === undefined || val === '') return null;
+      if (typeof val === 'number') {
+        if (isNaN(val)) return null;
+        return val > 0 && val <= 1 ? val * 100 : val;
+      }
+      const str = String(val).trim();
+      const hasPercent = str.includes('%');
+      const num = parseFloat(str.replace(/[^0-9.-]+/g, ''));
+      if (isNaN(num)) return null;
+      if (!hasPercent && num > 0 && num <= 1) return num * 100;
+      return num;
+    }
+
+    // Helper: Urutan prioritas RFS Classification (P0 -> P5 -> lainnya)
+    function getRFSSortRank(rfsLabel) {
+      const upper = String(rfsLabel || '').toUpperCase().trim();
+      if (upper.startsWith('P0')) return 0;
+      if (upper.startsWith('P1')) return 1;
+      if (upper.startsWith('P2')) return 2;
+      if (upper.startsWith('P3')) return 3;
+      if (upper.startsWith('P4')) return 4;
+      if (upper.startsWith('P5')) return 5;
+      return 99;
+    }
+
+    // Helper: Format angka ribuan Indonesia
+    function formatNumber(num) {
+      return new Intl.NumberFormat('id-ID').format(Math.round(num || 0));
+    }
+
+    // Helper: Escape HTML untuk keamanan XSS
+    function escapeHTML(str) {
+      return String(str ?? '')
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;');
+    }
+
+    // Toast Notification
+    function showToast(message, isError = false) {
+      const toast = document.getElementById('toast');
+      const toastMsg = document.getElementById('toast-message');
+      const toastIcon = document.getElementById('toast-icon');
+      toastMsg.textContent = message;
+      toastIcon.className = isError
+        ? 'fa-solid fa-circle-exclamation text-rose-400'
+        : 'fa-solid fa-circle-check text-emerald-400';
+      toast.classList.remove('hidden');
+      toast.classList.add('flex');
+      clearTimeout(window.__toastTimer);
+      window.__toastTimer = setTimeout(() => {
+        toast.classList.add('hidden');
+        toast.classList.remove('flex');
+      }, 3000);
+    }
+
+    // Normalisasi baris CSV dari Google Sheets menjadi objek standar
+    function normalizeRows(rows) {
+      return rows
+        .filter(row => {
+          const cid = row['Cluster Id'] || row['Cluster ID'] || row['Clustername'];
+          return cid && String(cid).trim() !== '';
+        })
+        .map(row => {
+          const visitMTD = parseNum(row['Total Visit MTD'] ?? row['Visit MTD'] ?? row['Visit']);
+          const totalSA = parseNum(row['Total SA'] ?? row['JUMLAH SA']);
+          const statusSARaw = String(row['STATUS SA'] || '').trim().toUpperCase();
+          const isZonkSA = statusSARaw === 'ZONK SA' || statusSARaw === 'ZONK' || totalSA === 0;
+
+          const bmClean = cleanName(row['BM']);
+          const asmClean = cleanName(row['ASM']);
+          const aeClean = cleanName(row['AE']);
+          const kotaAsli = cleanName(row['KOTA ASLI'] || row['City'] || row['Area Name']);
+          const kecamatan = cleanName(row['KECAMATAN']);
+
+          return {
+            periodId: String(row['Period Id'] || 'Nov-26').trim(),
+            areaName: cleanName(row['Area Name']),
+            city: cleanName(row['City']),
+            kotaAsli: kotaAsli,
+            clusterId: String(row['Cluster Id'] || '-').trim(),
+            clusterName: String(row['Clustername'] || '-').trim(),
+            project: String(row['Project'] || row['Project Name'] || '-').trim(),
+            rfsDate: String(row['RFS Date'] || '-').trim(),
+            rfsClass: cleanName(row['RFS Classification'] || row['RFS Class'] || 'LAINNYA'),
+            hpTotal: parseNum(row['HP Total']),
+            totalSubs: parseNum(row['Total Subs']),
+            penRateRaw: String(row['Pen Rate %'] || '').trim(),
+            penRateNum: parsePenRate(row['Pen Rate %']),
+            visitMTD: visitMTD,
+            totalSA: totalSA,
+            hpAvailable: parseNum(row['HP Available']),
+            hpTaken: parseNum(row['HP Taken']),
+            kecamatan: kecamatan,
+            statusVisitSheet: String(row['STATUS VISIT'] || '-').trim(),
+            statusTargetSheet: String(row['STATUS TARGET'] || '-').trim(),
+            statusSA: isZonkSA ? 'ZONK SA' : (statusSARaw || 'ADA SA'),
+            isZonkSA: isZonkSA,
+            asm: asmClean,
+            ae: aeClean,
+            bm: bmClean
+          };
+        });
+    }
+
+    // Fetch Data Otomatis dari Google Sheets
+    async function fetchGoogleSheetData(isManualRefresh = false) {
+      const refreshIcon = document.getElementById('refresh-icon');
+      const badge = document.getElementById('data-source-badge');
+      refreshIcon.classList.add('fa-spin');
+
+      badge.className = 'inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[11px] font-semibold bg-amber-500/20 text-amber-300 border border-amber-500/30';
+      badge.innerHTML = '<span class="w-1.5 h-1.5 rounded-full bg-amber-400 animate-ping"></span>Menyinkronkan Google Sheets...';
+
+      let loaded = false;
+
+      for (const url of SHEET_URLS) {
+        try {
+          const response = await fetch(url, { cache: 'no-store' });
+          if (!response.ok) continue;
+          const csvText = await response.text();
+          if (!csvText || csvText.trim().startsWith('<!DOCTYPE html')) continue;
+
+          const parsed = Papa.parse(csvText, { header: true, skipEmptyLines: true });
+          const normalized = normalizeRows(parsed.data);
+
+          if (normalized.length > 0) {
+            rawClusterData = normalized;
+            loaded = true;
+            badge.className = 'inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[11px] font-semibold bg-emerald-500/20 text-emerald-300 border border-emerald-500/30';
+            badge.innerHTML = `<span class="w-1.5 h-1.5 rounded-full bg-emerald-400"></span>Live Google Sheets (${normalized.length} Cluster)`;
+
+            const nowStr = new Date().toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+            document.getElementById('footer-last-sync').textContent = `Terakhir disinkronkan: Hari ini pukul ${nowStr} WIB (${normalized.length} baris data)`;
+            if (isManualRefresh) showToast(`Berhasil memuat ${normalized.length} cluster dari Google Sheets!`);
+            break;
+          }
+        } catch (err) {
+          console.warn('Gagal fetch endpoint:', url, err);
+        }
+      }
+
+      refreshIcon.classList.remove('fa-spin');
+
+      if (!loaded) {
+        // Fallback jika CORS / offline agar dashboard langsung jalan & interaktif
+        loadFallbackSampleData();
+        badge.className = 'inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[11px] font-semibold bg-sky-500/20 text-sky-300 border border-sky-500/30';
+        badge.innerHTML = '<span class="w-1.5 h-1.5 rounded-full bg-sky-400"></span>Mode Pratinjau (Data Sampel)';
+        document.getElementById('footer-last-sync').textContent = 'Mode Pratinjau Aktif (Klik "Sumber / CSV" untuk unggah file CSV lokal jika akses Google Sheets terblokir CORS)';
+        if (isManualRefresh) {
+          showToast('Koneksi langsung diblokir browser/CORS, menampilkan data pratinjau.', true);
+        }
+      } else {
+        populateFilterDropdowns();
+        applyFilters();
+      }
+    }
+
+    // Handle Upload File CSV Manual
+    function handleManualCSVUpload(event) {
+      const file = event.target.files[0];
+      if (!file) return;
+
+      Papa.parse(file, {
+        header: true,
+        skipEmptyLines: true,
+        complete: function(results) {
+          const normalized = normalizeRows(results.data);
+          if (normalized.length > 0) {
+            rawClusterData = normalized;
+            initialDefaultApplied = false;
+            populateFilterDropdowns();
+            applyFilters();
+            const badge = document.getElementById('data-source-badge');
+            badge.className = 'inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[11px] font-semibold bg-indigo-500/20 text-indigo-300 border border-indigo-500/30';
+            badge.innerHTML = `<span class="w-1.5 h-1.5 rounded-full bg-indigo-400"></span>File CSV Lokal (${normalized.length} Cluster)`;
+            closeDataModal();
+            showToast(`Berhasil mengimpor ${normalized.length} cluster dari ${file.name}`);
+          } else {
+            showToast('Format CSV tidak sesuai atau kosong.', true);
+          }
+        }
+      });
+    }
+
+    // Data Simulasi Realistis (Berdasarkan struktur sheet user) sebagai fallback
+    function loadFallbackSampleData() {
+      const sampleRows = [
+        { 'Cluster Id': 'JKC270492', 'Clustername': 'RW 03 BALEKAMBANG - CONDET', 'RFS Classification': 'P4 (13-24 Bulan)', 'HP Total': 420, 'Total Subs': 168, 'Pen Rate %': '40.0%', 'HP Available': 285, 'Total Visit MTD': 14, 'Total SA': 0, 'STATUS SA': 'ZONK SA', 'KECAMATAN': 'KRAMAT JATI', 'KOTA ASLI': 'JAKARTA TIMUR', 'ASM': 'ANDRI KURNIAWAN', 'AE': 'RIZKY PRATAMA', 'BM': 'BENNY HADIAWAN' },
+        { 'Cluster Id': 'JKC270518', 'Clustername': 'GRIYA PESONA INDAH CIRACAS', 'RFS Classification': 'P3 (7-12 Bulan)', 'HP Total': 380, 'Total Subs': 133, 'Pen Rate %': '35.0%', 'HP Available': 210, 'Total Visit MTD': 16, 'Total SA': 0, 'STATUS SA': 'ZONK SA', 'KECAMATAN': 'CIRACAS', 'KOTA ASLI': 'JAKARTA TIMUR', 'ASM': 'ANDRI KURNIAWAN', 'AE': 'DIMAS SAPUTRA', 'BM': 'BENNY HADIAWAN' },
+        { 'Cluster Id': 'JKC270601', 'Clustername': 'TAMAN HARAPAN BARU BLOK C', 'RFS Classification': 'P2 (4-6 Bulan)', 'HP Total': 510, 'Total Subs': 153, 'Pen Rate %': '30.0%', 'HP Available': 340, 'Total Visit MTD': 15, 'Total SA': 2, 'STATUS SA': 'ADA SA', 'KECAMATAN': 'MEDAN SATRIA', 'KOTA ASLI': 'BEKASI', 'ASM': 'HENDRA WIJAYA', 'AE': 'FAJAR NUGROHO', 'BM': 'BENNY HADIAWAN' },
+        { 'Cluster Id': 'JKC270644', 'Clustername': 'KOMPLEK TNI AL DUREN SAWIT', 'RFS Classification': 'P5 (24 - 42 Bulan)', 'HP Total': 460, 'Total Subs': 230, 'Pen Rate %': '50.0%', 'HP Available': 195, 'Total Visit MTD': 18, 'Total SA': 1, 'STATUS SA': 'ADA SA', 'KECAMATAN': 'DUREN SAWIT', 'KOTA ASLI': 'JAKARTA TIMUR', 'ASM': 'ANDRI KURNIAWAN', 'AE': 'RIZKY PRATAMA', 'BM': 'BENNY HADIAWAN' },
+        { 'Cluster Id': 'JKC270712', 'Clustername': 'PERUM JATIBENING PERMAI', 'RFS Classification': 'P1 (1-3 Bulan)', 'HP Total': 620, 'Total Subs': 124, 'Pen Rate %': '20.0%', 'HP Available': 490, 'Total Visit MTD': 13, 'Total SA': 0, 'STATUS SA': 'ZONK SA', 'KECAMATAN': 'PONDOK GEDE', 'KOTA ASLI': 'BEKASI', 'ASM': 'HENDRA WIJAYA', 'AE': 'SITI NURHALIZA', 'BM': 'BENNY HADIAWAN' },
+        { 'Cluster Id': 'JKC270789', 'Clustername': 'RW 07 CIPINANG MUARA', 'RFS Classification': 'P4 (13-24 Bulan)', 'HP Total': 350, 'Total Subs': 140, 'Pen Rate %': '40.0%', 'HP Available': 170, 'Total Visit MTD': 9, 'Total SA': 0, 'STATUS SA': 'ZONK SA', 'KECAMATAN': 'JATINEGARA', 'KOTA ASLI': 'JAKARTA TIMUR', 'ASM': 'ANDRI KURNIAWAN', 'AE': 'DIMAS SAPUTRA', 'BM': 'BENNY HADIAWAN' },
+        { 'Cluster Id': 'JKC270815', 'Clustername': 'VILLA GALAXI PEKAYON', 'RFS Classification': 'P5 (24 - 42 Bulan)', 'HP Total': 540, 'Total Subs': 297, 'Pen Rate %': '55.0%', 'HP Available': 260, 'Total Visit MTD': 21, 'Total SA': 4, 'STATUS SA': 'ADA SA', 'KECAMATAN': 'BEKASI SELATAN', 'KOTA ASLI': 'BEKASI', 'ASM': 'HENDRA WIJAYA', 'AE': 'FAJAR NUGROHO', 'BM': 'BENNY HADIAWAN' },
+        { 'Cluster Id': 'JKC270890', 'Clustername': 'CLUSTER MELATI CIBUBUR', 'RFS Classification': 'P0 (0 Bulan)', 'HP Total': 290, 'Total Subs': 43, 'Pen Rate %': '14.8%', 'HP Available': 245, 'Total Visit MTD': 17, 'Total SA': 3, 'STATUS SA': 'ADA SA', 'KECAMATAN': 'CIRACAS', 'KOTA ASLI': 'JAKARTA TIMUR', 'ASM': 'ANDRI KURNIAWAN', 'AE': 'RIZKY PRATAMA', 'BM': 'BENNY HADIAWAN' },
+        { 'Cluster Id': 'JKC270911', 'Clustername': 'PERUM HARAPAN JAYA UTARA', 'RFS Classification': 'P3 (7-12 Bulan)', 'HP Total': 480, 'Total Subs': 192, 'Pen Rate %': '40.0%', 'HP Available': 310, 'Total Visit MTD': 22, 'Total SA': 5, 'STATUS SA': 'ADA SA', 'KECAMATAN': 'BEKASI UTARA', 'KOTA ASLI': 'BEKASI', 'ASM': 'HENDRA WIJAYA', 'AE': 'SITI NURHALIZA', 'BM': 'BENNY HADIAWAN' },
+        { 'Cluster Id': 'JKC270955', 'Clustername': 'RW 05 KAYU PUTIH PULOGADUNG', 'RFS Classification': 'P2 (4-6 Bulan)', 'HP Total': 410, 'Total Subs': 123, 'Pen Rate %': '30.0%', 'HP Available': 220, 'Total Visit MTD': 11, 'Total SA': 0, 'STATUS SA': 'ZONK SA', 'KECAMATAN': 'PULOGADUNG', 'KOTA ASLI': 'JAKARTA TIMUR', 'ASM': 'ANDRI KURNIAWAN', 'AE': 'DIMAS SAPUTRA', 'BM': 'BENNY HADIAWAN' },
+        { 'Cluster Id': 'JKC271002', 'Clustername': 'GRAHA INDAH JATIMEKAR', 'RFS Classification': 'P1 (1-3 Bulan)', 'HP Total': 390, 'Total Subs': 78, 'Pen Rate %': '20.0%', 'HP Available': 275, 'Total Visit MTD': 19, 'Total SA': 2, 'STATUS SA': 'ADA SA', 'KECAMATAN': 'JATIASIH', 'KOTA ASLI': 'BEKASI', 'ASM': 'HENDRA WIJAYA', 'AE': 'FAJAR NUGROHO', 'BM': 'BENNY HADIAWAN' },
+        { 'Cluster Id': 'JKC271045', 'Clustername': 'KOMPLEK DEPKES SUNTER', 'RFS Classification': 'P3 (7-12 Bulan)', 'HP Total': 500, 'Total Subs': 200, 'Pen Rate %': '40.0%', 'HP Available': 300, 'Total Visit MTD': 15, 'Total SA': 1, 'STATUS SA': 'ADA SA', 'KECAMATAN': 'TANJUNG PRIOK', 'KOTA ASLI': 'JAKARTA UTARA', 'ASM': 'BUDI SANTOSO', 'AE': 'ARIF RAHMAN', 'BM': 'BM LAINNYA' }
+      ];
+      rawClusterData = normalizeRows(sampleRows);
+      initialDefaultApplied = false;
+      populateFilterDropdowns();
+      applyFilters();
+    }
+
+    // Populate Filter BM, ASM, AE, Kota secara hierarkis
+    function populateFilterDropdowns() {
+      const bmSelect = document.getElementById('filter-bm');
+      const uniqueBMs = [...new Set(rawClusterData.map(d => d.bm).filter(v => v && v !== '-'))].sort();
+
+      bmSelect.innerHTML = `<option value="ALL">Semua BM (${uniqueBMs.length})</option>`;
+      uniqueBMs.forEach(bm => {
+        const opt = document.createElement('option');
+        opt.value = bm;
+        opt.textContent = bm;
+        bmSelect.appendChild(opt);
+      });
+
+      // Default BM: BENNY HADIAWAN
+      if (!initialDefaultApplied) {
+        const bennyMatch = uniqueBMs.find(bm => bm.toUpperCase().includes('BENNY HADIAWAN'));
+        if (bennyMatch) {
+          bmSelect.value = bennyMatch;
+        }
+        initialDefaultApplied = true;
+      }
+
+      updateDependentDropdowns();
+    }
+
+    function updateDependentDropdowns() {
+      const selectedBM = document.getElementById('filter-bm').value;
+      const asmSelect = document.getElementById('filter-asm');
+      const aeSelect = document.getElementById('filter-ae');
+      const citySelect = document.getElementById('filter-city');
+      const rfsSelect = document.getElementById('filter-rfs');
+
+      const prevASM = asmSelect.value;
+      const prevAE = aeSelect.value;
+      const prevCity = citySelect.value;
+      const prevRFS = rfsSelect.value;
+
+      const byBM = selectedBM === 'ALL'
+        ? rawClusterData
+        : rawClusterData.filter(d => d.bm === selectedBM);
+
+      // ASM options
+      const uniqueASMs = [...new Set(byBM.map(d => d.asm).filter(v => v && v !== '-'))].sort();
+      asmSelect.innerHTML = `<option value="ALL">Semua ASM (${uniqueASMs.length})</option>`;
+      uniqueASMs.forEach(asm => {
+        const opt = document.createElement('option');
+        opt.value = asm;
+        opt.textContent = asm;
+        asmSelect.appendChild(opt);
+      });
+      if (uniqueASMs.includes(prevASM)) asmSelect.value = prevASM;
+
+      // AE options (tergantung BM & ASM)
+      const currentASM = asmSelect.value;
+      const byBMASM = currentASM === 'ALL' ? byBM : byBM.filter(d => d.asm === currentASM);
+      const uniqueAEs = [...new Set(byBMASM.map(d => d.ae).filter(v => v && v !== '-'))].sort();
+      aeSelect.innerHTML = `<option value="ALL">Semua AE (${uniqueAEs.length})</option>`;
+      uniqueAEs.forEach(ae => {
+        const opt = document.createElement('option');
+        opt.value = ae;
+        opt.textContent = ae;
+        aeSelect.appendChild(opt);
+      });
+      if (uniqueAEs.includes(prevAE)) aeSelect.value = prevAE;
+
+      // Kota options
+      const uniqueCities = [...new Set(byBMASM.map(d => d.kotaAsli).filter(v => v && v !== '-'))].sort();
+      citySelect.innerHTML = `<option value="ALL">Semua Kota / Area (${uniqueCities.length})</option>`;
+      uniqueCities.forEach(city => {
+        const opt = document.createElement('option');
+        opt.value = city;
+        opt.textContent = city;
+        citySelect.appendChild(opt);
+      });
+      if (uniqueCities.includes(prevCity)) citySelect.value = prevCity;
+
+      // RFS Classification options
+      const uniqueRFS = [...new Set(byBMASM.map(d => d.rfsClass).filter(v => v && v !== '-'))]
+        .sort((a, b) => getRFSSortRank(a) - getRFSSortRank(b) || a.localeCompare(b));
+      rfsSelect.innerHTML = `<option value="ALL">Semua RFS Class (${uniqueRFS.length})</option>`;
+      uniqueRFS.forEach(rfs => {
+        const opt = document.createElement('option');
+        opt.value = rfs;
+        opt.textContent = rfs;
+        rfsSelect.appendChild(opt);
+      });
+      if (uniqueRFS.includes(prevRFS)) rfsSelect.value = prevRFS;
+    }
+
+    function onBMChange() {
+      document.getElementById('filter-asm').value = 'ALL';
+      document.getElementById('filter-ae').value = 'ALL';
+      document.getElementById('filter-city').value = 'ALL';
+      document.getElementById('filter-rfs').value = 'ALL';
+      updateDependentDropdowns();
+      applyFilters();
+    }
+
+    function onASMChange() {
+      document.getElementById('filter-ae').value = 'ALL';
+      updateDependentDropdowns();
+      applyFilters();
+    }
+
+    function resetFilters() {
+      const bmSelect = document.getElementById('filter-bm');
+      const bennyOpt = Array.from(bmSelect.options).find(o => o.value.toUpperCase().includes('BENNY HADIAWAN'));
+      bmSelect.value = bennyOpt ? bennyOpt.value : 'ALL';
+      document.getElementById('filter-asm').value = 'ALL';
+      document.getElementById('filter-ae').value = 'ALL';
+      document.getElementById('filter-city').value = 'ALL';
+      document.getElementById('filter-rfs').value = 'ALL';
+      document.getElementById('filter-sa').value = 'ALL';
+      document.getElementById('filter-search').value = '';
+      document.getElementById('week-target-select').value = '20';
+      document.getElementById('remaining-days-input').value = '7';
+      updateDependentDropdowns();
+      applyFilters();
+      showToast('Filter dikembalikan ke default BM Benny Hadiawan (Week 4)');
+    }
+
+    // Toggle / Clear RFS Filter dari tabel ringkasan RFS Classification
+    function toggleRFSFilter(rfsName) {
+      const rfsSelect = document.getElementById('filter-rfs');
+      if (rfsSelect.value === rfsName) {
+        rfsSelect.value = 'ALL';
+        showToast('Filter RFS direset ke Semua RFS Class');
+      } else {
+        rfsSelect.value = rfsName;
+        showToast(`Menyaring data berdasarkan RFS: ${rfsName}`);
+      }
+      applyFilters();
+    }
+
+    function clearRFSFilter() {
+      document.getElementById('filter-rfs').value = 'ALL';
+      applyFilters();
+      showToast('Menampilkan seluruh kategori RFS Class');
+    }
+
+    // Menghitung ringkasan per RFS Classification dari array data tertentu
+    function computeRFSSummary(dataList, targetVisit) {
+      const rfsMap = new Map();
+
+      dataList.forEach(d => {
+        const key = d.rfsClass || 'LAINNYA';
+        if (!rfsMap.has(key)) {
+          rfsMap.set(key, {
+            rfsClass: key,
+            totalCluster: 0,
+            zonkSA: 0,
+            underTarget: 0,
+            wajibDaily: 0,
+            totalHP: 0,
+            totalSubs: 0,
+            totalVisitMTD: 0,
+            penRateSum: 0,
+            penRateCount: 0
+          });
+        }
+        const entry = rfsMap.get(key);
+        entry.totalCluster += 1;
+        if (d.isZonkSA) entry.zonkSA += 1;
+        if (d.isUnderTarget) entry.underTarget += 1;
+        if (d.isWajibDaily) entry.wajibDaily += 1;
+        entry.totalHP += d.hpTotal;
+        entry.totalSubs += d.totalSubs;
+        entry.totalVisitMTD += d.visitMTD;
+
+        if (typeof d.penRateNum === 'number' && !isNaN(d.penRateNum)) {
+          entry.penRateSum += d.penRateNum;
+          entry.penRateCount += 1;
+        }
+      });
+
+      return Array.from(rfsMap.values())
+        .map(entry => {
+          // Gunakan rata-rata Pen Rate % dari kolom sheet jika tersedia; jika tidak, hitung Subs/HP
+          const avgPenRate = entry.penRateCount > 0
+            ? (entry.penRateSum / entry.penRateCount)
+            : (entry.totalHP > 0 ? (entry.totalSubs / entry.totalHP) * 100 : 0);
+
+          const avgVisitMTD = entry.totalCluster > 0
+            ? (entry.totalVisitMTD / entry.totalCluster)
+            : 0;
+
+          return {
+            ...entry,
+            avgPenRate,
+            avgVisitMTD,
+            targetVisit
+          };
+        })
+        .sort((a, b) => getRFSSortRank(a.rfsClass) - getRFSSortRank(b.rfsClass) || a.rfsClass.localeCompare(b.rfsClass));
+    }
+
+    // Render Tabel Ringkasan RFS Classification
+    function renderRFSSummaryTable(targetVisit) {
+      const tbody = document.getElementById('tbody-rfs-summary');
+      const selectedRFS = document.getElementById('filter-rfs').value;
+      const activeBadge = document.getElementById('rfs-active-filter-badge');
+      const clearBtn = document.getElementById('btn-clear-rfs-filter');
+      const countBadge = document.getElementById('rfs-class-count-badge');
+
+      if (selectedRFS !== 'ALL') {
+        activeBadge.textContent = `Aktif: ${selectedRFS}`;
+        activeBadge.classList.remove('hidden');
+        clearBtn.classList.remove('hidden');
+      } else {
+        activeBadge.classList.add('hidden');
+        clearBtn.classList.add('hidden');
+      }
+
+      // Jika RFS tertentu sedang dipilih, tetap tampilkan semua RFS dari konteks BM/ASM/AE/Kota agar user mudah berpindah RFS
+      const selectedBM = document.getElementById('filter-bm').value;
+      const selectedASM = document.getElementById('filter-asm').value;
+      const selectedAE = document.getElementById('filter-ae').value;
+      const selectedCity = document.getElementById('filter-city').value;
+      const selectedSA = document.getElementById('filter-sa').value;
+      const searchQuery = document.getElementById('filter-search').value.trim().toLowerCase();
+      const remainingDays = Math.max(1, parseInt(document.getElementById('remaining-days-input').value, 10) || 7);
+
+      const contextData = rawClusterData
+        .filter(item => {
+          if (selectedBM !== 'ALL' && item.bm !== selectedBM) return false;
+          if (selectedASM !== 'ALL' && item.asm !== selectedASM) return false;
+          if (selectedAE !== 'ALL' && item.ae !== selectedAE) return false;
+          if (selectedCity !== 'ALL' && item.kotaAsli !== selectedCity) return false;
+          if (selectedSA === 'ZONK' && !item.isZonkSA) return false;
+          if (selectedSA === 'ADA' && item.isZonkSA) return false;
+          if (searchQuery) {
+            const hay = `${item.clusterId} ${item.clusterName} ${item.kecamatan} ${item.kotaAsli} ${item.asm} ${item.ae} ${item.rfsClass}`.toLowerCase();
+            if (!hay.includes(searchQuery)) return false;
+          }
+          return true;
+        })
+        .map(item => {
+          const deficit = Math.max(0, targetVisit - item.visitMTD);
+          const isUnderTarget = deficit > 0;
+          const isWajibDaily = isUnderTarget && deficit <= remainingDays;
+          return { ...item, isUnderTarget, isWajibDaily };
+        });
+
+      const rfsRows = computeRFSSummary(contextData, targetVisit);
+      countBadge.textContent = `${rfsRows.length} Kategori RFS`;
+
+      if (rfsRows.length === 0) {
+        tbody.innerHTML = `
+          <tr>
+            <td colspan="9" class="py-8 text-center text-slate-400">
+              Tidak ada data RFS Classification untuk filter aktif.
+            </td>
+          </tr>
+        `;
+        return;
+      }
+
+      const grandTotalCluster = rfsRows.reduce((s, r) => s + r.totalCluster, 0);
+      const grandZonk = rfsRows.reduce((s, r) => s + r.zonkSA, 0);
+      const grandUnder = rfsRows.reduce((s, r) => s + r.underTarget, 0);
+      const grandDaily = rfsRows.reduce((s, r) => s + r.wajibDaily, 0);
+      const grandHP = rfsRows.reduce((s, r) => s + r.totalHP, 0);
+      const grandSubs = rfsRows.reduce((s, r) => s + r.totalSubs, 0);
+      const grandVisit = rfsRows.reduce((s, r) => s + r.totalVisitMTD, 0);
+      const grandPenPct = grandHP > 0 ? (grandSubs / grandHP) * 100 : 0;
+      const grandAvgVisit = grandTotalCluster > 0 ? grandVisit / grandTotalCluster : 0;
+
+      const bodyHTML = rfsRows.map(r => {
+        const isSelected = selectedRFS === r.rfsClass;
+        const rowClass = isSelected
+          ? 'bg-indigo-50/90 ring-1 ring-inset ring-indigo-300'
+          : 'hover:bg-slate-50/90';
+
+        return `
+          <tr onclick="toggleRFSFilter('${escapeHTML(r.rfsClass).replace(/'/g, "\\'")}')" class="${rowClass} transition cursor-pointer" title="Klik untuk memfilter dashboard berdasarkan ${escapeHTML(r.rfsClass)}">
+            <td class="py-3 px-3.5">
+              <div class="flex items-center gap-2">
+                <span class="inline-flex items-center px-2.5 py-1 rounded-lg font-extrabold text-[11px] ${isSelected ? 'bg-indigo-600 text-white' : 'bg-indigo-50 text-indigo-800 border border-indigo-200'}">
+                  ${escapeHTML(r.rfsClass)}
+                </span>
+                ${isSelected ? '<span class="text-[10px] font-bold text-indigo-600"><i class="fa-solid fa-check mr-0.5"></i>Difilter</span>' : ''}
+              </div>
+            </td>
+            <td class="py-3 px-3.5 text-center font-extrabold text-slate-900">${formatNumber(r.totalCluster)}</td>
+            <td class="py-3 px-3.5 text-center">
+              <span class="inline-block px-2.5 py-0.5 rounded-full font-bold ${r.zonkSA > 0 ? 'bg-rose-100 text-rose-800' : 'bg-emerald-50 text-emerald-700'}">
+                ${formatNumber(r.zonkSA)}
+              </span>
+            </td>
+            <td class="py-3 px-3.5 text-center">
+              <span class="inline-block px-2.5 py-0.5 rounded-full font-bold ${r.underTarget > 0 ? 'bg-amber-100 text-amber-800' : 'bg-emerald-50 text-emerald-700'}">
+                ${formatNumber(r.underTarget)}
+              </span>
+            </td>
+            <td class="py-3 px-3.5 text-center">
+              <span class="inline-block px-2.5 py-0.5 rounded-full font-bold ${r.wajibDaily > 0 ? 'bg-amber-200/80 text-amber-950 border border-amber-300' : 'bg-slate-100 text-slate-500'}">
+                ${formatNumber(r.wajibDaily)}
+              </span>
+            </td>
+            <td class="py-3 px-3.5 text-right font-semibold text-slate-700">${formatNumber(r.totalHP)}</td>
+            <td class="py-3 px-3.5 text-right font-semibold text-indigo-700">${formatNumber(r.totalSubs)}</td>
+            <td class="py-3 px-3.5 text-center">
+              <span class="font-bold text-slate-800 bg-slate-100 px-2 py-0.5 rounded-md">${r.avgPenRate.toFixed(1)}%</span>
+            </td>
+            <td class="py-3 px-3.5 text-center">
+              <div class="font-extrabold text-slate-900">${formatNumber(r.totalVisitMTD)}</div>
+              <div class="text-[10px] text-slate-500">Avg: ${r.avgVisitMTD.toFixed(1)} / cluster</div>
+            </td>
+          </tr>
+        `;
+      }).join('');
+
+      const totalRowHTML = `
+        <tr class="bg-slate-100/90 border-t-2 border-slate-300 font-extrabold text-slate-900">
+          <td class="py-3 px-3.5 uppercase text-[11px] tracking-wider">Total / Rata-Rata</td>
+          <td class="py-3 px-3.5 text-center">${formatNumber(grandTotalCluster)}</td>
+          <td class="py-3 px-3.5 text-center text-rose-700">${formatNumber(grandZonk)}</td>
+          <td class="py-3 px-3.5 text-center text-amber-700">${formatNumber(grandUnder)}</td>
+          <td class="py-3 px-3.5 text-center text-amber-900">${formatNumber(grandDaily)}</td>
+          <td class="py-3 px-3.5 text-right">${formatNumber(grandHP)}</td>
+          <td class="py-3 px-3.5 text-right text-indigo-800">${formatNumber(grandSubs)}</td>
+          <td class="py-3 px-3.5 text-center">${grandPenPct.toFixed(1)}%</td>
+          <td class="py-3 px-3.5 text-center">
+            <div>${formatNumber(grandVisit)}</div>
+            <div class="text-[10px] font-semibold text-slate-600">Avg: ${grandAvgVisit.toFixed(1)}</div>
+          </td>
+        </tr>
+      `;
+
+      tbody.innerHTML = bodyHTML + totalRowHTML;
+    }
+
+    // Core Filter & Kalkulasi KPI
+    function applyFilters() {
+      const selectedBM = document.getElementById('filter-bm').value;
+      const selectedASM = document.getElementById('filter-asm').value;
+      const selectedAE = document.getElementById('filter-ae').value;
+      const selectedCity = document.getElementById('filter-city').value;
+      const selectedRFS = document.getElementById('filter-rfs').value;
+      const selectedSA = document.getElementById('filter-sa').value;
+      const searchQuery = document.getElementById('filter-search').value.trim().toLowerCase();
+
+      const targetVisit = parseInt(document.getElementById('week-target-select').value, 10) || 20;
+      const remainingDays = Math.max(1, parseInt(document.getElementById('remaining-days-input').value, 10) || 7);
+
+      // Update label target & sisa hari di UI
+      document.getElementById('kpi-target-num').textContent = targetVisit;
+      document.getElementById('kpi-ontarget-num').textContent = targetVisit;
+      document.getElementById('info-target-visit').textContent = targetVisit;
+      document.getElementById('info-sisa-hari').textContent = remainingDays;
+      document.getElementById('info-sisa-hari-2').textContent = remainingDays;
+
+      filteredClusterData = rawClusterData
+        .filter(item => {
+          if (selectedBM !== 'ALL' && item.bm !== selectedBM) return false;
+          if (selectedASM !== 'ALL' && item.asm !== selectedASM) return false;
+          if (selectedAE !== 'ALL' && item.ae !== selectedAE) return false;
+          if (selectedCity !== 'ALL' && item.kotaAsli !== selectedCity) return false;
+          if (selectedRFS !== 'ALL' && item.rfsClass !== selectedRFS) return false;
+          if (selectedSA === 'ZONK' && !item.isZonkSA) return false;
+          if (selectedSA === 'ADA' && item.isZonkSA) return false;
+          if (searchQuery) {
+            const hay = `${item.clusterId} ${item.clusterName} ${item.kecamatan} ${item.kotaAsli} ${item.asm} ${item.ae} ${item.rfsClass}`.toLowerCase();
+            if (!hay.includes(searchQuery)) return false;
+          }
+          return true;
+        })
+        .map(item => {
+          const deficit = Math.max(0, targetVisit - item.visitMTD);
+          const isUnderTarget = deficit > 0;
+          // Wajib visit setiap hari jika kurang visit > 0 dan <= sisa hari (1 visit/hari cukup untuk mengejar)
+          const isWajibDaily = isUnderTarget && deficit <= remainingDays;
+          // Kritis jika kekurangan visit melebihi sisa hari (perlu >1 visit per hari)
+          const isCritical = isUnderTarget && deficit > remainingDays;
+          const perDayNeeded = isUnderTarget ? (deficit / remainingDays) : 0;
+
+          return {
+            ...item,
+            targetVisit,
+            deficit,
+            isUnderTarget,
+            isWajibDaily,
+            isCritical,
+            perDayNeeded
+          };
+        });
+
+      updateKPICards(selectedBM);
+      renderRFSSummaryTable(targetVisit);
+      renderVisitTable();
+      renderZonkTable();
+      renderAllAndTeamTables();
+    }
+
+    function updateKPICards(selectedBM) {
+      const total = filteredClusterData.length;
+      const totalHP = filteredClusterData.reduce((acc, d) => acc + d.hpTotal, 0);
+
+      const zonkClusters = filteredClusterData.filter(d => d.isZonkSA);
+      const zonkCount = zonkClusters.length;
+      const zonkPct = total > 0 ? Math.round((zonkCount / total) * 100) : 0;
+      const zonkHPAvail = zonkClusters.reduce((acc, d) => acc + d.hpAvailable, 0);
+
+      const underVisitClusters = filteredClusterData.filter(d => d.isUnderTarget);
+      const underCount = underVisitClusters.length;
+      const underPct = total > 0 ? Math.round((underCount / total) * 100) : 0;
+
+      const dailyMustCount = filteredClusterData.filter(d => d.isWajibDaily).length;
+      const criticalVisitCount = filteredClusterData.filter(d => d.isCritical).length;
+
+      const onTargetCount = total - underCount;
+      const onTargetPct = total > 0 ? Math.round((onTargetCount / total) * 100) : 0;
+      const totalSA = filteredClusterData.reduce((acc, d) => acc + d.totalSA, 0);
+
+      // Update DOM
+      document.getElementById('kpi-total-cluster').textContent = formatNumber(total);
+      document.getElementById('kpi-bm-label').textContent = selectedBM === 'ALL' ? 'BM: SEMUA BM' : `BM: ${selectedBM}`;
+      document.getElementById('kpi-total-hp').textContent = `${formatNumber(totalHP)} HP`;
+
+      document.getElementById('kpi-zonk-count').textContent = formatNumber(zonkCount);
+      document.getElementById('kpi-zonk-pct').textContent = `${zonkPct}%`;
+      document.getElementById('kpi-zonk-hp').textContent = `${formatNumber(zonkHPAvail)} HP Avail`;
+
+      document.getElementById('kpi-under-visit').textContent = formatNumber(underCount);
+      document.getElementById('kpi-under-pct').textContent = `${underPct}%`;
+      document.getElementById('kpi-daily-must').textContent = formatNumber(dailyMustCount);
+      document.getElementById('kpi-critical-visit').textContent = formatNumber(criticalVisitCount);
+
+      document.getElementById('kpi-on-target').textContent = formatNumber(onTargetCount);
+      document.getElementById('kpi-ontarget-pct').textContent = `${onTargetPct}%`;
+      document.getElementById('kpi-total-sa').textContent = `${formatNumber(totalSA)} SA`;
+
+      // Update Tab Badges & Subfilter counts
+      document.getElementById('badge-tab-visit').textContent = underCount;
+      document.getElementById('badge-tab-zonk').textContent = zonkCount;
+      document.getElementById('badge-tab-all').textContent = total;
+
+      document.getElementById('count-sub-under').textContent = underCount;
+      document.getElementById('count-sub-daily').textContent = dailyMustCount;
+      document.getElementById('count-sub-critical').textContent = criticalVisitCount;
+    }
+
+    // Sub-filter di Tab 1
+    function setVisitSubFilter(mode) {
+      visitSubFilter = mode;
+      ['UNDER', 'DAILY', 'CRITICAL'].forEach(key => {
+        const btn = document.getElementById(`subfilter-${key}`);
+        if (key === mode) {
+          btn.className = 'visit-sub-btn px-3 py-1.5 rounded-xl text-xs font-bold bg-slate-900 text-white shadow-sm cursor-pointer transition';
+        } else {
+          btn.className = 'visit-sub-btn px-3 py-1.5 rounded-xl text-xs font-semibold bg-white text-slate-700 border border-slate-200 hover:bg-slate-50 cursor-pointer transition';
+        }
+      });
+      renderVisitTable();
+    }
+
+    // Render Tab 1: Cluster Kurang Target & Wajib Visit Harian
+    function renderVisitTable() {
+      const tbody = document.getElementById('tbody-visit');
+      let list = filteredClusterData.filter(d => d.isUnderTarget);
+
+      if (visitSubFilter === 'DAILY') {
+        list = list.filter(d => d.isWajibDaily);
+      } else if (visitSubFilter === 'CRITICAL') {
+        list = list.filter(d => d.isCritical);
+      }
+
+      // Urutkan: Wajib Visit Tiap Hari (deficit mendekati sisa hari) lalu Kritis
+      list.sort((a, b) => b.deficit - a.deficit);
+
+      if (list.length === 0) {
+        tbody.innerHTML = `
+          <tr>
+            <td colspan="9" class="py-10 px-4 text-center text-slate-500">
+              <div class="inline-flex flex-col items-center">
+                <i class="fa-solid fa-circle-check text-3xl text-emerald-500 mb-2"></i>
+                <p class="font-bold text-slate-700">Tidak ada cluster pada kategori ini!</p>
+                <p class="text-xs text-slate-400 mt-0.5">Semua cluster pada filter ini sudah memenuhi target visit atau tidak ada data cocok.</p>
+              </div>
+            </td>
+          </tr>
+        `;
+        return;
+      }
+
+      tbody.innerHTML = list.map((d, idx) => {
+        const statusBadge = d.isCritical
+          ? `<span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-rose-100 text-rose-800 font-bold text-[11px] border border-rose-200">
+               <i class="fa-solid fa-bolt text-rose-600"></i> KRITIS (&gt;1x/Hari)
+             </span>`
+          : `<span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-amber-100 text-amber-900 font-bold text-[11px] border border-amber-300">
+               <i class="fa-solid fa-calendar-day text-amber-600"></i> WAJIB VISIT TIAP HARI
+             </span>`;
+
+        const saBadge = d.isZonkSA
+          ? `<span class="px-2 py-0.5 rounded-md bg-rose-50 text-rose-700 font-bold border border-rose-200">0 (ZONK)</span>`
+          : `<span class="px-2 py-0.5 rounded-md bg-emerald-50 text-emerald-700 font-bold border border-emerald-200">${d.totalSA} SA</span>`;
+
+        const perDayText = d.isCritical
+          ? `${d.perDayNeeded.toFixed(1)}x / hari`
+          : `1x / hari`;
+
+        return `
+          <tr class="hover:bg-slate-50/90 transition">
+            <td class="py-3 px-3.5 font-semibold text-slate-500">${idx + 1}</td>
+            <td class="py-3 px-3.5">
+              <div class="font-bold text-slate-900">${escapeHTML(d.clusterName)}</div>
+              <div class="text-[11px] font-mono text-slate-500">${escapeHTML(d.clusterId)} &bull; ${escapeHTML(d.rfsClass)}</div>
+            </td>
+            <td class="py-3 px-3.5">
+              <div class="font-semibold text-slate-800">${escapeHTML(d.kecamatan)}</div>
+              <div class="text-[11px] text-slate-500">${escapeHTML(d.kotaAsli)}</div>
+            </td>
+            <td class="py-3 px-3.5">
+              <div class="font-semibold text-slate-800">${escapeHTML(d.asm)}</div>
+              <div class="text-[11px] text-indigo-600 font-medium">AE: ${escapeHTML(d.ae)}</div>
+            </td>
+            <td class="py-3 px-3.5 text-center">
+              <span class="inline-block px-2.5 py-1 rounded-lg bg-slate-100 font-extrabold text-slate-800">${d.visitMTD}</span>
+              <span class="text-[10px] text-slate-400 block">dari ${d.targetVisit}</span>
+            </td>
+            <td class="py-3 px-3.5 text-center">
+              <span class="inline-block px-2.5 py-1 rounded-lg bg-rose-50 text-rose-700 font-extrabold border border-rose-200">-${d.deficit}</span>
+            </td>
+            <td class="py-3 px-3.5 text-center font-bold text-slate-800">
+              ${perDayText}
+            </td>
+            <td class="py-3 px-3.5">
+              ${statusBadge}
+            </td>
+            <td class="py-3 px-3.5 text-center">
+              ${saBadge}
+            </td>
+          </tr>
+        `;
+      }).join('');
+    }
+
+    // Render Tab 2: Detail Cluster ZONK SA
+    function renderZonkTable() {
+      const tbody = document.getElementById('tbody-zonk');
+      const sortMode = document.getElementById('zonk-sort').value;
+      let list = filteredClusterData.filter(d => d.isZonkSA);
+
+      if (sortMode === 'hp_desc') {
+        list.sort((a, b) => b.hpAvailable - a.hpAvailable);
+      } else if (sortMode === 'visit_asc') {
+        list.sort((a, b) => a.visitMTD - b.visitMTD);
+      } else if (sortMode === 'visit_desc') {
+        list.sort((a, b) => b.visitMTD - a.visitMTD);
+      } else {
+        list.sort((a, b) => a.clusterName.localeCompare(b.clusterName));
+      }
+
+      if (list.length === 0) {
+        tbody.innerHTML = `
+          <tr>
+            <td colspan="9" class="py-10 px-4 text-center text-slate-500">
+              <div class="inline-flex flex-col items-center">
+                <i class="fa-solid fa-award text-3xl text-emerald-500 mb-2"></i>
+                <p class="font-bold text-slate-700">Luar Biasa! Tidak ada Cluster ZONK SA pada filter ini.</p>
+              </div>
+            </td>
+          </tr>
+        `;
+        return;
+      }
+
+      tbody.innerHTML = list.map((d, idx) => `
+        <tr class="hover:bg-rose-50/40 transition">
+          <td class="py-3 px-3.5 font-semibold text-slate-500">${idx + 1}</td>
+          <td class="py-3 px-3.5">
+            <div class="font-bold text-slate-900">${escapeHTML(d.clusterName)}</div>
+            <div class="text-[11px] font-mono text-slate-500">${escapeHTML(d.clusterId)}</div>
+          </td>
+          <td class="py-3 px-3.5">
+            <div class="font-semibold text-slate-800">${escapeHTML(d.kecamatan)}</div>
+            <div class="text-[11px] text-slate-500">${escapeHTML(d.kotaAsli)}</div>
+          </td>
+          <td class="py-3 px-3.5 text-slate-700 font-medium">${escapeHTML(d.rfsClass)}</td>
+          <td class="py-3 px-3.5 text-right font-semibold text-slate-700">${formatNumber(d.hpTotal)}</td>
+          <td class="py-3 px-3.5 text-right font-extrabold text-indigo-700">${formatNumber(d.hpAvailable)}</td>
+          <td class="py-3 px-3.5 text-center">
+            <span class="px-2.5 py-1 rounded-lg font-bold ${d.isUnderTarget ? 'bg-amber-100 text-amber-800' : 'bg-emerald-100 text-emerald-800'}">
+              ${d.visitMTD}
+            </span>
+          </td>
+          <td class="py-3 px-3.5">
+            <span class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-rose-100 text-rose-800 font-bold text-[11px]">
+              <i class="fa-solid fa-circle-xmark"></i> ZONK SA
+            </span>
+          </td>
+          <td class="py-3 px-3.5">
+            <div class="font-semibold text-slate-800">${escapeHTML(d.asm)}</div>
+            <div class="text-[11px] text-slate-500">AE: ${escapeHTML(d.ae)}</div>
+          </td>
+        </tr>
+      `).join('');
+    }
+
+    // Render Tab 3: Rekap ASM/AE & Seluruh Data Cluster
+    function renderAllAndTeamTables() {
+      // 1. Rekap per ASM & AE
+      const teamMap = new Map();
+      filteredClusterData.forEach(d => {
+        const key = `${d.asm}|||${d.ae}`;
+        if (!teamMap.has(key)) {
+          teamMap.set(key, {
+            asm: d.asm,
+            ae: d.ae,
+            total: 0,
+            zonk: 0,
+            underVisit: 0,
+            wajibDaily: 0,
+            onTarget: 0,
+            totalSA: 0
+          });
+        }
+        const entry = teamMap.get(key);
+        entry.total += 1;
+        if (d.isZonkSA) entry.zonk += 1;
+        if (d.isUnderTarget) entry.underVisit += 1;
+        else entry.onTarget += 1;
+        if (d.isWajibDaily) entry.wajibDaily += 1;
+        entry.totalSA += d.totalSA;
+      });
+
+      const teamList = Array.from(teamMap.values()).sort((a, b) => a.asm.localeCompare(b.asm) || a.ae.localeCompare(b.ae));
+      const tbodyTeam = document.getElementById('tbody-summary-team');
+
+      if (teamList.length === 0) {
+        tbodyTeam.innerHTML = `<tr><td colspan="8" class="py-6 text-center text-slate-400">Tidak ada data tim pada filter ini.</td></tr>`;
+      } else {
+        tbodyTeam.innerHTML = teamList.map(t => `
+          <tr class="hover:bg-slate-50">
+            <td class="py-2.5 px-3.5 font-bold text-slate-800">${escapeHTML(t.asm)}</td>
+            <td class="py-2.5 px-3.5 font-semibold text-indigo-700">${escapeHTML(t.ae)}</td>
+            <td class="py-2.5 px-3.5 text-center font-bold">${t.total}</td>
+            <td class="py-2.5 px-3.5 text-center font-bold text-rose-600">${t.zonk}</td>
+            <td class="py-2.5 px-3.5 text-center font-bold text-amber-600">${t.underVisit}</td>
+            <td class="py-2.5 px-3.5 text-center font-bold text-amber-800">${t.wajibDaily}</td>
+            <td class="py-2.5 px-3.5 text-center font-bold text-emerald-600">${t.onTarget}</td>
+            <td class="py-2.5 px-3.5 text-center font-extrabold text-indigo-700">${t.totalSA}</td>
+          </tr>
+        `).join('');
+      }
+
+      // 2. Tabel Semua Cluster
+      document.getElementById('all-table-count').textContent = filteredClusterData.length;
+      const tbodyAll = document.getElementById('tbody-all');
+
+      if (filteredClusterData.length === 0) {
+        tbodyAll.innerHTML = `<tr><td colspan="10" class="py-8 text-center text-slate-400">Tidak ada data cluster ditemukan.</td></tr>`;
+        return;
+      }
+
+      tbodyAll.innerHTML = filteredClusterData.map((d, idx) => `
+        <tr class="hover:bg-slate-50">
+          <td class="py-2.5 px-3.5 text-slate-500 font-semibold">${idx + 1}</td>
+          <td class="py-2.5 px-3.5 font-mono text-slate-700">${escapeHTML(d.clusterId)}</td>
+          <td class="py-2.5 px-3.5 font-bold text-slate-900">${escapeHTML(d.clusterName)}</td>
+          <td class="py-2.5 px-3.5">
+            <div class="font-medium text-slate-800">${escapeHTML(d.kecamatan)}</div>
+            <div class="text-[11px] text-slate-400">${escapeHTML(d.kotaAsli)}</div>
+          </td>
+          <td class="py-2.5 px-3.5 text-right font-semibold text-slate-700">${formatNumber(d.hpAvailable)}</td>
+          <td class="py-2.5 px-3.5 text-center font-extrabold ${d.isUnderTarget ? 'text-amber-600' : 'text-emerald-600'}">${d.visitMTD}</td>
+          <td class="py-2.5 px-3.5">
+            ${d.isUnderTarget
+              ? `<span class="px-2 py-0.5 rounded-md bg-amber-100 text-amber-800 font-bold text-[11px]">Kurang ${d.deficit}</span>`
+              : `<span class="px-2 py-0.5 rounded-md bg-emerald-100 text-emerald-800 font-bold text-[11px]">On Target</span>`}
+          </td>
+          <td class="py-2.5 px-3.5 text-center font-bold">${d.totalSA}</td>
+          <td class="py-2.5 px-3.5">
+            ${d.isZonkSA
+              ? `<span class="px-2 py-0.5 rounded-md bg-rose-100 text-rose-800 font-bold text-[11px]">ZONK SA</span>`
+              : `<span class="px-2 py-0.5 rounded-md bg-emerald-50 text-emerald-700 font-bold text-[11px]">${escapeHTML(d.statusSA)}</span>`}
+          </td>
+          <td class="py-2.5 px-3.5">
+            <div class="font-semibold text-slate-800">${escapeHTML(d.asm)} / ${escapeHTML(d.ae)}</div>
+            <div class="text-[10px] text-slate-400">BM: ${escapeHTML(d.bm)}</div>
+          </td>
+        </tr>
+      `).join('');
+    }
+
+    // Switch Tab Navigation
+    function switchTab(tabName) {
+      currentTab = tabName;
+      ['visit', 'zonk', 'all'].forEach(t => {
+        const btn = document.getElementById(`tab-btn-${t}`);
+        const content = document.getElementById(`tab-content-${t}`);
+        if (t === tabName) {
+          btn.className = 'tab-btn px-4 py-2.5 rounded-t-xl text-xs sm:text-sm font-bold border-b-2 border-indigo-600 text-indigo-700 bg-white flex items-center gap-2 transition cursor-pointer whitespace-nowrap';
+          content.classList.remove('hidden');
+        } else {
+          btn.className = 'tab-btn px-4 py-2.5 rounded-t-xl text-xs sm:text-sm font-semibold border-b-2 border-transparent text-slate-500 hover:text-slate-800 flex items-center gap-2 transition cursor-pointer whitespace-nowrap';
+          content.classList.add('hidden');
+        }
+      });
+    }
+
+    // =========================================================================
+    // MODAL DETAIL ZONK SA (Saat card angka ZONK SA diklik)
+    // =========================================================================
+    function openZonkModal() {
+      const zonkList = filteredClusterData
+        .filter(d => d.isZonkSA)
+        .sort((a, b) => b.hpAvailable - a.hpAvailable);
+
+      const selectedBM = document.getElementById('filter-bm').value;
+      const selectedASM = document.getElementById('filter-asm').value;
+      const selectedAE = document.getElementById('filter-ae').value;
+
+      const filterDesc = [
+        selectedBM === 'ALL' ? 'Semua BM' : `BM: ${selectedBM}`,
+        selectedASM !== 'ALL' ? `ASM: ${selectedASM}` : null,
+        selectedAE !== 'ALL' ? `AE: ${selectedAE}` : null
+      ].filter(Boolean).join(' | ');
+
+      const totalZonkHP = zonkList.reduce((acc, d) => acc + d.hpAvailable, 0);
+
+      document.getElementById('modal-zonk-subtitle').textContent = filterDesc;
+      document.getElementById('modal-zonk-total').textContent = `${zonkList.length} Cluster`;
+      document.getElementById('modal-zonk-hp').textContent = `${formatNumber(totalZonkHP)} HP`;
+
+      const tbody = document.getElementById('modal-zonk-tbody');
+      if (zonkList.length === 0) {
+        tbody.innerHTML = `<tr><td colspan="9" class="py-8 text-center text-slate-500 font-semibold">Tidak ada cluster ZONK SA pada filter yang dipilih.</td></tr>`;
+      } else {
+        tbody.innerHTML = zonkList.map((d, idx) => `
+          <tr class="hover:bg-rose-50/50">
+            <td class="py-2.5 px-3 font-semibold text-slate-500">${idx + 1}</td>
+            <td class="py-2.5 px-3 font-mono text-slate-700">${escapeHTML(d.clusterId)}</td>
+            <td class="py-2.5 px-3 font-bold text-slate-900">${escapeHTML(d.clusterName)}</td>
+            <td class="py-2.5 px-3">
+              <div class="font-medium text-slate-800">${escapeHTML(d.kecamatan)}</div>
+              <div class="text-[10px] text-slate-400">${escapeHTML(d.kotaAsli)}</div>
+            </td>
+            <td class="py-2.5 px-3 text-slate-600">${escapeHTML(d.rfsClass)}</td>
+            <td class="py-2.5 px-3 text-right">${formatNumber(d.hpTotal)}</td>
+            <td class="py-2.5 px-3 text-right font-bold text-indigo-700">${formatNumber(d.hpAvailable)}</td>
+            <td class="py-2.5 px-3 text-center font-bold ${d.isUnderTarget ? 'text-amber-700' : 'text-emerald-700'}">${d.visitMTD}</td>
+            <td class="py-2.5 px-3">
+              <div class="font-semibold text-slate-800">${escapeHTML(d.asm)}</div>
+              <div class="text-[10px] text-slate-500">AE: ${escapeHTML(d.ae)}</div>
+            </td>
+          </tr>
+        `).join('');
+      }
+
+      const modal = document.getElementById('modal-zonk');
+      modal.classList.remove('hidden');
+      modal.classList.add('flex');
+    }
+
+    function closeZonkModal() {
+      const modal = document.getElementById('modal-zonk');
+      modal.classList.add('hidden');
+      modal.classList.remove('flex');
+    }
+
+    function copyZonkListToClipboard() {
+      const zonkList = filteredClusterData
+        .filter(d => d.isZonkSA)
+        .sort((a, b) => b.hpAvailable - a.hpAvailable);
+
+      const lines = [
+        `*DETAIL CLUSTER ZONK SA (${zonkList.length} Cluster)*`,
+        ...zonkList.map((d, i) => `${i + 1}. *${d.clusterName}* (${d.clusterId}) - Kec. ${d.kecamatan} | HP Avail: ${d.hpAvailable} | Visit MTD: ${d.visitMTD} | AE: ${d.ae}`)
+      ];
+      copyToClipboardFallback(lines.join('\n'), 'Daftar detail cluster ZONK SA berhasil disalin!');
+    }
+
+    // =========================================================================
+    // MODAL DETAIL VISIT < TARGET / WAJIB TIAP HARI / KRITIS
+    // =========================================================================
+    function openUnderVisitModal(mode = 'UNDER') {
+      underVisitModalMode = mode;
+      renderUnderVisitModalContent();
+      const modal = document.getElementById('modal-under-visit');
+      modal.classList.remove('hidden');
+      modal.classList.add('flex');
+    }
+
+    function switchUnderVisitModalMode(mode) {
+      underVisitModalMode = mode;
+      renderUnderVisitModalContent();
+    }
+
+    function renderUnderVisitModalContent() {
+      const targetVisit = parseInt(document.getElementById('week-target-select').value, 10) || 20;
+      const remainingDays = Math.max(1, parseInt(document.getElementById('remaining-days-input').value, 10) || 7);
+
+      const allUnder = filteredClusterData.filter(d => d.isUnderTarget);
+      const allDaily = allUnder.filter(d => d.isWajibDaily);
+      const allCritical = allUnder.filter(d => d.isCritical);
+
+      document.getElementById('modal-uv-count-under').textContent = allUnder.length;
+      document.getElementById('modal-uv-count-daily').textContent = allDaily.length;
+      document.getElementById('modal-uv-count-critical').textContent = allCritical.length;
+
+      ['UNDER', 'DAILY', 'CRITICAL'].forEach(k => {
+        const btn = document.getElementById(`modal-uv-tab-${k}`);
+        if (k === underVisitModalMode) {
+          btn.className = 'px-3 py-1.5 rounded-xl font-bold bg-slate-900 text-white shadow-sm transition cursor-pointer';
+        } else if (k === 'CRITICAL') {
+          btn.className = 'px-3 py-1.5 rounded-xl font-semibold bg-white text-rose-700 border border-rose-300 hover:bg-rose-50 transition cursor-pointer';
+        } else {
+          btn.className = 'px-3 py-1.5 rounded-xl font-semibold bg-white text-amber-900 border border-amber-300 hover:bg-amber-100 transition cursor-pointer';
+        }
+      });
+
+      let list = allUnder;
+      let titleText = `Detail Semua Cluster Visit < Target (${allUnder.length} Cluster)`;
+      if (underVisitModalMode === 'DAILY') {
+        list = allDaily;
+        titleText = `Detail Cluster Wajib Visit Tiap Hari (${allDaily.length} Cluster)`;
+      } else if (underVisitModalMode === 'CRITICAL') {
+        list = allCritical;
+        titleText = `Detail Cluster Kritis / >1x Visit per Hari (${allCritical.length} Cluster)`;
+      }
+
+      list = [...list].sort((a, b) => b.deficit - a.deficit);
+
+      const selectedBM = document.getElementById('filter-bm').value;
+      const selectedASM = document.getElementById('filter-asm').value;
+      const selectedAE = document.getElementById('filter-ae').value;
+      const filterDesc = [
+        selectedBM === 'ALL' ? 'Semua BM' : `BM: ${selectedBM}`,
+        selectedASM !== 'ALL' ? `ASM: ${selectedASM}` : null,
+        selectedAE !== 'ALL' ? `AE: ${selectedAE}` : null,
+        `Target Min. ${targetVisit} Visit | Sisa ${remainingDays} Hari`
+      ].filter(Boolean).join(' • ');
+
+      document.getElementById('modal-uv-title').textContent = titleText;
+      document.getElementById('modal-uv-subtitle').textContent = filterDesc;
+      document.getElementById('modal-uv-footer-note').textContent = `Menampilkan ${list.length} cluster`;
+
+      const tbody = document.getElementById('modal-uv-tbody');
+      if (list.length === 0) {
+        tbody.innerHTML = `<tr><td colspan="9" class="py-10 text-center text-slate-500 font-semibold">Tidak ada cluster pada kategori ini.</td></tr>`;
+        return;
+      }
+
+      tbody.innerHTML = list.map((d, idx) => {
+        const statusBadge = d.isCritical
+          ? `<span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-rose-100 text-rose-800 font-bold text-[11px] border border-rose-200">
+               <i class="fa-solid fa-bolt text-rose-600"></i> KRITIS (&gt;1x/Hari)
+             </span>`
+          : `<span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-amber-100 text-amber-900 font-bold text-[11px] border border-amber-300">
+               <i class="fa-solid fa-calendar-day text-amber-600"></i> WAJIB TIAP HARI
+             </span>`;
+
+        const saBadge = d.isZonkSA
+          ? `<span class="px-2 py-0.5 rounded-md bg-rose-50 text-rose-700 font-bold border border-rose-200">0 (ZONK)</span>`
+          : `<span class="px-2 py-0.5 rounded-md bg-emerald-50 text-emerald-700 font-bold border border-emerald-200">${d.totalSA} SA</span>`;
+
+        const perDayText = d.isCritical ? `${d.perDayNeeded.toFixed(1)}x / hari` : `1x / hari`;
+
+        return `
+          <tr class="hover:bg-amber-50/40 transition">
+            <td class="py-2.5 px-3 font-semibold text-slate-500">${idx + 1}</td>
+            <td class="py-2.5 px-3">
+              <div class="font-bold text-slate-900">${escapeHTML(d.clusterName)}</div>
+              <div class="text-[10px] font-mono text-slate-500">${escapeHTML(d.clusterId)} &bull; ${escapeHTML(d.rfsClass)}</div>
+            </td>
+            <td class="py-2.5 px-3">
+              <div class="font-semibold text-slate-800">${escapeHTML(d.kecamatan)}</div>
+              <div class="text-[10px] text-slate-500">${escapeHTML(d.kotaAsli)}</div>
+            </td>
+            <td class="py-2.5 px-3">
+              <div class="font-semibold text-slate-800">${escapeHTML(d.asm)}</div>
+              <div class="text-[10px] text-indigo-600 font-medium">AE: ${escapeHTML(d.ae)}</div>
+            </td>
+            <td class="py-2.5 px-3 text-center">
+              <span class="inline-block px-2 py-0.5 rounded-md bg-slate-100 font-extrabold text-slate-800">${d.visitMTD} / ${d.targetVisit}</span>
+            </td>
+            <td class="py-2.5 px-3 text-center">
+              <span class="inline-block px-2 py-0.5 rounded-md bg-rose-50 text-rose-700 font-extrabold border border-rose-200">-${d.deficit}</span>
+            </td>
+            <td class="py-2.5 px-3 text-center font-bold text-slate-800">${perDayText}</td>
+            <td class="py-2.5 px-3">${statusBadge}</td>
+            <td class="py-2.5 px-3 text-center">${saBadge}</td>
+          </tr>
+        `;
+      }).join('');
+    }
+
+    function closeUnderVisitModal() {
+      const modal = document.getElementById('modal-under-visit');
+      modal.classList.add('hidden');
+      modal.classList.remove('flex');
+    }
+
+    function copyUnderVisitListToClipboard() {
+      const targetVisit = parseInt(document.getElementById('week-target-select').value, 10) || 20;
+      let list = filteredClusterData.filter(d => d.isUnderTarget);
+      let labelTitle = `SEMUA CLUSTER VISIT < TARGET (${targetVisit})`;
+
+      if (underVisitModalMode === 'DAILY') {
+        list = list.filter(d => d.isWajibDaily);
+        labelTitle = `CLUSTER WAJIB VISIT TIAP HARI`;
+      } else if (underVisitModalMode === 'CRITICAL') {
+        list = list.filter(d => d.isCritical);
+        labelTitle = `CLUSTER KRITIS (>1x VISIT/HARI)`;
+      }
+
+      list = [...list].sort((a, b) => b.deficit - a.deficit);
+      const lines = [
+        `*${labelTitle} (${list.length} Cluster)*`,
+        ...list.map((d, i) => `${i + 1}. *${d.clusterName}* (${d.clusterId}) | MTD: *${d.visitMTD}/${targetVisit}* (Kurang *${d.deficit}*) | Kec: ${d.kecamatan} | AE: ${d.ae}`)
+      ];
+      copyToClipboardFallback(lines.join('\n'), `Daftar ${list.length} cluster berhasil disalin!`);
+    }
+
+    // =========================================================================
+    // MODAL REPORT TEXT WHATSAPP (Mengikuti Filter Aktif)
+    // =========================================================================
+    function openWhatsAppModal() {
+      generateWhatsAppText();
+      const modal = document.getElementById('modal-wa');
+      modal.classList.remove('hidden');
+      modal.classList.add('flex');
+    }
+
+    function closeWhatsAppModal() {
+      const modal = document.getElementById('modal-wa');
+      modal.classList.add('hidden');
+      modal.classList.remove('flex');
+    }
+
+    function generateWhatsAppText() {
+      const selectedBM = document.getElementById('filter-bm').value;
+      const selectedASM = document.getElementById('filter-asm').value;
+      const selectedAE = document.getElementById('filter-ae').value;
+      const selectedCity = document.getElementById('filter-city').value;
+      const selectedRFS = document.getElementById('filter-rfs').value;
+      const targetVisit = parseInt(document.getElementById('week-target-select').value, 10) || 20;
+      const remainingDays = Math.max(1, parseInt(document.getElementById('remaining-days-input').value, 10) || 7);
+
+      const includeRFS = document.getElementById('wa-include-rfs').checked;
+      const includeZonk = document.getElementById('wa-include-zonk').checked;
+      const includeUnderVisit = document.getElementById('wa-include-undervisit').checked;
+
+      const total = filteredClusterData.length;
+      const zonkList = filteredClusterData.filter(d => d.isZonkSA).sort((a, b) => b.hpAvailable - a.hpAvailable);
+      const underVisitList = filteredClusterData.filter(d => d.isUnderTarget).sort((a, b) => b.deficit - a.deficit);
+      const wajibDailyList = underVisitList.filter(d => d.isWajibDaily);
+      const criticalList = underVisitList.filter(d => d.isCritical);
+      const onTargetCount = total - underVisitList.length;
+
+      let lines = [];
+      lines.push(`*📊 REPORT MONITORING CLUSTER CTJ (WEEK 4)*`);
+      lines.push(`Tanggal: *Selasa, 24 November 2026*`);
+      lines.push(`BM: *${selectedBM === 'ALL' ? 'Semua BM' : selectedBM}*`);
+      if (selectedASM !== 'ALL') lines.push(`ASM: *${selectedASM}*`);
+      if (selectedAE !== 'ALL') lines.push(`AE: *${selectedAE}*`);
+      if (selectedCity !== 'ALL') lines.push(`Area/Kota: *${selectedCity}*`);
+      if (selectedRFS !== 'ALL') lines.push(`RFS Class: *${selectedRFS}*`);
+      lines.push(`Acuan Target: *Min. ${targetVisit} Visit MTD* (Sisa ${remainingDays} hari s/d akhir bulan)`);
+      lines.push(`-----------------------------------`);
+      lines.push(`*RINGKASAN PERFORMA:*`);
+      lines.push(`• Total Cluster CTJ: *${total}*`);
+      lines.push(`• Cluster ZONK SA: *${zonkList.length}* (${total > 0 ? Math.round((zonkList.length / total) * 100) : 0}%)`);
+      lines.push(`• Visit < Target (${targetVisit}): *${underVisitList.length}*`);
+      lines.push(`   - Wajib Visit Tiap Hari: *${wajibDailyList.length}*`);
+      lines.push(`   - Kritis (>1x/Hari): *${criticalList.length}*`);
+      lines.push(`• Visit On-Target (>=${targetVisit}): *${onTargetCount}*`);
+
+      if (includeRFS) {
+        const rfsSummary = computeRFSSummary(filteredClusterData, targetVisit);
+        lines.push(``);
+        lines.push(`*🗂️ RINGKASAN RFS CLASSIFICATION (${rfsSummary.length} Kategori):*`);
+        if (rfsSummary.length === 0) {
+          lines.push(`_Tidak ada data RFS._`);
+        } else {
+          rfsSummary.forEach((r, idx) => {
+            lines.push(`${idx + 1}. *${r.rfsClass}* | Cls: *${r.totalCluster}* | ZONK: *${r.zonkSA}* | <${targetVisit} Visit: *${r.underTarget}* (Daily: *${r.wajibDaily}*) | HP: *${formatNumber(r.totalHP)}* | Subs: *${formatNumber(r.totalSubs)}* | Pen: *${r.avgPenRate.toFixed(1)}%* | Visit MTD: *${formatNumber(r.totalVisitMTD)}* (Avg ${r.avgVisitMTD.toFixed(1)})`);
+          });
+        }
+      }
+
+      if (includeUnderVisit) {
+        lines.push(``);
+        lines.push(`*🚨 CLUSTER WAJIB VISIT TIAP HARI & KURANG TARGET (${underVisitList.length}):*`);
+        if (underVisitList.length === 0) {
+          lines.push(`_Semua cluster sudah mencapai target minimal ${targetVisit} visit._`);
+        } else {
+          underVisitList.forEach((d, idx) => {
+            const label = d.isCritical ? `KRITIS (${d.perDayNeeded.toFixed(1)}x/hr)` : `WAJIB TIAP HARI`;
+            lines.push(`${idx + 1}. *${d.clusterName}* | MTD: *${d.visitMTD}/${targetVisit}* (Kurang *${d.deficit}*) - [${label}] - AE: ${d.ae}`);
+          });
+        }
+      }
+
+      if (includeZonk) {
+        lines.push(``);
+        lines.push(`*⚠️ DETAIL CLUSTER ZONK SA (${zonkList.length}):*`);
+        if (zonkList.length === 0) {
+          lines.push(`_Nihil cluster ZONK SA._`);
+        } else {
+          zonkList.forEach((d, idx) => {
+            lines.push(`${idx + 1}. *${d.clusterName}* (${d.clusterId}) | Kec: ${d.kecamatan} | HP Avail: ${d.hpAvailable} | Visit: ${d.visitMTD} | AE: ${d.ae}`);
+          });
+        }
+      }
+
+      lines.push(``);
+      lines.push(`_Mohon perhatian rekan-rekan ASM & AE untuk memprioritaskan cluster wajib visit harian & pecah telur ZONK SA. Terima kasih._`);
+
+      const finalText = lines.join('\n');
+      document.getElementById('wa-report-textarea').value = finalText;
+      updateWACharCount();
+    }
+
+    function updateWACharCount() {
+      const len = document.getElementById('wa-report-textarea').value.length;
+      document.getElementById('wa-char-count').textContent = `${formatNumber(len)} karakter`;
+    }
+
+    function copyWhatsAppText() {
+      const text = document.getElementById('wa-report-textarea').value;
+      copyToClipboardFallback(text, 'Report Text WhatsApp berhasil disalin!');
+    }
+
+    function sendToWhatsAppApp() {
+      const text = document.getElementById('wa-report-textarea').value;
+      const waUrl = `https://wa.me/?text=${encodeURIComponent(text)}`;
+      window.open(waUrl, '_blank', 'noopener,noreferrer');
+    }
+
+    // Clipboard helper compatible with iframe sandbox
+    function copyToClipboardFallback(text, successMsg) {
+      const tempTextArea = document.createElement('textarea');
+      tempTextArea.value = text;
+      tempTextArea.style.position = 'fixed';
+      tempTextArea.style.left = '-9999px';
+      document.body.appendChild(tempTextArea);
+      tempTextArea.select();
+      try {
+        document.execCommand('copy');
+        showToast(successMsg);
+      } catch (err) {
+        showToast('Gagal menyalin teks.', true);
+      }
+      document.body.removeChild(tempTextArea);
+    }
+
+    // Modal Sumber Data
+    function openDataModal() {
+      const modal = document.getElementById('modal-data');
+      modal.classList.remove('hidden');
+      modal.classList.add('flex');
+    }
+
+    function closeDataModal() {
+      const modal = document.getElementById('modal-data');
+      modal.classList.add('hidden');
+      modal.classList.remove('flex');
+    }
+
+    // Inisialisasi saat halaman dimuat
+    window.addEventListener('DOMContentLoaded', () => {
+      fetchGoogleSheetData(false);
+    });
+  </script>
+</body>
+</html>
