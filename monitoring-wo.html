@@ -333,6 +333,18 @@
                     </div>
                 </div>
 
+                <!-- Filter Rentang Tanggal Appointment: Hari Ini sampai Tanggal Pilihan -->
+                <div>
+                    <label for="filter-date-start" class="block text-xs font-semibold text-slate-600 mb-1.5">Tanggal Mulai</label>
+                    <input type="date" id="filter-date-start" readonly aria-label="Tanggal mulai hari ini" class="w-full bg-slate-100 border border-slate-300 text-slate-600 text-sm rounded-xl px-3.5 py-2.5 cursor-not-allowed">
+                    <p class="text-[10px] text-slate-400 mt-1">Otomatis: hari ini</p>
+                </div>
+                <div>
+                    <label for="filter-date-end" class="block text-xs font-semibold text-slate-600 mb-1.5">Sampai Tanggal</label>
+                    <input type="date" id="filter-date-end" onchange="handleDateRangeChange()" class="w-full bg-slate-50 border border-slate-300 text-slate-800 text-sm rounded-xl px-3.5 py-2.5 focus:outline-none focus:ring-2 focus:ring-blue-500 transition">
+                    <p class="text-[10px] text-slate-400 mt-1">Default: hari ini</p>
+                </div>
+
                 <!-- Pencarian Cepat -->
                 <div class="sm:col-span-2">
                     <label for="filter-search" class="block text-xs font-semibold text-slate-600 mb-1.5">Pencarian Cepat</label>
@@ -982,9 +994,50 @@
             applyFilters();
         }
 
+        function getTodayISODate() {
+            const now = new Date();
+            const year = now.getFullYear();
+            const month = String(now.getMonth() + 1).padStart(2, '0');
+            const day = String(now.getDate()).padStart(2, '0');
+            return `${year}-${month}-${day}`;
+        }
+
+        function normalizeAppointmentDate(value) {
+            const raw = cleanText(value);
+            if (!raw || raw === '-') return '';
+            // Format ISO: YYYY-MM-DD atau timestamp ISO
+            let match = raw.match(/^(\d{4})-(\d{1,2})-(\d{1,2})/);
+            if (match) return `${match[1]}-${String(match[2]).padStart(2, '0')}-${String(match[3]).padStart(2, '0')}`;
+            // Format Indonesia: DD/MM/YYYY atau DD-MM-YYYY
+            match = raw.match(/^(\d{1,2})[\/.-](\d{1,2})[\/.-](\d{4})$/);
+            if (match) return `${match[3]}-${String(match[2]).padStart(2, '0')}-${String(match[1]).padStart(2, '0')}`;
+            return '';
+        }
+
+        function handleDateRangeChange() {
+            const today = getTodayISODate();
+            const startEl = document.getElementById('filter-date-start');
+            const endEl = document.getElementById('filter-date-end');
+            if (startEl) startEl.value = today;
+            if (endEl && (!endEl.value || endEl.value < today)) {
+                endEl.value = today;
+                showToast('Tanggal akhir tidak boleh sebelum hari ini.', 'info');
+            }
+            applyFilters();
+        }
+
         function resetAllFilters(showNotification = true) {
             selectedSlotFromTable = null;
             populateFilterOptions('DEFAULT_BENNY', 'ALL', 'ALL');
+
+            const today = getTodayISODate();
+            const dateStartEl = document.getElementById('filter-date-start');
+            const dateEndEl = document.getElementById('filter-date-end');
+            if (dateStartEl) dateStartEl.value = today;
+            if (dateEndEl) {
+                dateEndEl.min = today;
+                dateEndEl.value = today;
+            }
 
             const areaEl = document.getElementById('filter-area');
             const contEl = document.getElementById('filter-contractor');
@@ -1015,11 +1068,17 @@
                 area: document.getElementById('filter-area')?.value || 'ALL',
                 contractor: document.getElementById('filter-contractor')?.value || 'ALL',
                 slot: selectedSlotFromTable || ((document.getElementById('filter-slottime')?.value || 'ALL') !== 'ALL' ? document.getElementById('filter-slottime').value : null),
+                dateStart: document.getElementById('filter-date-start')?.value || getTodayISODate(),
+                dateEnd: document.getElementById('filter-date-end')?.value || getTodayISODate(),
                 search: cleanText(document.getElementById('filter-search')?.value || '').toLowerCase()
             };
         }
 
         function matchesCriteria(item, crit, ignoreSlot = false) {
+            const appointmentDate = normalizeAppointmentDate(item.appointmentDate);
+            if (!appointmentDate || appointmentDate < crit.dateStart || appointmentDate > crit.dateEnd) {
+                return false;
+            }
             if (crit.bsm !== 'ALL' && normalizePersonKey(item.bsmName) !== normalizePersonKey(crit.bsm)) {
                 return false;
             }
@@ -1062,7 +1121,7 @@
 
             const statusTextEl = document.getElementById('filter-status-text');
             if (statusTextEl) {
-                statusTextEl.innerHTML = `Menampilkan <strong class="text-blue-600">${filteredWorkOrders.length}</strong> dari ${rawWorkOrders.length} Work Order • BSM: <strong class="text-slate-800">${crit.bsm === 'ALL' ? 'Semua' : crit.bsm}</strong>`;
+                statusTextEl.innerHTML = `Menampilkan <strong class="text-blue-600">${filteredWorkOrders.length}</strong> dari ${rawWorkOrders.length} Work Order • Tanggal: <strong class="text-slate-800">${crit.dateStart}</strong> s.d. <strong class="text-slate-800">${crit.dateEnd}</strong> • BSM: <strong class="text-slate-800">${crit.bsm === 'ALL' ? 'Semua' : crit.bsm}</strong>`;
             }
 
             currentPage = 1;
