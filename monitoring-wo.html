@@ -635,7 +635,7 @@
 
     <script>
         // ============================================================================
-        // 1. KONSTANTA & DATA SAMPEL
+        // 1. KONSTANTA
         // ============================================================================
         const DEFAULT_BSM_NAME = 'BENNY HADIAWAN .';
 
@@ -757,7 +757,7 @@
         // ============================================================================
         // 2. STATE GLOBAL
         // ============================================================================
-        let rawWorkOrders = generateSampleData();
+        let rawWorkOrders = [];
         let filteredWorkOrders = [];
         let selectedSlotFromTable = null;
         let sortConfig = { key: 'workOrderNumber', direction: 'asc' };
@@ -857,7 +857,7 @@
             const contractorSelect = document.getElementById('filter-contractor');
 
             // 1. Populasi BSM dari seluruh data
-            const allBSMs = [...new Set(rawWorkOrders.map(d => cleanText(d.bsmName)).filter(Boolean))].sort((a, b) => a.localeCompare(b, 'id'));
+            const allBSMs = [...new Set(rawWorkOrders.map(d => cleanText(d.bsmName)).filter(v => v && v !== '-' && v.toLowerCase() !== 'null'))].sort((a, b) => a.localeCompare(b, 'id'));
             if (bsmSelect) {
                 bsmSelect.innerHTML = `<option value="ALL">Semua BSM (${allBSMs.length})</option>`;
                 allBSMs.forEach(name => {
@@ -1096,25 +1096,98 @@
             return true;
         }
 
-        // Refresh tampilan berdasarkan data yang sedang dimuat tanpa menghapus
-        // hasil impor Excel/CSV maupun pilihan filter pengguna.
-        function refreshDashboard() {
+        // Sumber data utama: Google Sheets, tab gid 1649075390.
+        const GOOGLE_SHEET_CSV_URL = 'https://docs.google.com/spreadsheets/d/1RHBB-N5TZ4LzNRRu7RVHOKWwd1ewSyBSQ1r9ZN8Q2jQ/export?format=csv&gid=1649075390';
+
+        function parseCSVText(text) {
+            const rows = []; let row = []; let field = ''; let quoted = false;
+            for (let i = 0; i < text.length; i++) {
+                const ch = text[i], next = text[i + 1];
+                if (ch === '"') {
+                    if (quoted && next === '"') { field += '"'; i++; }
+                    else quoted = !quoted;
+                } else if (ch === ',' && !quoted) { row.push(field); field = ''; }
+                else if ((ch === '\n' || ch === '\r') && !quoted) {
+                    if (ch === '\r' && next === '\n') i++;
+                    row.push(field); field = '';
+                    if (row.some(v => String(v).trim() !== '')) rows.push(row);
+                    row = [];
+                } else field += ch;
+            }
+            row.push(field); if (row.some(v => String(v).trim() !== '')) rows.push(row);
+            return rows;
+        }
+
+        function mapSheetRows(matrix) {
+            if (!matrix || matrix.length < 2) throw new Error('Tab Google Sheets kosong atau tidak memiliki baris data.');
+            const headers = matrix[0].map(h => cleanText(h).replace(/^\uFEFF/, ''));
+            const index = Object.fromEntries(headers.map((h, i) => [h.toLowerCase(), i]));
+            const col = (r, name, fallback = '') => {
+                const i = index[String(name).toLowerCase()];
+                return i === undefined ? fallback : (r[i] ?? fallback);
+            };
+            return matrix.slice(1).map((r, idx) => {
+                // Kolom AM (indeks 38) adalah sumber KPI appointmentStatus.
+                const statusAM = cleanText(r[38]);
+                let bsm = cleanText(col(r, 'bsmName'));
+                if (!bsm || bsm.toLowerCase() === 'null' || bsm === '-') bsm = '';
+                const rawDate = col(r, 'appointmentDate');
+                return {
+                    workOrderNumber: cleanText(col(r, 'workOrderNumber')) || `WO-${idx + 1}`,
+                    customerId: cleanText(col(r, 'customerId')) || '-',
+                    endUserName: cleanText(col(r, 'endUserName')) || '-',
+                    salesName: cleanText(col(r, 'salesName')) || '-',
+                    areaAsli: cleanText(col(r, 'area asli')),
+                    area: cleanText(col(r, 'area')),
+                    clusterName: cleanText(col(r, 'clusterName')) || '-',
+                    contractorName: cleanText(col(r, 'IKR') || col(r, 'contractorName')) || 'Tidak Diketahui',
+                    vendorName: cleanText(col(r, 'vendorName')) || '-',
+                    plan: cleanText(col(r, 'plan')) || '-',
+                    serviceStatus: cleanText(col(r, 'serviceStatus')) || '-',
+                    appointmentDate: normalizeAppointmentDate(rawDate) || cleanText(rawDate) || '-',
+                    slotTime: cleanText(col(r, 'slotTime')),
+                    appointmentStatus: statusAM || 'New',
+                    unsuccessfulCategory: cleanText(col(r, 'unsuccessfulCategory')) || '-',
+                    unsucessfulSubCategory: cleanText(col(r, 'unsucessfulSubCategory')) || '-',
+                    woRepitation: Number(col(r, 'woRepitation')) || 1,
+                    asmName: cleanText(col(r, 'asmName')) || '-',
+                    bsmName: bsm,
+                    statusWO: cleanText(col(r, 'Status WO')) || '-'
+                };
+            }).filter(x => x.workOrderNumber && x.workOrderNumber !== '-');
+        }
+
+        async function loadGoogleSheetData(showMessage = true) {
+            const badge = document.getElementById('data-source-badge');
+            if (badge) badge.textContent = 'Menghubungkan ke Google Sheets…';
+            const response = await fetch(GOOGLE_SHEET_CSV_URL, { cache: 'no-store' });
+            if (!response.ok) throw new Error(`Google Sheets merespons HTTP ${response.status}`);
+            const csvText = await response.text();
+            if (/<!doctype html|<html/i.test(csvText.slice(0, 300))) throw new Error('Google Sheets belum dapat dibaca sebagai CSV. Pastikan akses umum spreadsheet adalah Siapa saja yang memiliki link – Pelihat.');
+            const matrix = parseCSVText(csvText);
+            const mapped = mapSheetRows(matrix);
+            if (!mapped.length) throw new Error('Tidak ada baris WO yang berhasil dibaca dari tab sumber.');
+            rawWorkOrders = mapped;
+            resetAllFilters(false);
+            const bsmCount = new Set(mapped.map(x => x.bsmName).filter(Boolean)).size;
+            if (badge) {
+                badge.innerHTML = `<span class="w-1.5 h-1.5 rounded-full bg-emerald-600"></span> Google Sheets • ${mapped.length} WO • ${bsmCount} BSM`;
+                badge.className = 'inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200';
+            }
+            if (showMessage) showToast(`Data Google Sheets berhasil dimuat: ${mapped.length} WO, ${bsmCount} nama BSM.`, 'success');
+        }
+
+        async function refreshDashboard() {
             const button = document.getElementById('btn-refresh-dashboard');
             const icon = button ? button.querySelector('i') : null;
             if (button) button.disabled = true;
             if (icon) icon.classList.add('animate-spin');
-
             try {
-                applyFilters();
-                const stamp = new Date().toLocaleTimeString('id-ID', {
-                    hour: '2-digit',
-                    minute: '2-digit',
-                    second: '2-digit'
-                });
-                showToast(`Dashboard diperbarui • ${filteredWorkOrders.length} dari ${rawWorkOrders.length} WO • ${stamp}`, 'success');
+                await loadGoogleSheetData(true);
             } catch (err) {
-                console.error('Gagal refresh dashboard:', err);
-                showToast('Refresh dashboard gagal. Silakan coba lagi.', 'error');
+                console.error('Gagal mengambil data Google Sheets:', err);
+                showToast(`Gagal memuat Google Sheets: ${err.message}`, 'error');
+                if (rawWorkOrders.length) applyFilters();
             } finally {
                 if (button) button.disabled = false;
                 if (icon) icon.classList.remove('animate-spin');
@@ -1972,7 +2045,7 @@
         }
 
         // ============================================================================
-        // 8. IMPOR EXCEL / CSV (SHEET "data WO" & KOLOM CD / INDEKS 81) + EKSPOR CSV
+        // 8. PEMETAAN DATA SUMBER (appointmentStatus dari kolom AM / indeks 38) + EKSPOR CSV
         // ============================================================================
         function getFieldFlexible(row, rowArray, exactIndex, candidates) {
             // Prioritas indeks kolom langsung jika tersedia (misal kolom CD = indeks 81)
@@ -2039,6 +2112,9 @@
                         // Kolom CD = indeks 81 (0-based) untuk 'area asli'
                         const areaAsliVal = getFieldFlexible(row, rowArray, 81, ['area asli', 'area_asli', 'areaAsli', 'Area Asli']);
                         const areaVal = getFieldFlexible(row, rowArray, -1, ['area', 'Area', 'Kota', 'City']);
+                        // Kolom AM (indeks 38, 0-based) adalah sumber resmi appointmentStatus.
+                        // KPI, grafik, dan ringkasan status menggunakan nilai dari kolom ini.
+                        const appointmentStatusAM = cleanText(rowArray[38]);
 
                         return {
                             workOrderNumber: cleanText(getFieldFlexible(row, rowArray, -1, ['workOrderNumber', 'Work Order Number', 'WO Number', 'No WO'])) || `WO-IMP-${idx + 1}`,
@@ -2054,7 +2130,7 @@
                             serviceStatus: cleanText(getFieldFlexible(row, rowArray, -1, ['serviceStatus', 'Service Status'])) || '-',
                             appointmentDate: cleanText(rawDate) || '-',
                             slotTime: cleanText(getFieldFlexible(row, rowArray, -1, ['slotTime', 'Slot Time', 'Time Slot', 'Slot'])),
-                            appointmentStatus: cleanText(getFieldFlexible(row, rowArray, -1, ['appointmentStatus', 'Appointment Status', 'Status'])) || 'New',
+                            appointmentStatus: appointmentStatusAM || 'New',
                             unsuccessfulCategory: cleanText(getFieldFlexible(row, rowArray, -1, ['unsuccessfulCategory', 'Unsuccessful Category'])) || '-',
                             unsucessfulSubCategory: cleanText(getFieldFlexible(row, rowArray, -1, ['unsucessfulSubCategory', 'unsuccessfulSubCategory', 'Unsuccessful Sub Category'])) || '-',
                             woRepitation: Number(getFieldFlexible(row, rowArray, -1, ['woRepitation', 'woRepetition', 'WO Repetition', 'Repetition'])) || 1,
@@ -2174,12 +2250,15 @@
         // ============================================================================
         // 10. INISIALISASI AWAL
         // ============================================================================
-        window.addEventListener('DOMContentLoaded', () => {
+        window.addEventListener('DOMContentLoaded', async () => {
             try {
-                resetAllFilters(false);
+                await loadGoogleSheetData(false);
             } catch (err) {
-                console.error('Gagal menginisialisasi dashboard:', err);
-                showToast('Terjadi kesalahan saat memuat dashboard.', 'error');
+                console.error('Gagal menginisialisasi dashboard dari Google Sheets:', err);
+                const badge = document.getElementById('data-source-badge');
+                if (badge) badge.textContent = 'Google Sheets belum terhubung';
+                resetAllFilters(false);
+                showToast(`Data Google Sheets belum dapat dimuat: ${err.message}`, 'error');
             }
         });
     </script>
