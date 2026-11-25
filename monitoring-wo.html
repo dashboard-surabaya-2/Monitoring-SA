@@ -1849,7 +1849,7 @@ html.dark option { background:#0f172a; color:#f1f5f9; }
                     ? `<span class="text-xs text-rose-700 font-medium bg-rose-50 px-2 py-0.5 rounded border border-rose-100">${escapeHTML(wo.unsucessfulSubCategory)}</span>`
                     : `<span class="text-xs text-slate-400">-</span>`;
 
-                const encodedWO = encodeURIComponent(wo.workOrderNumber);
+                const encodedWO = encodeURIComponent(wo.workOrderNumber).replace(/'/g, '%27');
 
                 return `
                     <tr onclick="openWOModal(decodeURIComponent('${encodedWO}'))" class="hover:bg-blue-50/50 cursor-pointer transition">
