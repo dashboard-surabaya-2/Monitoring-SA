@@ -1617,13 +1617,14 @@ html.dark option { background:#0f172a; color:#f1f5f9; }
     }
 
     function getCTJNearbyClusters(selected,lat,lon) {
-      // Gunakan sumber data Maps yang sama agar daftar terdekat mengikuti filter BM/ASM Maps.
-      const valid = ctjMapBaseData.filter(item => item !== selected &&
-        String(item.clusterId || '') !== String(selected.clusterId || '') &&
-        item.latitude !== null && item.latitude !== undefined && String(item.latitude).trim() !== '' &&
-        item.longitude !== null && item.longitude !== undefined && String(item.longitude).trim() !== '' &&
-        Number.isFinite(Number(item.latitude)) && Number.isFinite(Number(item.longitude)) &&
-        Math.abs(Number(item.latitude)) <= 90 && Math.abs(Number(item.longitude)) <= 180);
+      // Kandidat diambil dari marker yang benar-benar sedang ditampilkan pada peta.
+      // Dengan demikian hasil mengikuti seluruh filter dan kondisi tampilan Maps.
+      const valid = ctjMapMarkerIndex
+        .filter(entry => entry.data !== selected &&
+          String(entry.data.clusterId || '') !== String(selected.clusterId || '') &&
+          Number.isFinite(Number(entry.lat)) && Number.isFinite(Number(entry.lon)) &&
+          Math.abs(Number(entry.lat)) <= 90 && Math.abs(Number(entry.lon)) <= 180)
+        .map(entry => entry.data);
       return valid.map(item => {
         const itemLat=Number(item.latitude), itemLon=Number(item.longitude);
         const dLat=(itemLat-lat)*Math.PI/180, dLon=(itemLon-lon)*Math.PI/180;
