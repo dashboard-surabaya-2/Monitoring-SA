@@ -21,6 +21,7 @@
 
   <script>
     tailwind.config = {
+      darkMode: 'class',
       theme: {
         extend: {
           fontFamily: {
@@ -118,6 +119,20 @@
     header .flex.flex-col.md\\:flex-row{gap:.5rem!important}
     header p.text-xs{margin-top:.15rem!important;line-height:1.25!important}
   }
+
+  /* Tema bersama untuk Monitoring CTJ */
+  html.dark body{background:#080d1a!important;color:#e2e8f0!important}
+  html.dark main{background:#080d1a!important;color:#e2e8f0!important}
+  html.dark .bg-white{background-color:#111827!important;color:#e2e8f0!important}
+  html.dark .bg-slate-50,html.dark .bg-slate-100{background-color:#0f172a!important;color:#e2e8f0!important}
+  html.dark .text-slate-800,html.dark .text-slate-700,html.dark .text-slate-600{color:#cbd5e1!important}
+  html.dark .border-slate-200,html.dark .border-slate-300,html.dark .divide-slate-100{border-color:#334155!important}
+  html.dark input,html.dark select,html.dark textarea{background-color:#0b1220!important;color:#e2e8f0!important;border-color:#475569!important}
+  html.dark table thead{background:#1e293b!important;color:#e2e8f0!important}
+  html.dark table tbody,html.dark table tr{background:#111827!important;color:#e2e8f0!important}
+  html.dark .mobile-dashboard-nav{background:rgba(15,23,42,.97)!important;border-color:#334155!important}
+  html.dark .mobile-dashboard-nav a{color:#cbd5e1!important}
+  html.dark .mobile-dashboard-nav a.active{background:#312e81!important;color:#c7d2fe!important}
 </style>
 </head>
 <body class="antialiased min-h-screen flex flex-col">
@@ -163,7 +178,8 @@
         </div>
 
         <!-- Action Controls & Iconic Green WA Button -->
-        <div class="flex items-center gap-2.5 self-start md:self-auto">
+        <div class="flex items-center gap-2.5 self-start md:self-auto"><button onclick="toggleSharedTheme()" id="sharedThemeBtn" title="Ubah tema" class="inline-flex items-center gap-1.5 px-3 py-2.5 rounded-xl bg-slate-800/90 hover:bg-slate-700 text-slate-200 text-xs font-semibold border border-slate-700 transition"><span id="sharedThemeIcon">🌙</span><span id="sharedThemeLabel" class="hidden sm:inline">Dark Mode</span></button>
+          
           <button onclick="fetchGoogleSheetData(true)" title="Muat Ulang Data dari Google Sheets" class="inline-flex items-center gap-2 px-3.5 py-2.5 rounded-xl bg-slate-800/90 hover:bg-slate-700 text-slate-200 text-xs font-semibold border border-slate-700 transition cursor-pointer">
             <i id="refresh-icon" class="fa-solid fa-rotate"></i>
             <span class="hidden sm:inline">Refresh Live</span>
@@ -2196,6 +2212,16 @@
   window.addEventListener('touchmove',onScroll,{passive:true});
   window.addEventListener('resize',()=>{ if(nearBottom()) show(); });
   if(nearBottom()) show();
+})();
+</script>
+
+<script>
+(function(){
+ const key='moraRepublic:theme';
+ function apply(v){const dark=v==='dark';document.documentElement.classList.toggle('dark',dark);const i=document.getElementById('sharedThemeIcon'),l=document.getElementById('sharedThemeLabel');if(i)i.textContent=dark?'☀️':'🌙';if(l)l.textContent=dark?'Light Mode':'Dark Mode';}
+ window.toggleSharedTheme=function(){const next=document.documentElement.classList.contains('dark')?'light':'dark';try{localStorage.setItem(key,next)}catch(e){}apply(next)};
+ try{apply(localStorage.getItem(key)||'light')}catch(e){apply('light')}
+ window.addEventListener('storage',e=>{if(e.key===key)apply(e.newValue||'light')});
 })();
 </script>
 </body>
