@@ -77,7 +77,20 @@
     @media print {
       .no-print { display: none !important; }
     }
-  </style>
+  /* Mobile usability: dashboard utama */
+@media (max-width:640px){
+ html{-webkit-text-size-adjust:100%} body{overflow-x:hidden}
+ body>div.relative{padding-left:.75rem!important;padding-right:.75rem!important;padding-top:1rem!important}
+ button,select,input{min-height:40px}
+ #mainTabSA,#mainTabCTJ,#mainTabWO{flex:1 1 auto;justify-content:center;padding:.65rem .55rem!important;font-size:.72rem!important}
+ [role=tablist]{display:flex;flex-wrap:wrap;gap:.4rem}
+ table{font-size:.72rem}.overflow-x-auto{-webkit-overflow-scrolling:touch}
+ #sheetModal>div,#waModal>div{width:calc(100vw - 1rem)!important;max-width:calc(100vw - 1rem)!important;max-height:92dvh!important;margin:.5rem}
+ #sheetModal,#waModal{padding:.25rem!important}.grid{min-width:0}
+}
+@media(max-width:380px){h1{overflow-wrap:anywhere}}
+
+</style>
 </head>
 <body class="bg-slate-50 text-slate-900 dark:bg-[#080d1a] dark:text-slate-100 min-h-screen relative overflow-x-hidden">
 
