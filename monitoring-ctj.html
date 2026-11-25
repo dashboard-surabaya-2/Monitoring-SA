@@ -6,6 +6,8 @@
   <title>Dashboard Monitoring Cluster Tanggung Jawab (CTJ)</title>
 
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" crossorigin="" />
+  <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.5.3/dist/MarkerCluster.css" />
+  <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.5.3/dist/MarkerCluster.Default.css" />
   <!-- Google Fonts: Plus Jakarta Sans & Inter -->
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
@@ -156,9 +158,11 @@ html.dark input,html.dark select,html.dark textarea { color:#f1f5f9!important; }
 html.dark input::placeholder,html.dark textarea::placeholder { color:#94a3b8!important; opacity:1; }
 html.dark option { background:#0f172a; color:#f1f5f9; }
 
-  #ctj-cluster-map .leaflet-tooltip.ctj-cluster-label{background:rgba(255,255,255,.94);border:1px solid #c7d2fe;border-radius:6px;color:#1e1b4b;font-size:10px;font-weight:800;padding:3px 6px;box-shadow:0 2px 7px rgba(15,23,42,.16)}
-  #ctj-cluster-map .leaflet-tooltip-top:before{border-top-color:#c7d2fe}
-  @media(max-width:640px){#ctj-cluster-map{height:430px!important}#ctj-cluster-map .leaflet-tooltip.ctj-cluster-label{font-size:9px;padding:2px 4px}}
+  #ctj-cluster-map .ctj-map-pin{background:transparent;border:0}
+  #ctj-cluster-map .ctj-map-pin span{display:block;width:16px;height:16px;border:3px solid #fff;border-radius:50%;background:#4f46e5;box-shadow:0 1px 7px rgba(15,23,42,.5)}
+  #ctj-cluster-map .marker-cluster div{background:#4f46e5;color:#fff;font-weight:800}
+  #ctj-cluster-map .marker-cluster{background:rgba(79,70,229,.22)}
+  @media(max-width:640px){#ctj-cluster-map{height:430px!important}}
 </style>
 </head>
 <body class="antialiased min-h-screen flex flex-col">
@@ -944,6 +948,7 @@ html.dark option { background:#0f172a; color:#f1f5f9; }
   <!-- JAVASCRIPT LOGIC                                                      -->
   <!-- ===================================================================== -->
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" crossorigin=""></script>
+  <script src="https://unpkg.com/leaflet.markercluster@1.5.3/dist/leaflet.markercluster.js"></script>
   <script>
     // Konfigurasi Google Sheet ID & Endpoints
     const SHEET_ID = '1p7IheHnt4xPdBMRMgF1DPiu4_NluZLKS4MY3Ktb0OGE';
@@ -1065,10 +1070,13 @@ html.dark option { background:#0f172a; color:#f1f5f9; }
       if (!el || typeof L === 'undefined') return;
       if (!ctjLeafletMap) {
         ctjLeafletMap = L.map(el, { scrollWheelZoom: true, zoomControl: true }).setView([-7.7, 112.5], 8);
-        L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png', {
-          maxZoom: 19, attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> &copy; <a href="https://carto.com/attributions">CARTO</a>'
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+          maxZoom: 19, attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
         }).addTo(ctjLeafletMap);
-        ctjClusterMarkers = L.layerGroup().addTo(ctjLeafletMap);
+        ctjClusterMarkers = L.markerClusterGroup({
+          showCoverageOnHover: false, spiderfyOnMaxZoom: true, zoomToBoundsOnClick: true,
+          maxClusterRadius: 48, disableClusteringAtZoom: 16
+        }).addTo(ctjLeafletMap);
       }
       setTimeout(() => ctjLeafletMap.invalidateSize(), 120);
     }
@@ -1112,17 +1120,21 @@ html.dark option { background:#0f172a; color:#f1f5f9; }
               <span>Penetrasi</span><b>${penetration.toFixed(2)}%</b>
             </div>
           </div>`;
-        const marker = L.circleMarker([lat, lon], {
-          radius: 7, color: '#ffffff', weight: 2, fillColor: '#4f46e5', fillOpacity: 0.95
-        }).bindTooltip(name, { permanent: true, direction: 'top', offset: [0, -7], className: 'ctj-cluster-label' })
-          .bindPopup(popup, { maxWidth: 260 });
+        const marker = L.marker([lat, lon], {
+          title: d.clusterName || d.clusterId || 'Cluster',
+          icon: L.divIcon({
+            className: 'ctj-map-pin',
+            html: '<span></span>',
+            iconSize: [18, 18], iconAnchor: [9, 9]
+          })
+        }).bindPopup(popup, { maxWidth: 260 });
         marker.addTo(ctjClusterMarkers);
         bounds.push([lat, lon]);
       });
 
       // Fokus otomatis pada sebaran titik cluster, bukan tampilan peta yang terlalu luas.
       if (bounds.length === 1) ctjLeafletMap.setView(bounds[0], 15);
-      else if (bounds.length > 1) ctjLeafletMap.fitBounds(bounds, { padding: [48, 48], maxZoom: 13, animate: false });
+      else if (bounds.length > 1) ctjLeafletMap.fitBounds(bounds, { padding: [48, 48], maxZoom: 12, animate: false });
       else ctjLeafletMap.setView([-7.7, 112.5], 8);
       setTimeout(() => ctjLeafletMap.invalidateSize(), 150);
     }
