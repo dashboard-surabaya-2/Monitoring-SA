@@ -2079,6 +2079,12 @@ html.dark option { background:#0f172a; color:#f1f5f9; }
       const previousBM = bmSelect.value || 'ALL';
       const uniqueBMs = [...new Set(rawClusterData.map(d => d.bm).filter(v => v && v !== '-'))].sort((a,b) => a.localeCompare(b,'id'));
       bmSelect.innerHTML = '<option value="ALL">ALL BM</option>';
+      uniqueBMs.forEach(bm => {
+        const option = document.createElement('option');
+        option.value = bm;
+        option.textContent = bm;
+        bmSelect.appendChild(option);
+      });
       bmSelect.value = uniqueBMs.includes(previousBM) ? previousBM : 'ALL';
       updateCTJMapASMFilter(false);
     }
@@ -2091,6 +2097,12 @@ html.dark option { background:#0f172a; color:#f1f5f9; }
       const byBM = bm === 'ALL' ? rawClusterData : rawClusterData.filter(d => d.bm === bm);
       const uniqueASMs = [...new Set(byBM.map(d => d.asm).filter(v => v && v !== '-'))].sort((a,b) => a.localeCompare(b,'id'));
       asmSelect.innerHTML = '<option value="ALL">Semua ASM</option>';
+      uniqueASMs.forEach(asm => {
+        const option = document.createElement('option');
+        option.value = asm;
+        option.textContent = asm;
+        asmSelect.appendChild(option);
+      });
       asmSelect.value = uniqueASMs.includes(previousASM) ? previousASM : 'ALL';
       if (shouldRender && ctjMapHasEnteredViewport) renderCTJClusterMap();
     }
@@ -2102,12 +2114,6 @@ html.dark option { background:#0f172a; color:#f1f5f9; }
       const uniqueBMs = [...new Set(rawClusterData.map(d => d.bm).filter(v => v && v !== '-'))].sort();
 
       bmSelect.innerHTML = `<option value="ALL">Semua BM (${uniqueBMs.length})</option>` + uniqueBMs.map(v => `<option value="${escapeHTML(v)}">${escapeHTML(v)}</option>`).join('');
-      uniqueBMs.forEach(bm => {
-        const opt = document.createElement('option');
-        opt.value = bm;
-        opt.textContent = bm;
-        bmSelect.appendChild(opt);
-      });
 
       // Default BM: BENNY HADIAWAN
       if (!initialDefaultApplied) {
@@ -2140,12 +2146,6 @@ html.dark option { background:#0f172a; color:#f1f5f9; }
       // ASM options
       const uniqueASMs = [...new Set(byBM.map(d => d.asm).filter(v => v && v !== '-'))].sort();
       asmSelect.innerHTML = `<option value="ALL">Semua ASM (${uniqueASMs.length})</option>` + uniqueASMs.map(v => `<option value="${escapeHTML(v)}">${escapeHTML(v)}</option>`).join('');
-      uniqueASMs.forEach(asm => {
-        const opt = document.createElement('option');
-        opt.value = asm;
-        opt.textContent = asm;
-        asmSelect.appendChild(opt);
-      });
       if (uniqueASMs.includes(prevASM)) asmSelect.value = prevASM;
 
       // AE options (tergantung BM & ASM)
