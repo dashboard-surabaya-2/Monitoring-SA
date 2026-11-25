@@ -1091,8 +1091,11 @@
             if (contEl) contEl.value = 'ALL';
             if (slotEl) slotEl.value = 'ALL';
             if (searchEl) searchEl.value = '';
-            if (appointmentFromEl) appointmentFromEl.value = '';
-            if (appointmentToEl) appointmentToEl.value = '';
+            // Default rentang Appointment Date selalu hari ini (zona waktu lokal browser).
+            // Pengguna tetap bebas mengganti tanggal Dari/Sampai sesuai kebutuhan.
+            const todayAppointment = getTodayISODate();
+            if (appointmentFromEl) appointmentFromEl.value = todayAppointment;
+            if (appointmentToEl) appointmentToEl.value = todayAppointment;
 
             syncSlotPill();
             applyFilters();
