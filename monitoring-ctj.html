@@ -625,6 +625,10 @@ html.dark option { background:#0f172a; color:#f1f5f9; }
             <input id="map-cluster-search" type="search" placeholder="Nama / ID cluster..." class="ctj-map-input flex-1 min-w-0" onkeydown="if(event.key==='Enter')searchCTJClusterOnMap()" />
             <button type="button" onclick="searchCTJClusterOnMap()" class="ctj-map-search-btn" aria-label="Cari cluster"><i class="fa-solid fa-magnifying-glass"></i></button>
           </div>
+          <label class="ctj-map-label" for="map-kecamatan-filter">Kecamatan</label>
+          <select id="map-kecamatan-filter" onchange="renderCTJClusterMap()" class="ctj-map-select mb-3">
+            <option value="ALL">Semua kecamatan</option>
+          </select>
           <label class="ctj-map-label" for="map-condition-filter">Kondisi Cluster</label>
           <select id="map-condition-filter" onchange="renderCTJClusterMap()" class="ctj-map-select mb-3">
             <option value="ALL">Semua kondisi cluster</option><option value="LOW">Penetrasi rendah (&lt;10%)</option><option value="MEDIUM">Penetrasi sedang (10–&lt;20%)</option><option value="HIGH">Penetrasi tinggi (≥20%)</option><option value="UNVISITED">Belum ada visit MTD</option><option value="ZONK">ZONK SA saja</option>
@@ -656,7 +660,7 @@ html.dark option { background:#0f172a; color:#f1f5f9; }
             <button type="button" onclick="locateNearestCTJCluster()"><i class="fa-solid fa-location-dot"></i> Cluster Terdekat</button>
             <button type="button" onclick="openSelectedCTJRoute()"><i class="fa-solid fa-route"></i> Rute Pilihan (<b id="map-route-count-bottom">0</b>)</button>
           </div>
-          <p class="text-[10px] text-slate-400 px-3 py-2">Klik marker untuk melihat detail cluster, prioritas, estimasi rute, dan navigasi. Peta mengikuti filter BM, ASM, AE, Kota, RFS, Status SA, serta pencarian utama.</p>
+          <p class="text-[10px] text-slate-400 px-3 py-2">Klik marker untuk melihat detail cluster, prioritas, estimasi rute, dan navigasi. Peta mengikuti filter utama serta pilihan kecamatan dan kondisi cluster.</p>
         </div>
 
         <aside class="ctj-map-detail p-3 sm:p-4" id="ctj-map-detail-panel">
@@ -1496,8 +1500,33 @@ html.dark option { background:#0f172a; color:#f1f5f9; }
       }
       if (zonkAction) zonkAction.textContent = mapShowZonkOnly ? 'Tampilkan Semua' : 'Tampilkan';
 
+      // Isi pilihan kecamatan berdasarkan data yang sudah lolos filter utama BM/ASM/AE/Kota/RFS.
+      const kecamatanSelect = document.getElementById('map-kecamatan-filter');
+      const selectedKecamatan = kecamatanSelect?.value || 'ALL';
+      if (kecamatanSelect) {
+        const kecamatanList = [...new Set(filteredClusterData
+          .map(d => String(d.kecamatan || '').trim())
+          .filter(Boolean))]
+          .sort((a,b) => a.localeCompare(b, 'id'));
+        kecamatanSelect.innerHTML = '';
+        const allOption = document.createElement('option');
+        allOption.value = 'ALL';
+        allOption.textContent = 'Semua kecamatan';
+        kecamatanSelect.appendChild(allOption);
+        kecamatanList.forEach(name => {
+          const option = document.createElement('option');
+          option.value = name;
+          option.textContent = name;
+          kecamatanSelect.appendChild(option);
+        });
+        kecamatanSelect.value = kecamatanList.includes(selectedKecamatan) ? selectedKecamatan : 'ALL';
+      }
+      const activeKecamatan = kecamatanSelect?.value || 'ALL';
       const mapCondition = document.getElementById('map-condition-filter')?.value || 'ALL';
       let mapSource = mapShowZonkOnly ? filteredClusterData.filter(d => d.isZonkSA) : filteredClusterData;
+      if (activeKecamatan !== 'ALL') {
+        mapSource = mapSource.filter(d => String(d.kecamatan || '').trim() === activeKecamatan);
+      }
       mapSource = mapSource.filter(d => {
         const p=getCTJMapPenetration(d);
         if (mapCondition==='LOW') return p<10;
