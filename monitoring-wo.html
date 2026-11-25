@@ -1369,7 +1369,7 @@ html.dark option { background:#0f172a; color:#f1f5f9; }
 
             const statusTextEl = document.getElementById('filter-status-text');
             if (statusTextEl) {
-                statusTextEl.innerHTML = `Menampilkan <strong class="text-blue-600">${filteredWorkOrders.length}</strong> dari ${rawWorkOrders.length} Work Order • BSM: <strong class="text-slate-800">${crit.bsm === 'ALL' ? 'Semua' : crit.bsm}</strong>`;
+                statusTextEl.innerHTML = `Menampilkan <strong class="text-blue-600">${filteredWorkOrders.length}</strong> dari ${rawWorkOrders.length} Work Order • BSM: <strong class="text-slate-800">${escapeHTML(crit.bsm === 'ALL' ? 'Semua' : crit.bsm)}</strong>`;
             }
 
             currentPage = 1;
@@ -1799,7 +1799,7 @@ html.dark option { background:#0f172a; color:#f1f5f9; }
                 return `<span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-bold bg-emerald-50 text-emerald-700 border border-emerald-200"><span class="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>${escapeHTML(label)}</span>`;
             }
             if (norm === 'In Progress') {
-                return `<span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-bold bg-amber-50 text-amber-700 border border-amber-200"><span class="w-1.5 h-1.5 rounded-full bg-amber-500"></span>${label}</span>`;
+                return `<span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-bold bg-amber-50 text-amber-700 border border-amber-200"><span class="w-1.5 h-1.5 rounded-full bg-amber-500"></span>${escapeHTML(label)}</span>`;
             }
             if (norm === 'Unsuccessful') {
                 return `<span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-bold bg-rose-50 text-rose-700 border border-rose-200"><span class="w-1.5 h-1.5 rounded-full bg-rose-500"></span>${label}</span>`;
@@ -1883,7 +1883,7 @@ html.dark option { background:#0f172a; color:#f1f5f9; }
 
                 return `
                     <tr onclick="openWOModal(decodeURIComponent('${encodedWO}'))" class="hover:bg-blue-50/50 cursor-pointer transition">
-                        <td class="py-3 px-4 font-bold text-blue-700">${wo.workOrderNumber}</td>
+                        <td class="py-3 px-4 font-bold text-blue-700">${escapeHTML(wo.workOrderNumber)}</td>
                         <td class="py-3 px-4">
                             <div class="font-semibold text-slate-900">${escapeHTML(wo.endUserName || '-')}</div>
                             <div class="text-[11px] text-slate-500">${escapeHTML(wo.customerId || '-')}</div>
@@ -1892,7 +1892,7 @@ html.dark option { background:#0f172a; color:#f1f5f9; }
                         <td class="py-3 px-4 font-semibold text-indigo-700">${escapeHTML(wo.salesName || '-')}</td>
                         <td class="py-3 px-4">
                             <div class="font-bold text-slate-800">${escapeHTML(effArea)}</div>
-                            <div class="text-xs text-slate-500">${wo.clusterName || '-'}</div>
+                            <div class="text-xs text-slate-500">${escapeHTML(wo.clusterName || '-')}</div>
                         </td>
                         <td class="py-3 px-4">
                             <div class="font-medium text-slate-800">${escapeHTML(wo.contractorName || '-')}</div>
@@ -2025,8 +2025,8 @@ html.dark option { background:#0f172a; color:#f1f5f9; }
             if (!wo) return;
             openPreviewWAModal({
                 title: `Report WA — ${escapeHTML(wo.workOrderNumber)}`,
-                subtitle: `${wo.endUserName || '-'} • ${getEffectiveArea(wo)} • ${normalizeSlotTime(wo.slotTime)}`,
-                filterSummary: `WO: ${escapeHTML(wo.workOrderNumber)} • BSM: ${wo.bsmName || '-'} • ASM: ${wo.asmName || '-'} • AE: ${wo.salesName || '-'}`,
+                subtitle: `${escapeHTML(wo.endUserName || '-')} • ${escapeHTML(getEffectiveArea(wo))} • ${escapeHTML(normalizeSlotTime(wo.slotTime))}`, 
+                filterSummary: `WO: ${escapeHTML(wo.workOrderNumber)} • BSM: ${escapeHTML(wo.bsmName || '-')} • ASM: ${escapeHTML(wo.asmName || '-')} • AE: ${escapeHTML(wo.salesName || '-')}`, 
                 records: [wo]
             });
         }
