@@ -96,6 +96,10 @@
     .mobile-dashboard-nav a small{font-size:.68rem;line-height:1.2;white-space:nowrap}
     .mobile-dashboard-nav a.active{background:#e0e7ff;color:#4338ca}
   }
+
+  /* Navigasi bawah tampil saat scroll, sembunyi saat diam, tetap tampil di ujung halaman */
+  .mobile-dashboard-nav{transform:translateY(110%);opacity:0;pointer-events:none;transition:transform .22s ease,opacity .22s ease}
+  .mobile-dashboard-nav.is-visible{transform:translateY(0);opacity:1;pointer-events:auto}
 </style>
 </head>
 <body class="bg-slate-50 text-slate-800 antialiased min-h-screen flex flex-col">
@@ -2501,6 +2505,27 @@
                 panel.style.top = Math.min(parseFloat(panel.style.top) || 0, maxTop) + 'px';
             });
         })();
+</script>
+
+<script>
+(function(){
+  const nav=document.querySelector('.mobile-dashboard-nav');
+  if(!nav) return;
+  let idleTimer=null;
+  const nearBottom=()=>window.innerHeight+window.scrollY>=document.documentElement.scrollHeight-28;
+  const show=()=>nav.classList.add('is-visible');
+  const hide=()=>nav.classList.remove('is-visible');
+  const onScroll=()=>{
+    show();
+    if(idleTimer) clearTimeout(idleTimer);
+    if(nearBottom()) return;
+    idleTimer=setTimeout(()=>{ if(!nearBottom()) hide(); },850);
+  };
+  window.addEventListener('scroll',onScroll,{passive:true});
+  window.addEventListener('touchmove',onScroll,{passive:true});
+  window.addEventListener('resize',()=>{ if(nearBottom()) show(); });
+  if(nearBottom()) show();
+})();
 </script>
 </body>
 </html>
