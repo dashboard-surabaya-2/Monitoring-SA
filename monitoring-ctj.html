@@ -1402,6 +1402,31 @@ html.dark option { background:#0f172a; color:#f1f5f9; }
       },error=>showToast(error.code===1?'Izin GPS ditolak. Aktifkan lokasi browser.':'Lokasi GPS tidak berhasil diperoleh.',true),
       {enableHighAccuracy:true,timeout:15000,maximumAge:60000});
     }
+    function clearCTJMapDetail() {
+      const empty=document.getElementById('ctj-map-detail-empty');
+      const content=document.getElementById('ctj-map-detail-content');
+      if(empty) empty.classList.remove('hidden');
+      if(content) content.classList.add('hidden');
+      const set=(id,value)=>{const el=document.getElementById(id);if(el)el.textContent=value;};
+      set('ctj-detail-name','-');
+      set('ctj-detail-owner','ASM - • AE -');
+      set('ctj-detail-priority','Prioritas -');
+      set('ctj-detail-hp','0');
+      set('ctj-detail-subs','0');
+      set('ctj-detail-pen','0%');
+      set('ctj-detail-visit','0');
+      set('ctj-detail-reasons','-');
+      set('ctj-detail-location','-');
+      set('ctj-detail-route-result','Pilih cluster pada peta untuk melihat informasi dan estimasi perjalanan.');
+      const routeBtn=document.getElementById('ctj-detail-route-btn');
+      const addBtn=document.getElementById('ctj-detail-add-route');
+      if(routeBtn){routeBtn.disabled=true;routeBtn.onclick=null;}
+      if(addBtn){addBtn.disabled=true;addBtn.onclick=null;}
+      const nav=document.getElementById('ctj-detail-navigation');
+      if(nav) nav.href='#';
+      if(ctjClusterMarkers) ctjClusterMarkers.closePopup();
+    }
+
     function showCTJMapDetail(d,lat,lon) {
       const empty=document.getElementById('ctj-map-detail-empty');
       const content=document.getElementById('ctj-map-detail-content');
@@ -1606,6 +1631,8 @@ html.dark option { background:#0f172a; color:#f1f5f9; }
 
     // Fetch Data Otomatis dari Google Sheets
     async function fetchGoogleSheetData(isManualRefresh = false) {
+      // Kosongkan detail cluster yang dipilih sebelumnya agar tidak menampilkan data lama saat sinkronisasi.
+      clearCTJMapDetail();
       const refreshIcon = document.getElementById('refresh-icon');
       const badge = document.getElementById('data-source-badge');
       refreshIcon.classList.add('fa-spin');
@@ -2058,6 +2085,8 @@ html.dark option { background:#0f172a; color:#f1f5f9; }
     }
 
     function applyFilters() {
+      // Setiap pembaruan filter/data membatalkan pilihan cluster sebelumnya.
+      clearCTJMapDetail();
       const selectedBM = document.getElementById('filter-bm').value;
       const selectedASM = document.getElementById('filter-asm').value;
       const selectedAE = document.getElementById('filter-ae').value;
