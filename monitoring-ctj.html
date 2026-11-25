@@ -212,6 +212,23 @@ html.dark option { background:#0f172a; color:#f1f5f9; }
   .ctj-detail-reasons{padding:11px;border-radius:10px;background:#fff7ed;border:1px solid #fed7aa;margin-top:10px;font-size:10px;color:#9a3412;line-height:1.6}
   .ctj-detail-reasons p{margin-top:4px;color:#7c2d12}
   .ctj-detail-location{font-size:10px;color:#64748b;margin:12px 0}
+  .ctj-detail-status-row{display:flex;flex-wrap:wrap;gap:6px;margin:0 0 10px}
+  .ctj-detail-status{display:inline-flex;align-items:center;gap:5px;padding:6px 8px;border-radius:8px;font-size:9px;font-weight:900;border:1px solid transparent}
+  .ctj-detail-status.is-zonk{background:#fff1f2;color:#be123c;border-color:#fecdd3}
+  .ctj-detail-status.has-sa{background:#ecfdf5;color:#047857;border-color:#a7f3d0}
+  .ctj-detail-status.is-low{background:#fff7ed;color:#c2410c;border-color:#fed7aa}
+  .ctj-detail-status.is-normal{background:#eff6ff;color:#1d4ed8;border-color:#bfdbfe}
+  .ctj-detail-nearby{margin:10px 0;padding:10px;border:1px solid #e2e8f0;border-radius:10px;background:#f8fafc}
+  .ctj-detail-nearby-title{font-size:10px;font-weight:900;color:#334155;margin-bottom:7px;display:flex;align-items:center;gap:6px}
+  .ctj-detail-nearby-list{display:grid;gap:6px}
+  .ctj-detail-nearby-item{display:flex;align-items:center;justify-content:space-between;gap:8px;padding:7px 8px;background:#fff;border:1px solid #e2e8f0;border-radius:8px}
+  .ctj-detail-nearby-name{font-size:10px;font-weight:800;color:#1e293b;overflow-wrap:anywhere}
+  .ctj-detail-nearby-meta{font-size:9px;color:#64748b;margin-top:2px}
+  .ctj-detail-nearby-distance{font-size:10px;font-weight:900;color:#4338ca;white-space:nowrap}
+  .ctj-detail-nearby-empty{font-size:10px;color:#64748b;line-height:1.5}
+  html.dark .ctj-detail-nearby{background:#0f172a;border-color:#334155}
+  html.dark .ctj-detail-nearby-title,html.dark .ctj-detail-nearby-name{color:#e2e8f0}
+  html.dark .ctj-detail-nearby-item{background:#1e293b;border-color:#334155}
   .ctj-detail-route-result{padding:9px;border-radius:9px;background:#f1f5f9;color:#64748b;font-size:10px;line-height:1.5;margin-bottom:8px}
   .ctj-detail-action{display:flex;align-items:center;justify-content:center;gap:7px;width:100%;padding:10px;border-radius:9px;font-size:10px;font-weight:900;margin-top:7px;text-decoration:none}
   .ctj-detail-action:disabled{opacity:.45;cursor:not-allowed}
@@ -682,6 +699,7 @@ html.dark option { background:#0f172a; color:#f1f5f9; }
             <div class="ctj-detail-name" id="ctj-detail-name">-</div>
             <div class="ctj-detail-owner" id="ctj-detail-owner">ASM - • AE -</div>
             <div class="ctj-detail-priority" id="ctj-detail-priority">Prioritas -</div>
+            <div class="ctj-detail-status-row"><span id="ctj-detail-condition" class="ctj-detail-status is-normal">Kondisi penetrasi -</span><span id="ctj-detail-sa-status" class="ctj-detail-status has-sa">Status SA -</span></div>
             <div class="ctj-detail-metrics">
               <div><small>Total HP</small><b id="ctj-detail-hp">0</b></div>
               <div><small>Total Subs</small><b id="ctj-detail-subs">0</b></div>
@@ -690,6 +708,7 @@ html.dark option { background:#0f172a; color:#f1f5f9; }
             </div>
             <div class="ctj-detail-reasons"><b><i class="fa-solid fa-list-check"></i> Alasan Prioritas</b><p id="ctj-detail-reasons">-</p></div>
             <div class="ctj-detail-location" id="ctj-detail-location">-</div>
+            <div class="ctj-detail-nearby"><div class="ctj-detail-nearby-title"><i class="fa-solid fa-location-crosshairs"></i> Cluster Terdekat <span style="font-weight:600;color:#94a3b8">(5 terdekat)</span></div><div id="ctj-detail-nearby-list" class="ctj-detail-nearby-list"><div class="ctj-detail-nearby-empty">Pilih cluster untuk melihat cluster lain di sekitarnya.</div></div><p style="font-size:9px;color:#94a3b8;margin-top:6px">Jarak dihitung garis lurus berdasarkan koordinat, bukan jarak tempuh jalan.</p></div>
             <div id="ctj-detail-route-result" class="ctj-detail-route-result">Pilih hitung jarak untuk melihat estimasi perjalanan dari lokasi GPS.</div>
             <button type="button" id="ctj-detail-route-btn" class="ctj-detail-action primary" disabled><i class="fa-solid fa-route"></i> Hitung Jarak & Waktu</button>
             <button type="button" id="ctj-detail-add-route" class="ctj-detail-action secondary" disabled><i class="fa-solid fa-plus"></i> Tambahkan ke Rute</button>
@@ -1485,6 +1504,10 @@ html.dark option { background:#0f172a; color:#f1f5f9; }
       set('ctj-detail-name','-');
       set('ctj-detail-owner','ASM - • AE -');
       set('ctj-detail-priority','Prioritas -');
+      set('ctj-detail-condition','Kondisi penetrasi -');
+      set('ctj-detail-sa-status','Status SA -');
+      const nearbyList=document.getElementById('ctj-detail-nearby-list');
+      if(nearbyList) nearbyList.innerHTML='<div class="ctj-detail-nearby-empty">Pilih cluster untuk melihat cluster lain di sekitarnya.</div>';
       set('ctj-detail-hp','0');
       set('ctj-detail-subs','0');
       set('ctj-detail-pen','0%');
@@ -1499,6 +1522,34 @@ html.dark option { background:#0f172a; color:#f1f5f9; }
       const nav=document.getElementById('ctj-detail-navigation');
       if(nav) nav.href='#';
       if(ctjClusterMarkers) ctjClusterMarkers.closePopup();
+    }
+
+    function getCTJNearbyClusters(selected,lat,lon) {
+      const valid = filteredClusterData.filter(item => item !== selected &&
+        item.latitude !== null && item.latitude !== undefined && String(item.latitude).trim() !== '' &&
+        item.longitude !== null && item.longitude !== undefined && String(item.longitude).trim() !== '' &&
+        Number.isFinite(Number(item.latitude)) && Number.isFinite(Number(item.longitude)) &&
+        Math.abs(Number(item.latitude)) <= 90 && Math.abs(Number(item.longitude)) <= 180);
+      return valid.map(item => {
+        const itemLat=Number(item.latitude), itemLon=Number(item.longitude);
+        const dLat=(itemLat-lat)*Math.PI/180, dLon=(itemLon-lon)*Math.PI/180;
+        const a=Math.sin(dLat/2)**2+Math.cos(lat*Math.PI/180)*Math.cos(itemLat*Math.PI/180)*Math.sin(dLon/2)**2;
+        const km=6371*2*Math.atan2(Math.sqrt(a),Math.sqrt(1-a));
+        return {data:item,km};
+      }).sort((a,b)=>a.km-b.km).slice(0,5);
+    }
+
+    function renderCTJNearbyClusters(selected,lat,lon) {
+      const list=document.getElementById('ctj-detail-nearby-list');
+      if(!list) return;
+      const nearby=getCTJNearbyClusters(selected,lat,lon);
+      if(!nearby.length){list.innerHTML='<div class="ctj-detail-nearby-empty">Tidak ada cluster lain dengan koordinat yang tersedia pada filter utama saat ini.</div>';return;}
+      list.innerHTML=nearby.map(item=>{
+        const d=item.data, pen=getCTJMapPenetration(d);
+        const status=d.isZonkSA?'ZONK SA':'ADA SA';
+        const statusColor=d.isZonkSA?'#e11d48':'#059669';
+        return `<div class="ctj-detail-nearby-item"><div style="min-width:0"><div class="ctj-detail-nearby-name">${escapeHTML(d.clusterName||d.clusterId||'Cluster')}</div><div class="ctj-detail-nearby-meta">${escapeHTML(d.kecamatan||'Kecamatan -')} • <span style="color:${statusColor};font-weight:800">${status}</span> • Pen ${pen.toFixed(1).replace('.',',')}%</div></div><div class="ctj-detail-nearby-distance">${item.km.toFixed(2).replace('.',',')} km</div></div>`;
+      }).join('');
     }
 
     function showCTJMapDetail(d,lat,lon) {
@@ -1518,6 +1569,10 @@ html.dark option { background:#0f172a; color:#f1f5f9; }
       set('ctj-detail-name',d.clusterName||d.clusterId||'Cluster');
       set('ctj-detail-owner','ASM: '+(d.asm||'-')+' • AE: '+(d.ae||'-'));
       set('ctj-detail-priority',priority.level+' • Skor '+priority.score+'/95');
+      const conditionEl=document.getElementById('ctj-detail-condition');
+      if(conditionEl){const condition=pen<10?'LOW PENETRATION':pen<20?'PENETRASI SEDANG':'PENETRASI TINGGI';conditionEl.textContent=condition;conditionEl.className='ctj-detail-status '+(pen<10?'is-low':'is-normal');}
+      const saStatusEl=document.getElementById('ctj-detail-sa-status');
+      if(saStatusEl){saStatusEl.textContent=d.isZonkSA?'ZONK SA':'ADA SA';saStatusEl.className='ctj-detail-status '+(d.isZonkSA?'is-zonk':'has-sa');}
       const priorityEl=document.getElementById('ctj-detail-priority');if(priorityEl){priorityEl.style.color=levelColor;priorityEl.style.background=priority.score>=70?'#fff1f2':priority.score>=45?'#fff7ed':priority.score>=20?'#fefce8':'#ecfdf5';}
       set('ctj-detail-hp',formatNumber(d.hpTotal));
       set('ctj-detail-subs',formatNumber(d.totalSubs));
@@ -1525,6 +1580,7 @@ html.dark option { background:#0f172a; color:#f1f5f9; }
       set('ctj-detail-visit',formatNumber(d.visitMTD));
       set('ctj-detail-reasons',reasons.join(' • ')||'Kondisi relatif baik');
       set('ctj-detail-location',[d.kecamatan,d.kotaAsli].filter(Boolean).join(', ')||'Lokasi cluster');
+      renderCTJNearbyClusters(d,lat,lon);
       const routeResult=document.getElementById('ctj-detail-route-result');
       if(routeResult) routeResult.textContent='Pilih hitung jarak untuk melihat estimasi perjalanan dari lokasi GPS.';
       const routeBtn=document.getElementById('ctj-detail-route-btn');
@@ -1645,7 +1701,7 @@ html.dark option { background:#0f172a; color:#f1f5f9; }
               <span>Visit MTD</span><b>${formatNumber(d.visitMTD)}</b>
               <span>Prioritas Gabungan</span><b style="color:${getCTJMapPriority(d).score>=70?'#e11d48':getCTJMapPriority(d).score>=45?'#ea580c':getCTJMapPriority(d).score>=20?'#d97706':'#059669'}">${getCTJMapPriority(d).level} (${getCTJMapPriority(d).score}/95)</b>
               <span>Alasan Prioritas</span><b>${[d.isZonkSA?'ZONK SA':'',penetration<10?'Penetrasi <10%':penetration<20?'Penetrasi <20%':'',Number(d.visitMTD||0)<=0?'Belum ada visit':'',d.isUnderTarget?'Visit belum target':''].filter(Boolean).join(', ')||'Kondisi relatif baik'}</b>
-              <span>Status SA</span><b style="color:${d.isZonkSA?'#e11d48':'#059669'}">${escapeHTML(d.statusSA)}</b>
+              <span>Status SA</span><b style="color:${d.isZonkSA?'#e11d48':'#059669'}">${d.isZonkSA?'ZONK SA':'ADA SA'}</b>
               <span>Status Visit</span><b>${escapeHTML(d.statusVisitSheet)}</b>
               <span>RFS</span><b>${escapeHTML(d.rfsClass)}</b>
             </div>
