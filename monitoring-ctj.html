@@ -1851,7 +1851,7 @@ html.dark option { background:#0f172a; color:#f1f5f9; }
         const penetration=getCTJMapPenetration(d);
         const routeBoxId='ctj-route-'+String(d.clusterId||'').replace(/[^a-zA-Z0-9_-]/g,'');
         const routeLinkId='ctj-route-link-'+String(d.clusterId||'').replace(/[^a-zA-Z0-9_-]/g,'');
-        const safeRouteName=encodeURIComponent(String(d.clusterName||d.clusterId||'Cluster'));
+        const safeRouteName=encodeURIComponent(String(d.clusterName||d.clusterId||'Cluster')).replace(/'/g, '%27');
         const popup=`
           <div style="min-width:235px;font-family:Inter,Arial,sans-serif;color:#0f172a">
             <div style="font-weight:800;font-size:14px;margin-bottom:8px;color:#3730a3">${name}</div>
@@ -2352,7 +2352,7 @@ html.dark option { background:#0f172a; color:#f1f5f9; }
           : 'hover:bg-slate-50/90';
 
         return `
-          <tr onclick="toggleRFSFilter(decodeURIComponent('${encodeURIComponent(r.rfsClass)}'))" class="${rowClass} transition cursor-pointer" title="Klik untuk memfilter dashboard berdasarkan ${escapeHTML(r.rfsClass)}">
+          <tr onclick="toggleRFSFilter(decodeURIComponent('${encodeURIComponent(r.rfsClass).replace(/'/g, '%27')}'))" class="${rowClass} transition cursor-pointer" title="Klik untuk memfilter dashboard berdasarkan ${escapeHTML(r.rfsClass)}">
             <td class="py-3 px-3.5">
               <div class="flex items-center gap-2">
                 <span class="inline-flex items-center px-2.5 py-1 rounded-lg font-extrabold text-[11px] ${isSelected ? 'bg-indigo-600 text-white' : 'bg-indigo-50 text-indigo-800 border border-indigo-200'}">
@@ -2604,7 +2604,7 @@ html.dark option { background:#0f172a; color:#f1f5f9; }
           <tr class="hover:bg-slate-50/90 transition">
             <td class="py-3 px-3.5 font-semibold text-slate-500">${idx + 1}</td>
             <td class="py-3 px-3.5">
-              <button type="button" onclick="openClusterMap(decodeURIComponent('${encodeURIComponent(d.clusterName)}'), ${d.latitude === null ? 'null' : d.latitude}, ${d.longitude === null ? 'null' : d.longitude})" class="text-left font-bold text-indigo-700 hover:text-indigo-900 hover:underline decoration-dotted underline-offset-2 cursor-pointer">${escapeHTML(d.clusterName)} <i class="fa-solid fa-location-dot text-[10px] ml-1" aria-hidden="true"></i></button>
+              <button type="button" onclick="openClusterMap(decodeURIComponent('${encodeURIComponent(d.clusterName).replace(/'/g, '%27')}'), ${d.latitude === null ? 'null' : d.latitude}, ${d.longitude === null ? 'null' : d.longitude})" class="text-left font-bold text-indigo-700 hover:text-indigo-900 hover:underline decoration-dotted underline-offset-2 cursor-pointer">${escapeHTML(d.clusterName)} <i class="fa-solid fa-location-dot text-[10px] ml-1" aria-hidden="true"></i></button>
               <div class="text-[11px] font-mono text-slate-500">${escapeHTML(d.clusterId)} &bull; ${escapeHTML(d.rfsClass)}</div>
             </td>
             <td class="py-3 px-3.5">
@@ -2670,7 +2670,7 @@ html.dark option { background:#0f172a; color:#f1f5f9; }
         <tr class="hover:bg-rose-50/40 transition">
           <td class="py-3 px-3.5 font-semibold text-slate-500">${idx + 1}</td>
           <td class="py-3 px-3.5">
-            <button type="button" onclick="openClusterMap(decodeURIComponent('${encodeURIComponent(d.clusterName)}'), ${d.latitude === null ? 'null' : d.latitude}, ${d.longitude === null ? 'null' : d.longitude})" class="text-left font-bold text-indigo-700 hover:text-indigo-900 hover:underline decoration-dotted underline-offset-2 cursor-pointer">${escapeHTML(d.clusterName)} <i class="fa-solid fa-location-dot text-[10px] ml-1" aria-hidden="true"></i></button>
+            <button type="button" onclick="openClusterMap(decodeURIComponent('${encodeURIComponent(d.clusterName).replace(/'/g, '%27')}'), ${d.latitude === null ? 'null' : d.latitude}, ${d.longitude === null ? 'null' : d.longitude})" class="text-left font-bold text-indigo-700 hover:text-indigo-900 hover:underline decoration-dotted underline-offset-2 cursor-pointer">${escapeHTML(d.clusterName)} <i class="fa-solid fa-location-dot text-[10px] ml-1" aria-hidden="true"></i></button>
             <div class="text-[11px] font-mono text-slate-500">${escapeHTML(d.clusterId)}</div>
           </td>
           <td class="py-3 px-3.5">
@@ -2962,7 +2962,7 @@ html.dark option { background:#0f172a; color:#f1f5f9; }
           <tr class="hover:bg-amber-50/40 transition">
             <td class="py-2.5 px-3 font-semibold text-slate-500">${idx + 1}</td>
             <td class="py-2.5 px-3">
-              <button type="button" onclick="openClusterMap(decodeURIComponent('${encodeURIComponent(d.clusterName)}'), ${d.latitude === null ? 'null' : d.latitude}, ${d.longitude === null ? 'null' : d.longitude})" class="text-left font-bold text-indigo-700 hover:text-indigo-900 hover:underline decoration-dotted underline-offset-2 cursor-pointer">${escapeHTML(d.clusterName)} <i class="fa-solid fa-location-dot text-[10px] ml-1" aria-hidden="true"></i></button>
+              <button type="button" onclick="openClusterMap(decodeURIComponent('${encodeURIComponent(d.clusterName).replace(/'/g, '%27')}'), ${d.latitude === null ? 'null' : d.latitude}, ${d.longitude === null ? 'null' : d.longitude})" class="text-left font-bold text-indigo-700 hover:text-indigo-900 hover:underline decoration-dotted underline-offset-2 cursor-pointer">${escapeHTML(d.clusterName)} <i class="fa-solid fa-location-dot text-[10px] ml-1" aria-hidden="true"></i></button>
               <div class="text-[10px] font-mono text-slate-500">${escapeHTML(d.clusterId)} &bull; ${escapeHTML(d.rfsClass)}</div>
             </td>
             <td class="py-2.5 px-3">
