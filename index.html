@@ -1616,10 +1616,8 @@ html.dark option { background:#0f172a; color:#f1f5f9; }
         // Nama ASM ditampilkan per pelanggan hanya jika report mencakup semua ASM.
         if (allASM) lines.push(`   ASM: ${clean(r.asm_name)}`);
         lines.push(
-          `   AE: ${clean(r.sales_agent_name)}`,
-          `   Sub ID: ${r.subscription_id || '-'}`,
-          `   Paket: ${r.plan || '-'}`,
-          `   Tagihan: ${formatIDR(Number(r.invoice_amount) || 0)}`,
+          `   AE: ${clean(r.sales_agent_name)} | Sub: ${r.subscription_id || '-'}`,
+          `   Paket: ${r.plan || '-'} | Tagihan: ${formatIDR(Number(r.invoice_amount) || 0)}`,
           ''
         );
         return lines;
@@ -1916,7 +1914,16 @@ html.dark option { background:#0f172a; color:#f1f5f9; }
       setTimeout(() => { toast.classList.add('hidden'); toast.classList.remove('flex'); }, 3000);
     }
 
+    const WA_SAFE_LIMIT = 8000;
+    function fitWhatsAppLength(text, limit = WA_SAFE_LIMIT) {
+      const value = String(text || '');
+      if (value.length <= limit) return value;
+      const note = '\n\n…Laporan dipersingkat agar aman dikirim. Gunakan filter ASM/AE/Paket untuk melihat rincian lainnya.';
+      return value.slice(0, Math.max(0, limit - note.length)).replace(/\n+$/, '') + note;
+    }
+
     function openWAModal(title, text) {
+      text = fitWhatsAppLength(text);
       document.getElementById('waModalTitle').textContent = title;
       document.getElementById('waPreviewText').value = text;
       document.getElementById('waDirectLink').href = 'https://wa.me/?text=' + encodeURIComponent(text);
@@ -1993,7 +2000,7 @@ html.dark option { background:#0f172a; color:#f1f5f9; }
           const gap = Math.max(0, a.target - a.total);
           const status = a.total >= a.target ? '✅ Target tercapai' : `Sisa ${gap} SA`;
           const zonk = a.lastDate ? Math.max(0, reportDay - a.lastDate.day) : reportDay;
-          lines.push(`${idx + 1}. *${a.name}* — ${a.total}/${a.target} SA (${pct}%) | ${status} | SA terakhir: ${formatDate(a.lastDate)} | ⏳ ZONK: *${zonk} hari*`);
+          lines.push(`${idx + 1}. *${a.name}*: ${a.total}/${a.target} SA (${pct}%) • ${status} • Last SA ${formatDate(a.lastDate)} • ZONK ${zonk}h`);
         });
         reports.push(lines.join('\n'));
       });
