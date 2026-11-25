@@ -1291,8 +1291,8 @@
         grouped[key].revenue += (Number(r.revenue_before_tax) || Number(r.invoice_amount) || 0);
       });
 
-      // Tambahkan perbandingan bulan lalu (Oktober MTD) HANYA untuk AE yang aktif di bulan ini
-      getOctoberMTDSA().forEach(r => {
+      // Acuan target: capaian EOM bulan lalu (seluruh Oktober), bukan MTD tanggal yang sama.
+      filteredData.filter(isOctoberFullEOMData).forEach(r => {
         const key = `${r.asm_name || '-'}|||${r.sales_agent_name || '-'}`;
         if (grouped[key]) {
           grouped[key].prevMonth++;
@@ -1300,7 +1300,7 @@
       });
 
       return Object.values(grouped).map(item => {
-        // Target AE memakai nilai terbesar antara capaian bulan lalu (MTD tanggal yang sama) dan standar 15 SA.
+        // Target AE memakai nilai terbesar antara capaian EOM bulan lalu dan standar 15 SA.
         item.target = Math.max(TARGET_PER_AE, item.prevMonth);
         const diffPrev = item.total - item.prevMonth;
         const vsTargetDiff = item.total - item.target;
@@ -1350,7 +1350,7 @@
             <th class="py-2.5 px-3 sticky left-0 bg-slate-100 dark:bg-slate-950 z-10">Nama AE & ASM</th>
             <th class="py-2.5 px-2">Branch</th>
             <th class="py-2.5 px-2.5 text-center bg-cyan-500/10 text-cyan-600 dark:text-cyan-400 whitespace-nowrap">SA Bln Ini</th>
-            <th class="py-2.5 px-2.5 text-center whitespace-nowrap">SA Bln Lalu</th>
+            <th class="py-2.5 px-2.5 text-center whitespace-nowrap">SA Bln Lalu (EOM)</th>
             <th class="py-2.5 px-2.5 text-center whitespace-nowrap">Selisih</th>
             <th class="py-2.5 px-2 text-center whitespace-nowrap">Target</th>
             <th class="py-2.5 px-3 text-center whitespace-nowrap">vs Target</th>
@@ -1391,7 +1391,7 @@
             <th class="py-3 px-3">Nama ASM</th>
             <th class="py-3 px-2.5">Branch</th>
             <th class="py-3 px-3 text-center bg-cyan-500/10 text-cyan-600 dark:text-cyan-400">SA Bulan Ini</th>
-            <th class="py-3 px-3 text-center">SA Bulan Lalu</th>
+            <th class="py-3 px-3 text-center">SA Bulan Lalu (EOM)</th>
             <th class="py-3 px-3 text-center">Selisih</th>
             <th class="py-3 px-2.5 text-center">Target AE</th>
             <th class="py-3 px-3 text-center">Perbandingan Target</th>
@@ -1848,7 +1848,7 @@
           const info = parseDateInfo(r.service_activation_date);
           if (info && (!item.lastDate || new Date(info.year, info.month - 1, info.day) > new Date(item.lastDate.year, item.lastDate.month - 1, item.lastDate.day))) item.lastDate = info;
         });
-        getOctoberMTDSA().filter(r => (r.asm_name || '-') === asmName && (aeFilter === 'ALL' || r.sales_agent_name === aeFilter) && (planFilter === 'ALL' || r.plan === planFilter)).forEach(r => {
+        filteredData.filter(r => isOctoberFullEOMData(r) && (r.asm_name || '-') === asmName && (aeFilter === 'ALL' || r.sales_agent_name === aeFilter) && (planFilter === 'ALL' || r.plan === planFilter)).forEach(r => {
           const item = byAE.get(r.sales_agent_name || '-');
           if (item) item.prevMonth++;
         });
@@ -1870,7 +1870,7 @@
           `📊 *RINGKASAN TARGET*`,
           `• Total SA bulan ini: *${totalSA}*`,
           `• Jumlah AE dalam data: *${agents.length}*`,
-          `• Target total ASM (target tiap AE): *${targetTotal} SA*`,
+          `• Target total ASM (berdasarkan EOM bulan lalu / min. 15 SA per AE): *${targetTotal} SA*`,
           `• Kekurangan menuju target: *${shortfall} SA*`,
           `• Proyeksi akhir bulan: *${projection} SA*`,
           '',
