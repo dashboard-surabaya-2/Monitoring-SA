@@ -1595,30 +1595,51 @@ html.dark option { background:#0f172a; color:#f1f5f9; }
     }
 
     function generatePaidUnpaidWhatsAppReport() {
-      // Report khusus UNPAID; tetap mengikuti filter ASM, AE, dan Paket aktif.
+      // Report khusus UNPAID; mengikuti filter ASM, AE, dan Paket aktif.
       const rows = getNovemberSA().filter(r => getDelayBucket(r) !== 'PAID')
         .sort((a, b) => (parseInt(b.unpaid_days) || 0) - (parseInt(a.unpaid_days) || 0));
       const total = rows.reduce((sum, r) => sum + (Number(r.invoice_amount) || 0), 0);
-      const asmText = document.getElementById('filterASM').selectedOptions[0]?.text || 'Semua ASM';
-      const aeText = document.getElementById('filterAE').selectedOptions[0]?.text || 'Semua AE';
-      const planText = document.getElementById('filterPlan').selectedOptions[0]?.text || 'Semua Paket';
+      const asmSelect = document.getElementById('filterASM');
+      const aeSelect = document.getElementById('filterAE');
+      const planSelect = document.getElementById('filterPlan');
+      const asmText = asmSelect.selectedOptions[0]?.text || 'Semua ASM';
+      const aeText = aeSelect.selectedOptions[0]?.text || 'Semua AE';
+      const planText = planSelect.selectedOptions[0]?.text || 'Semua Paket';
+      const allASM = asmSelect.value === 'ALL';
+
+      const detailLines = rows.length ? rows.flatMap((r, i) => {
+        const days = parseInt(r.unpaid_days) || 0;
+        const clean = value => String(value || '-').replace(/\\s+\\./g, '').trim();
+        const lines = [
+          `${i + 1}. *${clean(r.name)}* — *${days} hari*`
+        ];
+        // Nama ASM ditampilkan per pelanggan hanya jika report mencakup semua ASM.
+        if (allASM) lines.push(`   ASM: ${clean(r.asm_name)}`);
+        lines.push(
+          `   AE: ${clean(r.sales_agent_name)}`,
+          `   Sub ID: ${r.subscription_id || '-'}`,
+          `   Paket: ${r.plan || '-'}`,
+          `   Tagihan: ${formatIDR(Number(r.invoice_amount) || 0)}`,
+          ''
+        );
+        return lines;
+      }) : ['Tidak ada data UNPAID sesuai filter.'];
+
       const report = [
-        `⚠️ *MONITORING SA UNPAID – MORA REPUBLIC SURABAYA 2*`,
+        `⚠️ *MONITORING SA UNPAID — MORA REPUBLIC SURABAYA 2*`,
         `📅 Periode: November 2026`,
-        `👤 ASM: ${asmText}`,
-        `🧑‍💼 AE: ${aeText}`,
-        `📦 Paket: ${planText}`,
+        `ASM: ${asmText}`,
+        `AE: ${aeText}`,
+        `Paket: ${planText}`,
         '',
         `📊 *RINGKASAN UNPAID*`,
-        `• Total pelanggan: *${rows.length}*`,
-        `• Total tagihan: *${formatIDR(total)}*`,
+        `Total pelanggan: *${rows.length}*`,
+        `Total tagihan: *${formatIDR(total)}*`,
         '',
-        `📋 *DAFTAR UNPAID (TERLAMA DI ATAS)*`,
-        ...(rows.length ? rows.map((r, i) => {
-          const days = parseInt(r.unpaid_days) || 0;
-          return `${i + 1}. *${r.name || '-'}* – *${days} hari*\n   ASM: ${r.asm_name || '-'} | AE: ${r.sales_agent_name || '-'}\n   Sub ID: ${r.subscription_id || '-'} | ${r.plan || '-'}\n   Tagihan: ${formatIDR(Number(r.invoice_amount) || 0)}`;
-        }) : ['Tidak ada data UNPAID sesuai filter.'])
-      ].join('\n');
+        `📋 *DAFTAR UNPAID — TERLAMA DI ATAS*`,
+        '',
+        ...detailLines
+      ].join('\\n').replace(/\\n{3,}/g, '\\n\\n').trim();
       openWAModal('Report WhatsApp – SA Unpaid', report);
     }
 
