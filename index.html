@@ -153,6 +153,15 @@
     .relative.z-10.max-w-\\[1600px\\]{padding-top:.65rem!important}
     header{padding-bottom:.55rem!important}
   }
+
+  /* CTJ/WO mobile frame: fill the available phone viewport without black gaps */
+  @media(max-width:640px){
+    body.embedded-dashboard-view>div.relative{min-height:100dvh!important;padding-bottom:0!important}
+    body.embedded-dashboard-view>div.relative>section#mainCTJView,
+    body.embedded-dashboard-view>div.relative>section#mainWOView{height:100dvh!important;min-height:100dvh!important;overflow:hidden!important}
+    body.embedded-dashboard-view>div.relative>section#mainCTJView iframe,
+    body.embedded-dashboard-view>div.relative>section#mainWOView iframe{display:block!important;width:100%!important;height:100dvh!important;min-height:100dvh!important}
+  }
 </style>
 </head>
 <body class="bg-slate-50 text-slate-900 dark:bg-[#080d1a] dark:text-slate-100 min-h-screen relative overflow-x-hidden">
