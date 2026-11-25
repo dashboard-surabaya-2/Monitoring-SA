@@ -916,6 +916,12 @@ html.dark option { background:#0f172a; color:#f1f5f9; }
         // ============================================================================
         // 3. HELPER NORMALISASI & AREA ASLI (PRIORITAS KOLOM CD / INDEKS 81)
         // ============================================================================
+        function escapeHTML(value) {
+            return String(value ?? '').replace(/[&<>"']/g, ch => ({
+                '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'
+            }[ch]));
+        }
+
         function cleanText(val) {
             if (val === null || val === undefined) return '';
             return String(val).trim().replace(/\s+/g, ' ');
@@ -1870,31 +1876,31 @@ html.dark option { background:#0f172a; color:#f1f5f9; }
                     : `<span class="text-xs font-semibold text-slate-600">${repNum}x</span>`;
 
                 const kendalaText = (wo.unsucessfulSubCategory && wo.unsucessfulSubCategory !== '-')
-                    ? `<span class="text-xs text-rose-700 font-medium bg-rose-50 px-2 py-0.5 rounded border border-rose-100">${wo.unsucessfulSubCategory}</span>`
+                    ? `<span class="text-xs text-rose-700 font-medium bg-rose-50 px-2 py-0.5 rounded border border-rose-100">${escapeHTML(wo.unsucessfulSubCategory)}</span>`
                     : `<span class="text-xs text-slate-400">-</span>`;
 
                 const encodedWO = encodeURIComponent(wo.workOrderNumber);
 
                 return `
                     <tr onclick="openWOModal(decodeURIComponent('${encodedWO}'))" class="hover:bg-blue-50/50 cursor-pointer transition">
-                        <td class="py-3 px-4 font-bold text-blue-700">${wo.workOrderNumber}</td>
+                        <td class="py-3 px-4 font-bold text-blue-700">${escapeHTML(wo.workOrderNumber)}</td>
                         <td class="py-3 px-4">
-                            <div class="font-semibold text-slate-900">${wo.endUserName || '-'}</div>
-                            <div class="text-[11px] text-slate-500">${wo.customerId || '-'}</div>
+                            <div class="font-semibold text-slate-900">${escapeHTML(wo.endUserName || '-')}</div>
+                            <div class="text-[11px] text-slate-500">${escapeHTML(wo.customerId || '-')}</div>
                         </td>
-                        <td class="py-3 px-4 font-semibold text-slate-800">${wo.asmName || '-'}</td>
-                        <td class="py-3 px-4 font-semibold text-indigo-700">${wo.salesName || '-'}</td>
+                        <td class="py-3 px-4 font-semibold text-slate-800">${escapeHTML(wo.asmName || '-')}</td>
+                        <td class="py-3 px-4 font-semibold text-indigo-700">${escapeHTML(wo.salesName || '-')}</td>
                         <td class="py-3 px-4">
-                            <div class="font-bold text-slate-800">${effArea}</div>
+                            <div class="font-bold text-slate-800">${escapeHTML(effArea)}</div>
                             <div class="text-xs text-slate-500">${wo.clusterName || '-'}</div>
                         </td>
                         <td class="py-3 px-4">
-                            <div class="font-medium text-slate-800">${wo.contractorName || '-'}</div>
-                            <div class="text-[11px] text-slate-500">${wo.vendorName || '-'}</div>
+                            <div class="font-medium text-slate-800">${escapeHTML(wo.contractorName || '-')}</div>
+                            <div class="text-[11px] text-slate-500">${escapeHTML(wo.vendorName || '-')}</div>
                         </td>
                         <td class="py-3 px-4">${getSlotBadge(wo.slotTime)}</td>
                         <td class="py-3 px-4">${getStatusBadge(wo.appointmentStatus)}</td>
-                        <td class="py-3 px-4 font-semibold text-slate-700">${wo.statusWO || '-'}</td>
+                        <td class="py-3 px-4 font-semibold text-slate-700">${escapeHTML(wo.statusWO || '-')}</td>
                         <td class="py-3 px-4 text-center">${repBadge}</td>
                         <td class="py-3 px-4">${kendalaText}</td>
                         <td class="py-3 px-4 text-center">
@@ -2018,9 +2024,9 @@ html.dark option { background:#0f172a; color:#f1f5f9; }
             const wo = rawWorkOrders.find(item => item.workOrderNumber === woNumber);
             if (!wo) return;
             openPreviewWAModal({
-                title: `Report WA — ${wo.workOrderNumber}`,
-                subtitle: `${wo.endUserName || '-'} • ${getEffectiveArea(wo)} • ${normalizeSlotTime(wo.slotTime)}`,
-                filterSummary: `WO: ${wo.workOrderNumber} • BSM: ${wo.bsmName || '-'} • ASM: ${wo.asmName || '-'} • AE: ${wo.salesName || '-'}`,
+                title: `Report WA — ${escapeHTML(wo.workOrderNumber)}`,
+                subtitle: `${escapeHTML(wo.endUserName || '-')} • ${escapeHTML(getEffectiveArea(wo))} • ${escapeHTML(normalizeSlotTime(wo.slotTime))}`,
+                filterSummary: `WO: ${escapeHTML(wo.workOrderNumber)} • BSM: ${wo.bsmName || '-'} • ASM: ${escapeHTML(wo.asmName || '-')} • AE: ${escapeHTML(wo.salesName || '-')}`,
                 records: [wo]
             });
         }
@@ -2098,17 +2104,17 @@ html.dark option { background:#0f172a; color:#f1f5f9; }
 
             tbody.innerHTML = list.slice(0, 60).map(wo => `
                 <tr class="hover:bg-blue-50/40">
-                    <td class="py-2 px-3 font-bold text-blue-700">${wo.workOrderNumber}</td>
+                    <td class="py-2 px-3 font-bold text-blue-700">${escapeHTML(wo.workOrderNumber)}</td>
                     <td class="py-2 px-3">
-                        <div class="font-semibold text-slate-800">${wo.endUserName || '-'}</div>
-                        <div class="text-[11px] text-slate-500">${wo.customerId || '-'}</div>
+                        <div class="font-semibold text-slate-800">${escapeHTML(wo.endUserName || '-')}</div>
+                        <div class="text-[11px] text-slate-500">${escapeHTML(wo.customerId || '-')}</div>
                     </td>
-                    <td class="py-2 px-3 font-medium text-slate-700">${getEffectiveArea(wo)}</td>
-                    <td class="py-2 px-3 text-slate-700">${normalizeSlotTime(wo.slotTime)}</td>
-                    <td class="py-2 px-3 font-semibold text-slate-800">${wo.appointmentStatus || '-'}</td>
-                    <td class="py-2 px-3 font-semibold text-slate-700">${wo.statusWO || '-'}</td>
-                    <td class="py-2 px-3 font-semibold text-slate-800">${wo.asmName || '-'}</td>
-                    <td class="py-2 px-3 font-semibold text-indigo-700">${wo.salesName || '-'}</td>
+                    <td class="py-2 px-3 font-medium text-slate-700">${escapeHTML(getEffectiveArea(wo))}</td>
+                    <td class="py-2 px-3 text-slate-700">${escapeHTML(normalizeSlotTime(wo.slotTime))}</td>
+                    <td class="py-2 px-3 font-semibold text-slate-800">${escapeHTML(wo.appointmentStatus || '-')}</td>
+                    <td class="py-2 px-3 font-semibold text-slate-700">${escapeHTML(wo.statusWO || '-')}</td>
+                    <td class="py-2 px-3 font-semibold text-slate-800">${escapeHTML(wo.asmName || '-')}</td>
+                    <td class="py-2 px-3 font-semibold text-indigo-700">${escapeHTML(wo.salesName || '-')}</td>
                 </tr>
             `).join('');
             // Perbarui teks WA setiap kali kata pencarian berubah.
@@ -2221,7 +2227,7 @@ html.dark option { background:#0f172a; color:#f1f5f9; }
             const contentEl = document.getElementById('modal-content');
             if (!modal || !titleEl || !contentEl) return;
 
-            titleEl.textContent = `${wo.workOrderNumber} — ${wo.endUserName || '-'}`;
+            titleEl.textContent = `${escapeHTML(wo.workOrderNumber)} — ${escapeHTML(wo.endUserName || '-')}`;
 
             const items = [
                 { label: 'Work Order Number', value: wo.workOrderNumber },
@@ -2247,7 +2253,7 @@ html.dark option { background:#0f172a; color:#f1f5f9; }
             contentEl.innerHTML = items.map(it => `
                 <div class="bg-slate-50 p-3 rounded-xl border border-slate-200/80">
                     <div class="text-[11px] font-semibold text-slate-500 uppercase tracking-wider">${it.label}</div>
-                    <div class="text-sm font-bold text-slate-900 mt-0.5 break-words">${cleanText(it.value) || '-'}</div>
+                    <div class="text-sm font-bold text-slate-900 mt-0.5 break-words">${escapeHTML(cleanText(it.value) || '-')}</div>
                 </div>
             `).join('');
 
@@ -2479,7 +2485,7 @@ html.dark option { background:#0f172a; color:#f1f5f9; }
             }
 
             toast.className = `pointer-events-auto flex items-center gap-2.5 px-4 py-3 rounded-xl shadow-lg border text-xs sm:text-sm font-semibold fade-in ${styleClass}`;
-            toast.innerHTML = `<i data-lucide="${iconName}" class="w-4 h-4 shrink-0"></i><span>${message}</span>`;
+            toast.innerHTML = `<i data-lucide="${iconName}" class="w-4 h-4 shrink-0"></i><span>${escapeHTML(message)}</span>`;
 
             container.appendChild(toast);
             if (window.lucide && typeof window.lucide.createIcons === 'function') {
