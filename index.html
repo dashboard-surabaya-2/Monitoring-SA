@@ -767,7 +767,7 @@
       <div class="p-3 overflow-auto custom-scrollbar">
         <table class="w-full text-left text-xs border-collapse">
           <thead class="sticky top-0 bg-slate-100 dark:bg-slate-950 text-slate-600 dark:text-slate-300 uppercase">
-            <tr><th class="p-2">No</th><th class="p-2">Nama Pelanggan</th><th class="p-2">Subscription ID</th><th class="p-2">Tanggal SA</th><th class="p-2">Cluster</th><th class="p-2">Status</th><th class="p-2 text-right">Revenue</th></tr>
+            <tr><th class="p-2">No</th><th class="p-2">Nama Pelanggan</th><th class="p-2">Subscription ID</th><th class="p-2">Tanggal SA</th><th class="p-2">Plan / Paket</th><th class="p-2">Cluster</th><th class="p-2">Status</th><th class="p-2 text-right">Revenue</th></tr>
           </thead>
           <tbody id="saDetailTableBody"></tbody>
         </table>
@@ -1454,7 +1454,7 @@
       const title = labels[type] || 'Detail SA';
       const totalRevenue = rows.reduce((sum, r) => sum + (Number(r.revenue_before_tax) || Number(r.invoice_amount) || 0), 0);
       const safe = value => String(value ?? '-').replace(/[&<>"']/g, ch => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[ch]));
-      const detailRows = rows.map((r, i) => `${i+1}. ${r.name || '-'} | Sub: ${r.subscription_id || '-'} | Tgl: ${r.service_activation_date || '-'} | ${r.clustername || '-'} | ${getDelayBucket(r) === 'PAID' ? 'PAID' : 'UNPAID ('+(r.unpaid_days||0)+' hari)'} | ${formatIDR(r.revenue_before_tax || r.invoice_amount)}`);
+      const detailRows = rows.map((r, i) => `${i+1}. ${r.name || '-'} | Sub: ${r.subscription_id || '-'} | Tgl: ${r.service_activation_date || '-'} | Plan: ${r.plan || '-'} | Cluster: ${r.clustername || '-'} | ${getDelayBucket(r) === 'PAID' ? 'PAID' : 'UNPAID ('+(r.unpaid_days||0)+' hari)'} | ${formatIDR(r.revenue_before_tax || r.invoice_amount)}`);
       const waText = [
         '*DETAIL '+title.toUpperCase()+' – MORA REPUBLIC SURABAYA 2*',
         'ASM: '+asm,
@@ -1472,10 +1472,11 @@
           <td class="p-2 font-semibold">${safe(r.name)}</td>
           <td class="p-2 font-mono text-xs">${safe(r.subscription_id)}</td>
           <td class="p-2 whitespace-nowrap">${safe(r.service_activation_date)}</td>
+          <td class="p-2">${safe(r.plan)}</td>
           <td class="p-2">${safe(r.clustername)}</td>
           <td class="p-2 whitespace-nowrap">${getDelayBucket(r) === 'PAID' ? '<span class="text-emerald-500 font-bold">PAID</span>' : '<span class="text-rose-500 font-bold">UNPAID • '+(r.unpaid_days||0)+' hari</span>'}</td>
           <td class="p-2 text-right whitespace-nowrap">${formatIDR(r.revenue_before_tax || r.invoice_amount)}</td>
-        </tr>`).join('') || '<tr><td colspan="7" class="p-6 text-center text-slate-400">Tidak ada detail data.</td></tr>';
+        </tr>`).join('') || '<tr><td colspan="8" class="p-6 text-center text-slate-400">Tidak ada detail data.</td></tr>';
       document.getElementById('saDetailWALink').href = 'https://wa.me/?text=' + encodeURIComponent(waText);
       document.getElementById('saDetailCopyBtn').onclick = () => {
         if (navigator.clipboard?.writeText) navigator.clipboard.writeText(waText).then(() => showWAToast('Detail berhasil disalin untuk WhatsApp.'));
