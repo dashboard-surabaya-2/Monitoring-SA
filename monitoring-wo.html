@@ -72,6 +72,19 @@
 }
 @media(max-width:380px){#preview-wa-modal>div>div:first-child{padding:.5rem .65rem!important}#preview-wa-modal h3{font-size:.78rem!important}}
 
+
+    /* Mobile polish v2: one clear scroll area in preview */
+    @media(max-width:640px){
+      #preview-wa-modal>div{display:flex!important;flex-direction:column!important;overflow:hidden!important}
+      #preview-wa-modal>div>div:nth-child(2){flex:1 1 auto!important;min-height:0!important;overflow-y:auto!important;overflow-x:hidden!important;overscroll-behavior:contain}
+      #preview-wa-modal>div>div:nth-child(2) .overflow-x-auto{max-width:100%;overflow-x:auto!important;overscroll-behavior-x:contain}
+      #preview-wa-modal>div>div:last-child{position:sticky;bottom:0;z-index:3;background:#fff;padding:.65rem!important;border-top:1px solid #e2e8f0}
+      #preview-wa-modal textarea{font-size:13px!important;line-height:1.5!important}
+      #preview-wa-modal button{min-height:42px!important}
+      main{padding-left:.65rem!important;padding-right:.65rem!important}
+      table th,table td{white-space:nowrap}
+    }
+
 </style>
 </head>
 <body class="bg-slate-50 text-slate-800 antialiased min-h-screen flex flex-col">
