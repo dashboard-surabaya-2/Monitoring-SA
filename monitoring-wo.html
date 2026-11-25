@@ -148,9 +148,9 @@ html.dark option { background:#0f172a; color:#f1f5f9; }
 <body class="bg-slate-50 text-slate-800 antialiased min-h-screen flex flex-col">
     <!-- Navigasi cepat dashboard untuk HP -->
     <nav class="mobile-dashboard-nav" aria-label="Navigasi dashboard">
-      <a target="_top" href="index.html?dashboard=sa" onclick="window.top.location.href=new URL('index.html?dashboard=sa',window.top.location.href).href;return false;"><span aria-hidden="true">⌂</span><small>Dashboard</small></a>
-      <a target="_top" href="index.html?dashboard=wo" onclick="window.top.location.href=new URL('index.html?dashboard=wo',window.top.location.href).href;return false;" class="active" aria-current="page"><span aria-hidden="true">▣</span><small>Monitoring WO</small></a>
-      <a target="_top" href="index.html?dashboard=ctj" onclick="window.top.location.href=new URL('index.html?dashboard=ctj',window.top.location.href).href;return false;"><span aria-hidden="true">⌖</span><small>Monitoring CTJ</small></a>
+      <a target="_top" href="index.html?dashboard=sa" onclick="event.preventDefault(); window.top.location.assign(new URL('index.html?dashboard=sa', window.top.location.href).href); return false;" onclick="window.top.location.href=new URL('index.html?dashboard=sa',window.top.location.href).href;return false;"><span aria-hidden="true">⌂</span><small>Dashboard</small></a>
+      <a target="_top" href="index.html?dashboard=wo" onclick="event.preventDefault(); window.top.location.assign(new URL('index.html?dashboard=wo', window.top.location.href).href); return false;" onclick="window.top.location.href=new URL('index.html?dashboard=wo',window.top.location.href).href;return false;" class="active" aria-current="page"><span aria-hidden="true">▣</span><small>Monitoring WO</small></a>
+      <a target="_top" href="index.html?dashboard=ctj" onclick="event.preventDefault(); window.top.location.assign(new URL('index.html?dashboard=ctj', window.top.location.href).href); return false;" onclick="window.top.location.href=new URL('index.html?dashboard=ctj',window.top.location.href).href;return false;"><span aria-hidden="true">⌖</span><small>Monitoring CTJ</small></a>
     </nav>
 
 
