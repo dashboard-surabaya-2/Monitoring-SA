@@ -1300,6 +1300,8 @@
       });
 
       return Object.values(grouped).map(item => {
+        // Target AE memakai nilai terbesar antara capaian bulan lalu (MTD tanggal yang sama) dan standar 15 SA.
+        item.target = Math.max(TARGET_PER_AE, item.prevMonth);
         const diffPrev = item.total - item.prevMonth;
         const vsTargetDiff = item.total - item.target;
         const targetPct = Math.round((item.total / item.target) * 100);
@@ -1351,7 +1353,7 @@
             <th class="py-2.5 px-2.5 text-center whitespace-nowrap">SA Bln Lalu</th>
             <th class="py-2.5 px-2.5 text-center whitespace-nowrap">Selisih</th>
             <th class="py-2.5 px-2 text-center whitespace-nowrap">Target</th>
-            <th class="py-2.5 px-3 text-center whitespace-nowrap">vs Target (15)</th>
+            <th class="py-2.5 px-3 text-center whitespace-nowrap">vs Target</th>
             <th class="py-2.5 px-2 text-center text-emerald-500 whitespace-nowrap">Paid</th>
             <th class="py-2.5 px-2 text-center text-rose-500 whitespace-nowrap">Unpaid</th>
             ${dayHeaders}
@@ -1840,16 +1842,21 @@
         const byAE = new Map();
         asmRows.forEach(r => {
           const name = r.sales_agent_name || '-';
-          if (!byAE.has(name)) byAE.set(name, { name, total: 0, lastDate: null });
+          if (!byAE.has(name)) byAE.set(name, { name, total: 0, prevMonth: 0, lastDate: null });
           const item = byAE.get(name);
           item.total++;
           const info = parseDateInfo(r.service_activation_date);
           if (info && (!item.lastDate || new Date(info.year, info.month - 1, info.day) > new Date(item.lastDate.year, item.lastDate.month - 1, item.lastDate.day))) item.lastDate = info;
         });
-        const agents = [...byAE.values()].sort((a,b) => b.total - a.total || a.name.localeCompare(b.name));
+        getOctoberMTDSA().filter(r => (r.asm_name || '-') === asmName && (aeFilter === 'ALL' || r.sales_agent_name === aeFilter) && (planFilter === 'ALL' || r.plan === planFilter)).forEach(r => {
+          const item = byAE.get(r.sales_agent_name || '-');
+          if (item) item.prevMonth++;
+        });
+        const agents = [...byAE.values()].map(a => ({ ...a, target: Math.max(TARGET_PER_AE, a.prevMonth) })).sort((a,b) => b.total - a.total || a.name.localeCompare(b.name));
         if (!agents.length) return;
         const totalSA = agents.reduce((sum, a) => sum + a.total, 0);
-        const targetTotal = TARGET_PER_AE * agents.length;
+        // Target ASM adalah total target seluruh AE: masing-masing max(15 SA, capaian bulan lalu).
+        const targetTotal = agents.reduce((sum, a) => sum + a.target, 0);
         const shortfall = Math.max(0, targetTotal - totalSA);
         const projection = Math.round((totalSA / Math.max(1, reportDay)) * 30);
         const formatDate = info => info ? `${String(info.day).padStart(2,'0')} Nov 2026` : '-';
@@ -1863,18 +1870,18 @@
           `📊 *RINGKASAN TARGET*`,
           `• Total SA bulan ini: *${totalSA}*`,
           `• Jumlah AE dalam data: *${agents.length}*`,
-          `• Target total (15 SA × jumlah AE): *${targetTotal} SA*`,
+          `• Target total ASM (target tiap AE): *${targetTotal} SA*`,
           `• Kekurangan menuju target: *${shortfall} SA*`,
           `• Proyeksi akhir bulan: *${projection} SA*`,
           '',
-          `🎯 *PENCAPAIAN SETIAP AE (TARGET 15 SA)*`
+          `🎯 *PENCAPAIAN SETIAP AE (TARGET DINAMIS)*`
         ];
         agents.forEach((a, idx) => {
-          const pct = (a.total / TARGET_PER_AE * 100).toFixed(1).replace('.', ',');
-          const gap = Math.max(0, TARGET_PER_AE - a.total);
-          const status = a.total >= TARGET_PER_AE ? '✅ Target tercapai' : `Sisa ${gap} SA`;
+          const pct = (a.total / a.target * 100).toFixed(1).replace('.', ',');
+          const gap = Math.max(0, a.target - a.total);
+          const status = a.total >= a.target ? '✅ Target tercapai' : `Sisa ${gap} SA`;
           const zonk = a.lastDate ? Math.max(0, reportDay - a.lastDate.day) : reportDay;
-          lines.push(`${idx + 1}. *${a.name}* — ${a.total}/15 SA (${pct}%) | ${status} | SA terakhir: ${formatDate(a.lastDate)} | ⏳ ZONK: *${zonk} hari*`);
+          lines.push(`${idx + 1}. *${a.name}* — ${a.total}/${a.target} SA (${pct}%) | ${status} | SA terakhir: ${formatDate(a.lastDate)} | ⏳ ZONK: *${zonk} hari*`);
         });
         reports.push(lines.join('\n'));
       });
