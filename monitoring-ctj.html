@@ -2113,7 +2113,7 @@ html.dark option { background:#0f172a; color:#f1f5f9; }
       const bmSelect = document.getElementById('filter-bm');
       const uniqueBMs = [...new Set(rawClusterData.map(d => d.bm).filter(v => v && v !== '-'))].sort();
 
-      bmSelect.innerHTML = `<option value="ALL">Semua BM (${uniqueBMs.length})</option>`;
+      bmSelect.innerHTML = `<option value="ALL">Semua BM (${uniqueBMs.length})</option>` + uniqueBMs.map(v => `<option value="${escapeHTML(v)}">${escapeHTML(v)}</option>`).join('');
       uniqueBMs.forEach(bm => {
         const opt = document.createElement('option');
         opt.value = bm;
@@ -2151,7 +2151,7 @@ html.dark option { background:#0f172a; color:#f1f5f9; }
 
       // ASM options
       const uniqueASMs = [...new Set(byBM.map(d => d.asm).filter(v => v && v !== '-'))].sort();
-      asmSelect.innerHTML = `<option value="ALL">Semua ASM (${uniqueASMs.length})</option>`;
+      asmSelect.innerHTML = `<option value="ALL">Semua ASM (${uniqueASMs.length})</option>` + uniqueASMs.map(v => `<option value="${escapeHTML(v)}">${escapeHTML(v)}</option>`).join('');
       uniqueASMs.forEach(asm => {
         const opt = document.createElement('option');
         opt.value = asm;
@@ -2164,7 +2164,7 @@ html.dark option { background:#0f172a; color:#f1f5f9; }
       const currentASM = asmSelect.value;
       const byBMASM = currentASM === 'ALL' ? byBM : byBM.filter(d => d.asm === currentASM);
       const uniqueAEs = [...new Set(byBMASM.map(d => d.ae).filter(v => v && v !== '-'))].sort();
-      aeSelect.innerHTML = `<option value="ALL">Semua AE (${uniqueAEs.length})</option>`;
+      aeSelect.innerHTML = `<option value="ALL">Semua AE (${uniqueAEs.length})</option>` + uniqueAEs.map(v => `<option value="${escapeHTML(v)}">${escapeHTML(v)}</option>`).join('');
       uniqueAEs.forEach(ae => {
         const opt = document.createElement('option');
         opt.value = ae;
@@ -2175,7 +2175,7 @@ html.dark option { background:#0f172a; color:#f1f5f9; }
 
       // Kota options
       const uniqueCities = [...new Set(byBMASM.map(d => d.kotaAsli).filter(v => v && v !== '-'))].sort();
-      citySelect.innerHTML = `<option value="ALL">Semua Kota / Area (${uniqueCities.length})</option>`;
+      citySelect.innerHTML = `<option value="ALL">Semua Kota / Area (${uniqueCities.length})</option>` + uniqueCities.map(v => `<option value="${escapeHTML(v)}">${escapeHTML(v)}</option>`).join('');
       uniqueCities.forEach(city => {
         const opt = document.createElement('option');
         opt.value = city;
@@ -2187,7 +2187,7 @@ html.dark option { background:#0f172a; color:#f1f5f9; }
       // RFS Classification options
       const uniqueRFS = [...new Set(byBMASM.map(d => d.rfsClass).filter(v => v && v !== '-'))]
         .sort((a, b) => getRFSSortRank(a) - getRFSSortRank(b) || a.localeCompare(b));
-      rfsSelect.innerHTML = `<option value="ALL">Semua RFS Class (${uniqueRFS.length})</option>`;
+      rfsSelect.innerHTML = `<option value="ALL">Semua RFS Class (${uniqueRFS.length})</option>` + uniqueRFS.map(v => `<option value="${escapeHTML(v)}">${escapeHTML(v)}</option>`).join('');
       uniqueRFS.forEach(rfs => {
         const opt = document.createElement('option');
         opt.value = rfs;
