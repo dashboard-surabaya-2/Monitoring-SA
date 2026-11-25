@@ -9,6 +9,7 @@
   <script src="https://cdn.jsdelivr.net/npm/papaparse@5.4.1/papaparse.min.js"></script>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
   <script>
+    try { if (localStorage.getItem('moraRepublic:theme') === 'dark') document.documentElement.classList.add('dark'); } catch (error) {}
     const MAIN_DASHBOARD_STORAGE_KEY = 'moraRepublic:lastMainDashboard';
 
     function getSavedMainDashboard() {
@@ -1684,6 +1685,7 @@
       const html = document.documentElement;
       html.classList.toggle('dark');
       const isDark = html.classList.contains('dark');
+      try { localStorage.setItem('moraRepublic:theme', isDark ? 'dark' : 'light'); } catch (error) {}
       document.getElementById('themeIcon').textContent = isDark ? '☀️' : '🌙';
       document.getElementById('themeLabel').textContent = isDark ? 'Light Mode' : 'Dark Mode';
       renderTab1Charts();
@@ -1899,6 +1901,18 @@
       // Pulihkan dashboard utama terakhir yang dibuka, termasuk setelah Ctrl+F5.
       switchMainDashboard(getSavedMainDashboard());
       syncFromGoogleSheet(true);
+    });
+  </script>
+
+  <script>
+    window.addEventListener('storage', function(event) {
+      if (event.key !== 'moraRepublic:theme') return;
+      document.documentElement.classList.toggle('dark', event.newValue === 'dark');
+      const icon=document.getElementById('themeIcon'); const label=document.getElementById('themeLabel');
+      if(icon) icon.textContent=event.newValue === 'dark' ? '☀️' : '🌙';
+      if(label) label.textContent=event.newValue === 'dark' ? 'Light Mode' : 'Dark Mode';
+      if(typeof renderTab1Charts==='function') renderTab1Charts();
+      if(typeof renderTab2Charts==='function') renderTab2Charts();
     });
   </script>
 </body>
