@@ -1489,13 +1489,13 @@ html.dark option { background:#0f172a; color:#f1f5f9; }
             </td>
             <td class="py-3 px-3 font-medium text-slate-600 dark:text-slate-300">${escapeHTML(r.asm)}</td>
             <td class="py-3 px-2.5"><span class="px-2 py-0.5 rounded-full text-[10px] font-semibold bg-slate-200/70 dark:bg-slate-800">${escapeHTML(r.branch)}</span></td>
-            <td class="py-3 px-3 text-center font-mono font-extrabold text-cyan-500 bg-cyan-500/5 text-sm"><button type="button" onclick="openSAAgentDetail('SA', '${encodeURIComponent(r.ae)}', '${encodeURIComponent(r.asm)}')" class="underline decoration-dotted underline-offset-4 hover:text-cyan-300 cursor-pointer" title="Lihat detail SA bulan ini">${r.total}</button></td>
+            <td class="py-3 px-3 text-center font-mono font-extrabold text-cyan-500 bg-cyan-500/5 text-sm"><button type="button" onclick="openSAAgentDetail('SA', '${encodeURIComponent(r.ae).replace(/'/g, '%27')}', '${encodeURIComponent(r.asm).replace(/'/g, '%27')}')" class="underline decoration-dotted underline-offset-4 hover:text-cyan-300 cursor-pointer" title="Lihat detail SA bulan ini">${r.total}</button></td>
             <td class="py-3 px-3 text-center font-mono text-slate-500 dark:text-slate-400">${r.prevMonth}</td>
             <td class="py-3 px-3 text-center">${formatDiffBadge(r.diffPrev)}</td>
             <td class="py-3 px-2.5 text-center font-mono font-semibold text-slate-400">${r.target}</td>
             <td class="py-3 px-3">${formatTargetComparison(r)}</td>
-            <td class="py-3 px-3 text-center font-mono font-bold text-emerald-500"><button type="button" onclick="openSAAgentDetail('PAID', '${encodeURIComponent(r.ae)}', '${encodeURIComponent(r.asm)}')" class="underline decoration-dotted underline-offset-4 hover:text-emerald-300 cursor-pointer" title="Lihat detail SA Paid">${r.paid}</button></td>
-            <td class="py-3 px-3 text-center font-mono font-bold text-rose-500"><button type="button" onclick="openSAAgentDetail('UNPAID', '${encodeURIComponent(r.ae)}', '${encodeURIComponent(r.asm)}')" class="underline decoration-dotted underline-offset-4 hover:text-rose-300 cursor-pointer" title="Lihat detail SA Unpaid">${r.unpaid}</button></td>
+            <td class="py-3 px-3 text-center font-mono font-bold text-emerald-500"><button type="button" onclick="openSAAgentDetail('PAID', '${encodeURIComponent(r.ae).replace(/'/g, '%27')}', '${encodeURIComponent(r.asm).replace(/'/g, '%27')}')" class="underline decoration-dotted underline-offset-4 hover:text-emerald-300 cursor-pointer" title="Lihat detail SA Paid">${r.paid}</button></td>
+            <td class="py-3 px-3 text-center font-mono font-bold text-rose-500"><button type="button" onclick="openSAAgentDetail('UNPAID', '${encodeURIComponent(r.ae).replace(/'/g, '%27')}', '${encodeURIComponent(r.asm).replace(/'/g, '%27')}')" class="underline decoration-dotted underline-offset-4 hover:text-rose-300 cursor-pointer" title="Lihat detail SA Unpaid">${r.unpaid}</button></td>
             <td class="py-3 px-3 text-right font-mono font-semibold">${formatIDR(r.revenue)}</td>
           </tr>
         `).join('') || `<tr><td colspan="11" class="py-8 text-center text-slate-400">Tidak ada AE aktif di bulan ini.</td></tr>`;
