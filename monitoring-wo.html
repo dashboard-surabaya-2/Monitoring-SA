@@ -1013,7 +1013,7 @@ html.dark option { background:#0f172a; color:#f1f5f9; }
             rawWorkOrders.map(d => cleanText(d.bsmName)).filter(v => v && v !== '-' && v.toLowerCase() !== 'null').forEach(name => { const key = normalizePersonKey(name); if (key && !bsmByKey.has(key)) bsmByKey.set(key, name); });
             const allBSMs = [...bsmByKey.values()].sort((a, b) => a.localeCompare(b, 'id'));
             if (bsmSelect) {
-                bsmSelect.innerHTML = `<option value="ALL">Semua BSM (${allBSMs.length})</option>`;
+                bsmSelect.innerHTML = `<option value="ALL">Semua BSM (${allBSMs.length})</option>` + allBSMs.map(v => `<option value="${escapeHTML(v)}">${escapeHTML(v)}</option>`).join('');
                 allBSMs.forEach(name => {
                     const opt = document.createElement('option');
                     opt.value = name;
@@ -1043,7 +1043,7 @@ html.dark option { background:#0f172a; color:#f1f5f9; }
             asmSource.map(d => cleanText(d.asmName)).filter(v => v && v !== '-').forEach(name => { const key = normalizePersonKey(name); if (key && !asmByKey.has(key)) asmByKey.set(key, name); });
             const allASMs = [...asmByKey.values()].sort((a, b) => a.localeCompare(b, 'id'));
             if (asmSelect) {
-                asmSelect.innerHTML = `<option value="ALL">Semua ASM (${allASMs.length})</option>`;
+                asmSelect.innerHTML = `<option value="ALL">Semua ASM (${allASMs.length})</option>` + allASMs.map(v => `<option value="${escapeHTML(v)}">${escapeHTML(v)}</option>`).join('');
                 allASMs.forEach(name => {
                     const opt = document.createElement('option');
                     opt.value = name;
@@ -1062,7 +1062,7 @@ html.dark option { background:#0f172a; color:#f1f5f9; }
             });
             const allAEs = [...new Set(aeSource.map(d => cleanText(d.salesName)).filter(Boolean))].sort((a, b) => a.localeCompare(b, 'id'));
             if (aeSelect) {
-                aeSelect.innerHTML = `<option value="ALL">Semua AE (${allAEs.length})</option>`;
+                aeSelect.innerHTML = `<option value="ALL">Semua AE (${allAEs.length})</option>` + allAEs.map(v => `<option value="${escapeHTML(v)}">${escapeHTML(v)}</option>`).join('');
                 allAEs.forEach(name => {
                     const opt = document.createElement('option');
                     opt.value = name;
@@ -1076,7 +1076,7 @@ html.dark option { background:#0f172a; color:#f1f5f9; }
             const prevArea = areaSelect ? areaSelect.value : 'ALL';
             const allAreas = [...new Set(rawWorkOrders.map(d => getEffectiveArea(d)).filter(Boolean))].sort((a, b) => a.localeCompare(b, 'id'));
             if (areaSelect) {
-                areaSelect.innerHTML = `<option value="ALL">Semua Area (${allAreas.length})</option>`;
+                areaSelect.innerHTML = `<option value="ALL">Semua Area (${allAreas.length})</option>` + allAreas.map(v => `<option value="${escapeHTML(v)}">${escapeHTML(v)}</option>`).join('');
                 allAreas.forEach(area => {
                     const opt = document.createElement('option');
                     opt.value = area;
@@ -1089,7 +1089,7 @@ html.dark option { background:#0f172a; color:#f1f5f9; }
             const prevCont = contractorSelect ? contractorSelect.value : 'ALL';
             const allContractors = [...new Set(rawWorkOrders.map(d => cleanText(d.contractorName)).filter(Boolean))].sort((a, b) => a.localeCompare(b, 'id'));
             if (contractorSelect) {
-                contractorSelect.innerHTML = `<option value="ALL">Semua Kontraktor / IKR (${allContractors.length})</option>`;
+                contractorSelect.innerHTML = `<option value="ALL">Semua Kontraktor / IKR (${allContractors.length})</option>` + allContractors.map(v => `<option value="${escapeHTML(v)}">${escapeHTML(v)}</option>`).join('');
                 allContractors.forEach(c => {
                     const opt = document.createElement('option');
                     opt.value = c;
@@ -2397,7 +2397,7 @@ html.dark option { background:#0f172a; color:#f1f5f9; }
 
                     const badge = document.getElementById('data-source-badge');
                     if (badge) {
-                        badge.innerHTML = `<span class="w-1.5 h-1.5 rounded-full bg-blue-600"></span> ${file.name} [Sheet: ${sheetName}] (${mapped.length} WO)`;
+                        badge.textContent = `Google Sheets/Excel • ${file.name} [Sheet: ${sheetName}] (${mapped.length} WO)`;
                         badge.className = 'inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-blue-50 text-blue-700 border border-blue-200';
                     }
 
