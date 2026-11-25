@@ -494,7 +494,7 @@
                     </div>
                 </div>
                 <div class="mt-4 pt-3 border-t border-slate-100 flex items-center justify-between text-xs">
-                    <span id="kpi-unsucc-detail" class="text-slate-600 font-medium truncate">Unsucc: 0 | Resch: 0</span>
+                    <span id="kpi-unsucc-detail" class="text-slate-600 font-medium truncate">Appointment Status: Unsuccessful</span>
                     <span id="kpi-unsucc-pct" class="font-bold text-rose-700 bg-rose-50 px-2 py-0.5 rounded-md shrink-0">0.0%</span>
                 </div>
             </div>
@@ -1868,6 +1868,7 @@
             if (crit.area !== 'ALL') parts.push(`Area: ${crit.area}`);
             if (crit.contractor !== 'ALL') parts.push(`IKR: ${crit.contractor}`);
             if (crit.search) parts.push(`Cari: "${crit.search}"`);
+            if (crit.appointmentFrom || crit.appointmentTo) parts.push('Appointment Date: ' + (crit.appointmentFrom || 'Awal') + ' s/d ' + (crit.appointmentTo || 'Akhir'));
             if (extra) parts.unshift(extra);
             return parts.length ? parts.join(' • ') : 'Semua Data';
         }
