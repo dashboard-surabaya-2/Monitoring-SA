@@ -700,6 +700,23 @@ html.dark option { background:#0f172a; color:#f1f5f9; }
     </div>
   </footer>
 
+  <!-- Modal Lokasi Cluster -->
+  <div id="modal-cluster-map" class="fixed inset-0 z-[70] hidden items-center justify-center bg-slate-950/75 backdrop-blur-sm p-3 sm:p-5" onclick="if(event.target===this)closeClusterMap()">
+    <div class="bg-white rounded-3xl shadow-2xl border border-slate-200 w-full max-w-3xl overflow-hidden">
+      <div class="bg-gradient-to-r from-indigo-700 to-blue-600 text-white px-5 py-4 flex items-center justify-between gap-3">
+        <div class="min-w-0"><h3 id="cluster-map-title" class="font-display font-extrabold text-base truncate">Lokasi Cluster</h3><p id="cluster-map-coords" class="text-xs text-blue-100 mt-1"></p></div>
+        <button onclick="closeClusterMap()" aria-label="Tutup peta" class="w-9 h-9 shrink-0 rounded-full bg-white/15 hover:bg-white/25 flex items-center justify-center"><i class="fa-solid fa-xmark"></i></button>
+      </div>
+      <div class="p-3 sm:p-4">
+        <div class="rounded-2xl overflow-hidden border border-slate-200 bg-slate-100"><iframe id="cluster-map-frame" title="Peta lokasi cluster" src="about:blank" width="100%" height="360" style="border:0;display:block" loading="lazy" allowfullscreen referrerpolicy="no-referrer-when-downgrade"></iframe></div>
+        <div class="flex flex-col sm:flex-row gap-2 mt-3">
+          <a id="cluster-map-open" href="#" target="_blank" rel="noopener noreferrer" class="flex-1 inline-flex items-center justify-center gap-2 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-bold text-sm px-4 py-3"><i class="fa-solid fa-diamond-turn-right"></i> Buka Rute di Google Maps</a>
+          <button onclick="closeClusterMap()" class="rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-sm px-5 py-3">Tutup</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
   <!-- ===================================================================== -->
   <!-- MODAL 1: DETAIL CLUSTER ZONK SA (Muncul saat angka ZONK SA di-klik)   -->
   <!-- ===================================================================== -->
@@ -978,6 +995,27 @@ html.dark option { background:#0f172a; color:#f1f5f9; }
         .replace(/"/g, '&quot;');
     }
 
+    // Peta lokasi cluster dari koordinat LONG/LAT Google Sheets
+    function openClusterMap(clusterName, latitude, longitude) {
+      const lat = Number(latitude), lon = Number(longitude);
+      if (!Number.isFinite(lat) || !Number.isFinite(lon) || Math.abs(lat) > 90 || Math.abs(lon) > 180) {
+        showToast('Koordinat LONG/LAT cluster ini belum tersedia atau tidak valid.', true);
+        return;
+      }
+      const query = encodeURIComponent(lat + ',' + lon);
+      document.getElementById('cluster-map-title').textContent = clusterName || 'Lokasi Cluster';
+      document.getElementById('cluster-map-coords').textContent = 'LAT: ' + lat + ' | LONG: ' + lon;
+      document.getElementById('cluster-map-frame').src = 'https://maps.google.com/maps?q=' + query + '&z=16&output=embed';
+      document.getElementById('cluster-map-open').href = 'https://www.google.com/maps/dir/?api=1&destination=' + query;
+      const modal = document.getElementById('modal-cluster-map');
+      modal.classList.remove('hidden'); modal.classList.add('flex');
+    }
+    function closeClusterMap() {
+      const modal = document.getElementById('modal-cluster-map');
+      modal.classList.add('hidden'); modal.classList.remove('flex');
+      document.getElementById('cluster-map-frame').src = 'about:blank';
+    }
+
     // Toast Notification
     function showToast(message, isError = false) {
       const toast = document.getElementById('toast');
@@ -1014,6 +1052,18 @@ html.dark option { background:#0f172a; color:#f1f5f9; }
           const aeClean = cleanName(row['AE']);
           const kotaAsli = cleanName(row['KOTA ASLI'] || row['City'] || row['Area Name']);
           const kecamatan = cleanName(row['KECAMATAN']);
+          const findCoordinate = (keys) => {
+            for (const key of keys) {
+              const found = Object.keys(row).find(k => k.trim().toLowerCase() === key.toLowerCase());
+              if (found && row[found] !== undefined && String(row[found]).trim() !== '') {
+                const value = parseFloat(String(row[found]).trim().replace(',', '.'));
+                if (Number.isFinite(value)) return value;
+              }
+            }
+            return null;
+          };
+          const latitude = findCoordinate(['LAT', 'LATITUDE', 'LATITUDE CLUSTER', 'CLUSTER LAT']);
+          const longitude = findCoordinate(['LONG', 'LONGITUDE', 'LONGITUDE CLUSTER', 'CLUSTER LONG', 'LON']);
 
           return {
             periodId: String(row['Period Id'] || 'Nov-26').trim(),
@@ -1022,6 +1072,8 @@ html.dark option { background:#0f172a; color:#f1f5f9; }
             kotaAsli: kotaAsli,
             clusterId: String(row['Cluster Id'] || '-').trim(),
             clusterName: String(row['Clustername'] || '-').trim(),
+            latitude: latitude,
+            longitude: longitude,
             project: String(row['Project'] || row['Project Name'] || '-').trim(),
             rfsDate: String(row['RFS Date'] || '-').trim(),
             rfsClass: cleanName(row['RFS Classification'] || row['RFS Class'] || 'LAINNYA'),
@@ -1671,7 +1723,7 @@ html.dark option { background:#0f172a; color:#f1f5f9; }
           <tr class="hover:bg-slate-50/90 transition">
             <td class="py-3 px-3.5 font-semibold text-slate-500">${idx + 1}</td>
             <td class="py-3 px-3.5">
-              <div class="font-bold text-slate-900">${escapeHTML(d.clusterName)}</div>
+              <button type="button" onclick="openClusterMap('${escapeHTML(d.clusterName).replace(/'/g, '&#39;')}', ${d.latitude === null ? 'null' : d.latitude}, ${d.longitude === null ? 'null' : d.longitude})" class="text-left font-bold text-indigo-700 hover:text-indigo-900 hover:underline decoration-dotted underline-offset-2 cursor-pointer">${escapeHTML(d.clusterName)} <i class="fa-solid fa-location-dot text-[10px] ml-1" aria-hidden="true"></i></button>
               <div class="text-[11px] font-mono text-slate-500">${escapeHTML(d.clusterId)} &bull; ${escapeHTML(d.rfsClass)}</div>
             </td>
             <td class="py-3 px-3.5">
@@ -1737,7 +1789,7 @@ html.dark option { background:#0f172a; color:#f1f5f9; }
         <tr class="hover:bg-rose-50/40 transition">
           <td class="py-3 px-3.5 font-semibold text-slate-500">${idx + 1}</td>
           <td class="py-3 px-3.5">
-            <div class="font-bold text-slate-900">${escapeHTML(d.clusterName)}</div>
+            <button type="button" onclick="openClusterMap('${escapeHTML(d.clusterName).replace(/'/g, '&#39;')}', ${d.latitude === null ? 'null' : d.latitude}, ${d.longitude === null ? 'null' : d.longitude})" class="text-left font-bold text-indigo-700 hover:text-indigo-900 hover:underline decoration-dotted underline-offset-2 cursor-pointer">${escapeHTML(d.clusterName)} <i class="fa-solid fa-location-dot text-[10px] ml-1" aria-hidden="true"></i></button>
             <div class="text-[11px] font-mono text-slate-500">${escapeHTML(d.clusterId)}</div>
           </td>
           <td class="py-3 px-3.5">
@@ -1899,7 +1951,7 @@ html.dark option { background:#0f172a; color:#f1f5f9; }
           <tr class="hover:bg-rose-50/50">
             <td class="py-2.5 px-3 font-semibold text-slate-500">${idx + 1}</td>
             <td class="py-2.5 px-3 font-mono text-slate-700">${escapeHTML(d.clusterId)}</td>
-            <td class="py-2.5 px-3 font-bold text-slate-900">${escapeHTML(d.clusterName)}</td>
+            <td class="py-2.5 px-3">${button}</td>
             <td class="py-2.5 px-3">
               <div class="font-medium text-slate-800">${escapeHTML(d.kecamatan)}</div>
               <div class="text-[10px] text-slate-400">${escapeHTML(d.kotaAsli)}</div>
@@ -2029,7 +2081,7 @@ html.dark option { background:#0f172a; color:#f1f5f9; }
           <tr class="hover:bg-amber-50/40 transition">
             <td class="py-2.5 px-3 font-semibold text-slate-500">${idx + 1}</td>
             <td class="py-2.5 px-3">
-              <div class="font-bold text-slate-900">${escapeHTML(d.clusterName)}</div>
+              <button type="button" onclick="openClusterMap('${escapeHTML(d.clusterName).replace(/'/g, '&#39;')}', ${d.latitude === null ? 'null' : d.latitude}, ${d.longitude === null ? 'null' : d.longitude})" class="text-left font-bold text-indigo-700 hover:text-indigo-900 hover:underline decoration-dotted underline-offset-2 cursor-pointer">${escapeHTML(d.clusterName)} <i class="fa-solid fa-location-dot text-[10px] ml-1" aria-hidden="true"></i></button>
               <div class="text-[10px] font-mono text-slate-500">${escapeHTML(d.clusterId)} &bull; ${escapeHTML(d.rfsClass)}</div>
             </td>
             <td class="py-2.5 px-3">
