@@ -194,7 +194,9 @@ html.dark option { background:#0f172a; color:#f1f5f9; }
   .ctj-legend-dot{width:12px;height:12px;border-radius:50%;border:2px solid #fff;box-shadow:0 0 0 1px #cbd5e1;flex:none}
   .ctj-legend-dot.red{background:#e11d48}.ctj-legend-dot.orange{background:#f97316}.ctj-legend-dot.yellow{background:#fbbf24}.ctj-legend-dot.green{background:#059669}
   .ctj-map-traffic{display:flex;align-items:center;justify-content:center;gap:7px;background:#e0f2fe;color:#0369a1;border:1px solid #bae6fd;border-radius:10px;padding:10px;font-size:10px;font-weight:900}
-  .ctj-map-main{min-width:0;background:#e2e8f0}
+  .ctj-map-main{min-width:0;background:#e2e8f0;position:relative}
+  #ctj-cluster-map{display:block;width:100%;min-width:0;position:relative;overflow:hidden;background:#e2e8f0}
+  #ctj-cluster-map .leaflet-pane,#ctj-cluster-map .leaflet-tile-pane,#ctj-cluster-map .leaflet-map-pane{position:absolute;left:0;top:0}
   .ctj-map-toolbar{height:38px;padding:0 13px;background:#fff;display:flex;align-items:center;justify-content:space-between;font-size:10px;font-weight:900;color:#334155;border-bottom:1px solid #e2e8f0}
   .ctj-map-live-label{color:#64748b;font-size:9px;letter-spacing:.06em}.ctj-map-live-label i{font-size:7px;color:#10b981;margin-right:4px}
   .ctj-map-bottom-tools{display:flex;flex-wrap:wrap;gap:6px;padding:9px;background:#fff;border-top:1px solid #e2e8f0}
@@ -1307,6 +1309,39 @@ html.dark option { background:#0f172a; color:#f1f5f9; }
     let mapShowZonkOnly = false;
     let selectedCTJRouteStops = [];
     let ctjMapMarkerIndex = [];
+    let ctjMapResizeObserver = null;
+    let ctjMapResizeHandlerBound = false;
+
+    // Paksa Leaflet membaca ulang ukuran container setelah lazy-load, layout, atau resize.
+    function refreshCTJMapSize() {
+      if (!ctjLeafletMap) return;
+      const runInvalidate = () => {
+        if (!ctjLeafletMap) return;
+        const mapEl = document.getElementById('ctj-cluster-map');
+        if (!mapEl || mapEl.clientWidth < 100 || mapEl.clientHeight < 100) return;
+        ctjLeafletMap.invalidateSize({ pan: false, animate: false });
+      };
+      requestAnimationFrame(runInvalidate);
+      [120, 350, 800].forEach(delay => window.setTimeout(runInvalidate, delay));
+    }
+
+    function observeCTJMapSize() {
+      const mapEl = document.getElementById('ctj-cluster-map');
+      if (!mapEl) return;
+      if ('ResizeObserver' in window && !ctjMapResizeObserver) {
+        ctjMapResizeObserver = new ResizeObserver(() => refreshCTJMapSize());
+        ctjMapResizeObserver.observe(mapEl);
+      }
+      if (!ctjMapResizeHandlerBound) {
+        window.addEventListener('resize', refreshCTJMapSize, { passive: true });
+        window.addEventListener('orientationchange', refreshCTJMapSize, { passive: true });
+        document.addEventListener('visibilitychange', () => {
+          if (!document.hidden) refreshCTJMapSize();
+        });
+        ctjMapResizeHandlerBound = true;
+      }
+    }
+
     function initCTJClusterMap() {
       const el = document.getElementById('ctj-cluster-map');
       if (!el || typeof L === 'undefined') return;
@@ -1333,7 +1368,8 @@ html.dark option { background:#0f172a; color:#f1f5f9; }
           chunkedLoading: true, chunkInterval: 200, chunkDelay: 50
         }).addTo(ctjLeafletMap);
       }
-      setTimeout(() => ctjLeafletMap.invalidateSize(), 120);
+      observeCTJMapSize();
+      refreshCTJMapSize();
     }
 
     // Hitung jarak dan estimasi waktu rute dari posisi perangkat ke cluster terpilih.
@@ -1829,7 +1865,8 @@ html.dark option { background:#0f172a; color:#f1f5f9; }
         const zoom=Math.max(10,Math.min(16,ctjLeafletMap.getZoom()));
         trafficLink.href='https://www.google.com/maps/@'+center.lat.toFixed(5)+','+center.lng.toFixed(5)+','+zoom+'z/data=!5m1!1e1';
       }
-      setTimeout(()=>ctjLeafletMap.invalidateSize(),150);
+      // Beri waktu pada grid/layout dan tile layer untuk selesai sebelum ukuran peta dikunci.
+      refreshCTJMapSize();
     }
 
     // Normalisasi baris CSV dari Google Sheets menjadi objek standar
