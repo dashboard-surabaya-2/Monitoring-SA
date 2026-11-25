@@ -648,7 +648,7 @@ html.dark option { background:#0f172a; color:#f1f5f9; }
           <div class="ctj-map-panel-title"><i class="fa-solid fa-filter"></i> Filter Peta</div>
           <label class="ctj-map-label" for="map-cluster-search">Cari Cluster</label>
           <div class="ctj-map-search-wrap flex gap-1.5 mb-3">
-            <input id="map-cluster-search" type="search" placeholder="Nama / ID cluster..." class="ctj-map-input flex-1 min-w-0" autocomplete="off" oninput="showCTJClusterSuggestions()" onfocus="showCTJClusterSuggestions()" onkeydown="if(event.key==='Enter'){event.preventDefault();searchCTJClusterOnMap()}else if(event.key==='Escape)hideCTJClusterSuggestions()" />
+            <input id="map-cluster-search" type="search" placeholder="Nama / ID cluster..." class="ctj-map-input flex-1 min-w-0" autocomplete="off" oninput="showCTJClusterSuggestions()" onfocus="showCTJClusterSuggestions()" onkeydown="if(event.key==='Enter'){event.preventDefault();searchCTJClusterOnMap()}else if(event.key==='Escape')hideCTJClusterSuggestions()" />
             <button type="button" onclick="searchCTJClusterOnMap()" class="ctj-map-search-btn" aria-label="Cari cluster"><i class="fa-solid fa-magnifying-glass"></i></button>
             <div id="map-cluster-suggestions" class="ctj-map-search-suggestions hidden" role="listbox" aria-label="Saran nama cluster"></div>
           </div>
