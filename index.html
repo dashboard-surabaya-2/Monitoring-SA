@@ -1602,7 +1602,7 @@ html.dark option { background:#0f172a; color:#f1f5f9; }
       const asmSelect = document.getElementById('filterASM');
       const aeSelect = document.getElementById('filterAE');
       const planSelect = document.getElementById('filterPlan');
-      const clean = value => String(value || '-')
+      const clean = value => { const text = String(value || '-').split('*').join('').trim(); return text.endsWith('.') ? text.slice(0, -1).trim() : text; };
         .replace(/\*/g, '•')
         .replace(/\s*\.\s*$/, '')
         .trim();
