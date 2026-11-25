@@ -13,6 +13,11 @@
 
     function getSavedMainDashboard() {
       try {
+        const requested = new URLSearchParams(window.location.search).get('dashboard');
+        if (['sa', 'ctj', 'wo'].includes(requested)) {
+          localStorage.setItem(MAIN_DASHBOARD_STORAGE_KEY, requested);
+          return requested;
+        }
         const saved = localStorage.getItem(MAIN_DASHBOARD_STORAGE_KEY);
         return ['sa', 'ctj', 'wo'].includes(saved) ? saved : 'sa';
       } catch (error) {
@@ -23,6 +28,7 @@
     function switchMainDashboard(view) {
       const views = ['sa', 'ctj', 'wo'];
       if (!views.includes(view)) view = 'sa';
+      document.body.classList.toggle('embedded-dashboard-view', view !== 'sa');
       try {
         localStorage.setItem(MAIN_DASHBOARD_STORAGE_KEY, view);
       } catch (error) {
@@ -130,6 +136,15 @@
     nav[aria-label="Navigasi dashboard"]{display:grid!important;grid-template-columns:repeat(3,minmax(0,1fr));gap:.35rem!important;margin-top:.6rem!important;margin-bottom:.7rem!important}
     #mainTabSA,#mainTabWO,#mainTabCTJ{min-width:0!important;min-height:48px!important;padding:.45rem .3rem!important;font-size:.68rem!important;white-space:normal!important;text-align:center!important}
     #mainTabSA span,#mainTabWO span,#mainTabCTJ span{display:block;margin:0!important}
+  }
+
+  /* Saat WO/CTJ dibuka dalam iframe di HP, sembunyikan header shell agar tidak dobel */
+  @media(max-width:640px){
+    body.embedded-dashboard-view>div.relative>header,
+    body.embedded-dashboard-view>div.relative>nav[aria-label="Navigasi dashboard"]{display:none!important}
+    body.embedded-dashboard-view>div.relative>section#mainCTJView,
+    body.embedded-dashboard-view>div.relative>section#mainWOView{margin-top:0!important;border:0!important;border-radius:0!important;min-height:0!important}
+    body.embedded-dashboard-view>div.relative{padding-top:0!important;padding-left:0!important;padding-right:0!important}
   }
 </style>
 </head>
