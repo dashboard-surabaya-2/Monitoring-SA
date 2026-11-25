@@ -2121,6 +2121,24 @@
             if (modal) modal.classList.add('hidden');
         }
 
+        // Tutup popup dengan tombol Escape pada keyboard.
+        document.addEventListener('keydown', function (event) {
+            if (event.key !== 'Escape') return;
+
+            const previewModal = document.getElementById('preview-wa-modal');
+            const woModal = document.getElementById('wo-modal');
+
+            // Jika preview WA terbuka, tutup itu terlebih dahulu.
+            if (previewModal && !previewModal.classList.contains('hidden')) {
+                closePreviewWAModal();
+                return;
+            }
+
+            if (woModal && !woModal.classList.contains('hidden')) {
+                closeModal();
+            }
+        });
+
         function copyModalWONumber() {
             if (!currentModalWO) return;
             const tmp = document.createElement('input');
