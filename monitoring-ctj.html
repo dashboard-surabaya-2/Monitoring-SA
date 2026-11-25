@@ -1617,7 +1617,9 @@ html.dark option { background:#0f172a; color:#f1f5f9; }
     }
 
     function getCTJNearbyClusters(selected,lat,lon) {
-      const valid = filteredClusterData.filter(item => item !== selected &&
+      // Gunakan sumber data Maps yang sama agar daftar terdekat mengikuti filter BM/ASM Maps.
+      const valid = ctjMapBaseData.filter(item => item !== selected &&
+        String(item.clusterId || '') !== String(selected.clusterId || '') &&
         item.latitude !== null && item.latitude !== undefined && String(item.latitude).trim() !== '' &&
         item.longitude !== null && item.longitude !== undefined && String(item.longitude).trim() !== '' &&
         Number.isFinite(Number(item.latitude)) && Number.isFinite(Number(item.longitude)) &&
