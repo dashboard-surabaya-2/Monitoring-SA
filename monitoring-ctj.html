@@ -646,6 +646,14 @@ html.dark option { background:#0f172a; color:#f1f5f9; }
           <p id="map-role-hint" class="text-[11px] text-slate-500 mt-1 mb-3">Mode ASM: peta mengikuti filter wilayah dan tim yang dipilih.</p>
           <div class="ctj-map-divider"></div>
           <div class="ctj-map-panel-title"><i class="fa-solid fa-filter"></i> Filter Peta</div>
+          <label class="ctj-map-label" for="map-bm-filter">BM</label>
+          <select id="map-bm-filter" onchange="updateCTJMapASMFilter()" class="ctj-map-select mb-3">
+            <option value="ALL">ALL BM</option>
+          </select>
+          <label class="ctj-map-label" for="map-asm-filter">ASM</label>
+          <select id="map-asm-filter" onchange="renderCTJClusterMap()" class="ctj-map-select mb-3">
+            <option value="ALL">Semua ASM</option>
+          </select>
           <label class="ctj-map-label" for="map-cluster-search">Cari Cluster</label>
           <div class="ctj-map-search-wrap flex gap-1.5 mb-3">
             <input id="map-cluster-search" type="search" placeholder="Nama / ID cluster..." class="ctj-map-input flex-1 min-w-0" autocomplete="off" oninput="showCTJClusterSuggestions()" onfocus="showCTJClusterSuggestions()" onkeydown="if(event.key==='Enter'){event.preventDefault();searchCTJClusterOnMap()}else if(event.key==='Escape')hideCTJClusterSuggestions()" />
@@ -1295,6 +1303,7 @@ html.dark option { background:#0f172a; color:#f1f5f9; }
     let ctjLeafletMap = null;
     let ctjClusterMarkers = null;
     let ctjMapHasEnteredViewport = false;
+    let ctjMapBaseData = [];
     let mapShowZonkOnly = false;
     let selectedCTJRouteStops = [];
     let ctjMapMarkerIndex = [];
@@ -1410,7 +1419,7 @@ html.dark option { background:#0f172a; color:#f1f5f9; }
       const note = document.getElementById('ctj-kecamatan-priority-note');
       if (!tbody) return;
       const groups = new Map();
-      filteredClusterData.forEach(d => {
+      ctjMapBaseData.forEach(d => {
         const name = String(d.kecamatan || 'Tidak diketahui').trim() || 'Tidak diketahui';
         if (!groups.has(name)) groups.set(name, {name,total:0,zonk:0,red:0,orange:0,yellow:0,green:0});
         const row = groups.get(name);
@@ -1423,7 +1432,7 @@ html.dark option { background:#0f172a; color:#f1f5f9; }
         else row.green++;
       });
       const rows = [...groups.values()].sort((a,b) => (b.red+b.orange)-(a.red+a.orange) || b.zonk-a.zonk || b.total-a.total || a.name.localeCompare(b.name,'id'));
-      if (note) note.textContent = 'Mengikuti filter utama BM, ASM, AE, Kota, RFS, dan status SA. Ranking berdasarkan jumlah cluster prioritas merah + oranye.';
+      if (note) note.textContent = 'Mengikuti filter BM dan ASM khusus Maps. Ranking berdasarkan jumlah cluster prioritas merah + oranye.';
       if (!rows.length) {
         tbody.innerHTML = '<tr><td colspan="8" class="px-3 py-7 text-center text-slate-500">Tidak ada data kecamatan pada filter aktif.</td></tr>';
         return;
@@ -1653,18 +1662,49 @@ html.dark option { background:#0f172a; color:#f1f5f9; }
       const zonkCountEl = document.getElementById('map-zonk-count');
       const zonkToggle = document.getElementById('map-zonk-toggle');
       const zonkAction = document.getElementById('map-zonk-action');
-      const zonkTotal = filteredClusterData.filter(d => d.isZonkSA).length;
-      const lowPenTotal = filteredClusterData.filter(d => getCTJMapPenetration(d) < 10).length;
-      const unvisitedTotal = filteredClusterData.filter(d => Number(d.visitMTD || 0) <= 0).length;
-      const highPriorityTotal = filteredClusterData.filter(d => getCTJMapPriority(d).score >= 45).length;
+      const selectedMapBM = document.getElementById('map-bm-filter')?.value || 'ALL';
+      const selectedMapASM = document.getElementById('map-asm-filter')?.value || 'ALL';
+      const mainAE = document.getElementById('filter-ae')?.value || 'ALL';
+      const mainCity = document.getElementById('filter-city')?.value || 'ALL';
+      const mainRFS = document.getElementById('filter-rfs')?.value || 'ALL';
+      const mainSA = document.getElementById('filter-sa')?.value || 'ALL';
+      const mainSearch = (document.getElementById('filter-search')?.value || '').trim().toLowerCase();
+      const targetVisit = parseInt(document.getElementById('week-target-select')?.value, 10) || 20;
+      const remainingDays = Math.max(1, parseInt(document.getElementById('remaining-days-input')?.value, 10) || 7);
+      // Filter BM/ASM Maps berdiri sendiri; filter BM/ASM utama dashboard tidak mengubah peta.
+      ctjMapBaseData = rawClusterData.filter(d => {
+        if (selectedMapBM !== 'ALL' && d.bm !== selectedMapBM) return false;
+        if (selectedMapASM !== 'ALL' && d.asm !== selectedMapASM) return false;
+        if (mainAE !== 'ALL' && d.ae !== mainAE) return false;
+        if (mainCity !== 'ALL' && d.kotaAsli !== mainCity) return false;
+        if (mainRFS !== 'ALL' && d.rfsClass !== mainRFS) return false;
+        if (mainSA === 'ZONK' && !d.isZonkSA) return false;
+        if (mainSA === 'ADA' && d.isZonkSA) return false;
+        if (mainSearch) {
+          const hay = `${d.clusterId} ${d.clusterName} ${d.kecamatan} ${d.kotaAsli} ${d.asm} ${d.ae} ${d.rfsClass}`.toLowerCase();
+          if (!hay.includes(mainSearch)) return false;
+        }
+        const deficit = Math.max(0, targetVisit - Number(d.visitMTD || 0));
+        return true;
+      }).map(d => {
+        const deficit = Math.max(0, targetVisit - Number(d.visitMTD || 0));
+        return {...d, targetVisit, deficit, isUnderTarget: deficit > 0,
+          isWajibDaily: deficit > 0 && deficit <= remainingDays,
+          isCritical: deficit > remainingDays,
+          perDayNeeded: deficit > 0 ? deficit / remainingDays : 0};
+      });
+      const zonkTotal = ctjMapBaseData.filter(d => d.isZonkSA).length;
+      const lowPenTotal = ctjMapBaseData.filter(d => getCTJMapPenetration(d) < 10).length;
+      const unvisitedTotal = ctjMapBaseData.filter(d => Number(d.visitMTD || 0) <= 0).length;
+      const highPriorityTotal = ctjMapBaseData.filter(d => getCTJMapPriority(d).score >= 45).length;
       const setMapKPI = (id,value) => { const el=document.getElementById(id); if(el) el.textContent=formatNumber(value); };
-      setMapKPI('map-kpi-total',filteredClusterData.length);
+      setMapKPI('map-kpi-total',ctjMapBaseData.length);
       setMapKPI('map-kpi-zonk',zonkTotal);
       setMapKPI('map-kpi-low',lowPenTotal);
       setMapKPI('map-kpi-unvisited',unvisitedTotal);
       setMapKPI('map-kpi-priority',highPriorityTotal);
       const zonkPct=document.getElementById('map-kpi-zonk-pct');
-      if(zonkPct) zonkPct.textContent=(filteredClusterData.length?(zonkTotal/filteredClusterData.length*100):0).toFixed(1).replace('.',',')+'% dari cluster';
+      if(zonkPct) zonkPct.textContent=(ctjMapBaseData.length?(zonkTotal/ctjMapBaseData.length*100):0).toFixed(1).replace('.',',')+'% dari cluster';
       const routeBottom=document.getElementById('map-route-count-bottom');
       if(routeBottom) routeBottom.textContent=selectedCTJRouteStops.length;
       if (zonkCountEl) zonkCountEl.textContent = formatNumber(zonkTotal);
@@ -1679,7 +1719,7 @@ html.dark option { background:#0f172a; color:#f1f5f9; }
       const kecamatanSelect = document.getElementById('map-kecamatan-filter');
       const selectedKecamatan = kecamatanSelect?.value || 'ALL';
       if (kecamatanSelect) {
-        const kecamatanList = [...new Set(filteredClusterData
+        const kecamatanList = [...new Set(ctjMapBaseData
           .map(d => String(d.kecamatan || '').trim())
           .filter(Boolean))]
           .sort((a,b) => a.localeCompare(b, 'id'));
@@ -1698,7 +1738,7 @@ html.dark option { background:#0f172a; color:#f1f5f9; }
       }
       const activeKecamatan = kecamatanSelect?.value || 'ALL';
       const mapCondition = document.getElementById('map-condition-filter')?.value || 'ALL';
-      let mapSource = mapShowZonkOnly ? filteredClusterData.filter(d => d.isZonkSA) : filteredClusterData;
+      let mapSource = mapShowZonkOnly ? ctjMapBaseData.filter(d => d.isZonkSA) : ctjMapBaseData;
       if (activeKecamatan !== 'ALL') {
         mapSource = mapSource.filter(d => String(d.kecamatan || '').trim() === activeKecamatan);
       }
@@ -1960,8 +2000,44 @@ html.dark option { background:#0f172a; color:#f1f5f9; }
       applyFilters();
     }
 
+    // Filter BM/ASM khusus Maps, terpisah dari filter utama dashboard.
+    function populateCTJMapOwnerFilters() {
+      const bmSelect = document.getElementById('map-bm-filter');
+      if (!bmSelect) return;
+      const previousBM = bmSelect.value || 'ALL';
+      const uniqueBMs = [...new Set(rawClusterData.map(d => d.bm).filter(v => v && v !== '-'))].sort((a,b) => a.localeCompare(b,'id'));
+      bmSelect.innerHTML = '<option value="ALL">ALL BM</option>';
+      uniqueBMs.forEach(bm => {
+        const option = document.createElement('option');
+        option.value = bm;
+        option.textContent = bm;
+        bmSelect.appendChild(option);
+      });
+      bmSelect.value = uniqueBMs.includes(previousBM) ? previousBM : 'ALL';
+      updateCTJMapASMFilter(false);
+    }
+
+    function updateCTJMapASMFilter(shouldRender = true) {
+      const bm = document.getElementById('map-bm-filter')?.value || 'ALL';
+      const asmSelect = document.getElementById('map-asm-filter');
+      if (!asmSelect) return;
+      const previousASM = asmSelect.value || 'ALL';
+      const byBM = bm === 'ALL' ? rawClusterData : rawClusterData.filter(d => d.bm === bm);
+      const uniqueASMs = [...new Set(byBM.map(d => d.asm).filter(v => v && v !== '-'))].sort((a,b) => a.localeCompare(b,'id'));
+      asmSelect.innerHTML = '<option value="ALL">Semua ASM</option>';
+      uniqueASMs.forEach(asm => {
+        const option = document.createElement('option');
+        option.value = asm;
+        option.textContent = asm;
+        asmSelect.appendChild(option);
+      });
+      asmSelect.value = uniqueASMs.includes(previousASM) ? previousASM : 'ALL';
+      if (shouldRender && ctjMapHasEnteredViewport) renderCTJClusterMap();
+    }
+
     // Populate Filter BM, ASM, AE, Kota secara hierarkis
     function populateFilterDropdowns() {
+      populateCTJMapOwnerFilters();
       const bmSelect = document.getElementById('filter-bm');
       const uniqueBMs = [...new Set(rawClusterData.map(d => d.bm).filter(v => v && v !== '-'))].sort();
 
