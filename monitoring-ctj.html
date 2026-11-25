@@ -519,6 +519,7 @@ html.dark option { background:#0f172a; color:#f1f5f9; }
           <span class="rounded-lg bg-indigo-50 text-indigo-700 px-3 py-2">Cluster pada peta: <b id="map-cluster-count">0</b></span>
           <button id="map-zonk-toggle" type="button" onclick="toggleZonkMap()" aria-pressed="false" class="rounded-lg bg-rose-50 hover:bg-rose-100 text-rose-700 border border-rose-200 px-3 py-2 font-bold transition"> <i class="fa-solid fa-triangle-exclamation mr-1"></i>Cluster ZONK: <b id="map-zonk-count">0</b> <span id="map-zonk-action" class="ml-1 underline">Tampilkan</span></button>
           <span class="rounded-lg bg-amber-50 text-amber-700 px-3 py-2">Tanpa koordinat: <b id="map-missing-count">0</b></span>
+          <a id="map-traffic-link" href="https://www.google.com/maps" target="_blank" rel="noopener noreferrer" class="rounded-lg bg-sky-50 hover:bg-sky-100 text-sky-700 border border-sky-200 px-3 py-2 font-bold transition"><i class="fa-solid fa-car-side mr-1"></i>Lalu Lintas Live</a>
         </div>
       </div>
       <div class="p-2 sm:p-4">
@@ -1073,9 +1074,21 @@ html.dark option { background:#0f172a; color:#f1f5f9; }
       if (!el || typeof L === 'undefined') return;
       if (!ctjLeafletMap) {
         ctjLeafletMap = L.map(el, { scrollWheelZoom: true, zoomControl: true }).setView([-7.7, 112.5], 8);
-        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        const streetLayer = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
           maxZoom: 19, attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
-        }).addTo(ctjLeafletMap);
+        });
+        const satelliteLayer = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', {
+          maxZoom: 19, attribution: 'Tiles &copy; Esri'
+        });
+        const terrainLayer = L.tileLayer('https://{s}.tile.opentopomap.org/{z}/{x}/{y}.png', {
+          maxZoom: 17, attribution: 'Map data: &copy; OpenStreetMap contributors, SRTM | Map style: &copy; OpenTopoMap'
+        });
+        streetLayer.addTo(ctjLeafletMap);
+        L.control.layers({
+          'Peta Jalan': streetLayer,
+          'Satelit': satelliteLayer,
+          'Medan / Topografi': terrainLayer
+        }, null, { position: 'topright', collapsed: true }).addTo(ctjLeafletMap);
         ctjClusterMarkers = L.markerClusterGroup({
           showCoverageOnHover: false, spiderfyOnMaxZoom: true, zoomToBoundsOnClick: true,
           maxClusterRadius: 48, disableClusteringAtZoom: 16
@@ -1157,6 +1170,14 @@ html.dark option { background:#0f172a; color:#f1f5f9; }
       if (bounds.length === 1) ctjLeafletMap.setView(bounds[0], 15);
       else if (bounds.length > 1) ctjLeafletMap.fitBounds(bounds, { padding: [48, 48], maxZoom: 12, animate: false });
       else ctjLeafletMap.setView([-7.7, 112.5], 8);
+
+      // Lalu lintas real-time dibuka melalui Google Maps; tidak disimulasikan di peta internal.
+      const trafficLink = document.getElementById('map-traffic-link');
+      if (trafficLink) {
+        const center = ctjLeafletMap.getCenter();
+        const zoom = Math.max(10, Math.min(16, ctjLeafletMap.getZoom()));
+        trafficLink.href = 'https://www.google.com/maps/@' + center.lat.toFixed(5) + ',' + center.lng.toFixed(5) + ',' + zoom + 'z/data=!5m1!1e1';
+      }
       setTimeout(() => ctjLeafletMap.invalidateSize(), 150);
     }
 
