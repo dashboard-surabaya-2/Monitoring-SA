@@ -1935,8 +1935,75 @@ html.dark option { background:#0f172a; color:#f1f5f9; }
     function reCopyWABox() { const ta = document.getElementById('waPreviewText'); ta.select(); navigator.clipboard.writeText(ta.value).then(() => showWAToast('Teks disalin ulang!')); }
 
     function copyWAText(key) {
-      let text = `*Report Monitoring Surabaya 2*\nPeriode: November 2026`;
-      openWAModal('Report WhatsApp', text);
+      const novData = getNovemberSA();
+      const octData = getOctoberMTDSA();
+      const clean = value => String(value || '-').replace(/\\s*\\.\\s*$/, '').trim();
+      const growth = (nov, oct) => {
+        const diff = nov - oct;
+        const pct = oct > 0 ? Math.round(diff / oct * 100) : (nov > 0 ? 100 : 0);
+        return `${diff > 0 ? '+' : ''}${diff} (${pct > 0 ? '+' : ''}${pct}%)`;
+      };
+      let title = 'Report Monitoring SA';
+      let lines = [];
+
+      if (key === 'rankASM') {
+        title = 'Ranking Pencapaian SA per ASM';
+        const map = {};
+        novData.forEach(r => {
+          const name = r.asm_name || 'Unknown ASM';
+          if (!map[name]) map[name] = { name, branch: r.branch || '-', nov: 0, oct: 0 };
+          map[name].nov++;
+        });
+        octData.forEach(r => {
+          const name = r.asm_name || 'Unknown ASM';
+          if (!map[name]) map[name] = { name, branch: r.branch || '-', nov: 0, oct: 0 };
+          map[name].oct++;
+        });
+        const q = (document.getElementById('searchRankASM')?.value || '').toLowerCase();
+        const rows = Object.values(map).filter(r => r.name.toLowerCase().includes(q))
+          .sort((a,b) => b.nov-a.nov || b.oct-a.oct);
+        lines = [`🏆 *RANKING SA PER ASM — NOVEMBER 2026*`, `Perbandingan MTD s/d tanggal ${getCurrentCutoffDay()} vs Oktober`, ''];
+        rows.forEach((r,i) => lines.push(`${i+1}. *${clean(r.name)}* — Nov ${r.nov} | Okt ${r.oct} | Selisih ${growth(r.nov,r.oct)}`));
+      } else if (key === 'rankAE') {
+        title = 'Ranking Pencapaian SA per AE';
+        const map = {};
+        novData.forEach(r => {
+          const k = `${r.sales_agent_name || 'Unknown AE'}|||${r.asm_name || '-'}`;
+          if (!map[k]) map[k] = { ae:r.sales_agent_name || 'Unknown AE', asm:r.asm_name || '-', code:r.sales_agent_code || '-', nov:0, oct:0 };
+          map[k].nov++;
+        });
+        octData.forEach(r => {
+          const k = `${r.sales_agent_name || 'Unknown AE'}|||${r.asm_name || '-'}`;
+          if (map[k]) map[k].oct++;
+        });
+        const q = (document.getElementById('searchRankAE')?.value || '').toLowerCase();
+        const rows = Object.values(map).filter(r => `${r.ae} ${r.asm} ${r.code}`.toLowerCase().includes(q))
+          .sort((a,b) => b.nov-a.nov || b.oct-a.oct);
+        lines = [`🥇 *RANKING SA PER AE — NOVEMBER 2026*`, `Perbandingan MTD s/d tanggal ${getCurrentCutoffDay()} vs Oktober`, ''];
+        rows.forEach((r,i) => lines.push(`${i+1}. *${clean(r.ae)}* — Nov ${r.nov} | Okt ${r.oct} | Selisih ${growth(r.nov,r.oct)}\n   ASM: ${clean(r.asm)} | ID: ${r.code}`));
+      } else if (key === 'tab1Detail') {
+        title = 'Rincian Performa SA Harian';
+        const q = (document.getElementById('searchTab1')?.value || '').toLowerCase();
+        const rows = getAEPerformanceRows().filter(r => `${r.asm} ${r.ae} ${r.aeCode}`.toLowerCase().includes(q))
+          .sort((a,b) => b.total-a.total || b.prevMonth-a.prevMonth);
+        lines = [`📊 *RINCIAN PERFORMA SA — NOVEMBER 2026*`, `Total AE aktif: ${rows.length}`, ''];
+        rows.forEach((r,i) => lines.push(`${i+1}. *${clean(r.ae)}* — ${r.total} SA | Target ${r.target} | Paid ${r.paid} | Unpaid ${r.unpaid}\n   ASM: ${clean(r.asm)} | Okt EOM: ${r.prevMonth} | Selisih: ${growth(r.total,r.prevMonth)} | Revenue: ${formatIDR(r.revenue)}`));
+      } else if (key === 'tab2Detail') {
+        title = 'Detail Monitoring SA Paid & Unpaid';
+        const q = (document.getElementById('searchTab2')?.value || '').toLowerCase();
+        const rows = novData.filter(r => {
+          const bucket = getDelayBucket(r);
+          if (delayFilter === 'ALL_UNPAID' && bucket === 'PAID') return false;
+          if (delayFilter !== 'ALL' && delayFilter !== 'ALL_UNPAID' && bucket !== delayFilter) return false;
+          return !q || `${r.subscription_id} ${r.order_id} ${r.name} ${r.asm_name} ${r.sales_agent_name} ${r.clustername}`.toLowerCase().includes(q);
+        }).sort((a,b) => (parseInt(b.unpaid_days)||0) - (parseInt(a.unpaid_days)||0));
+        lines = [`📋 *DETAIL MONITORING SA — NOVEMBER 2026*`, `Total data: ${rows.length}`, ''];
+        rows.forEach((r,i) => lines.push(`${i+1}. *${clean(r.name)}* — ${getDelayBucket(r) === 'PAID' ? 'PAID' : 'UNPAID '+(r.unpaid_days||0)+' hari'}\n   ASM: ${clean(r.asm_name)} | AE: ${clean(r.sales_agent_name)}\n   Sub ID: ${r.subscription_id || '-'} | Paket: ${clean(r.plan)} | Tagihan: ${formatIDR(r.invoice_amount)}`));
+      } else {
+        lines = ['*Report Monitoring SA — November 2026*'];
+      }
+      const report = lines.join('\\n');
+      openWAModal(title, report);
     }
 
     function generateASMWhatsAppReport() {
