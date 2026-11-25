@@ -56,7 +56,23 @@
             from { opacity: 0; transform: translateY(4px); }
             to { opacity: 1; transform: translateY(0); }
         }
-    </style>
+    /* Mobile usability: Monitoring WO */
+@media(max-width:640px){
+ html{-webkit-text-size-adjust:100%}body{overflow-x:hidden}
+ button,select,input{min-height:40px}
+ main,.container,section{min-width:0}
+ .overflow-x-auto,.overflow-auto{-webkit-overflow-scrolling:touch}
+ #preview-wa-modal{padding:.25rem!important;align-items:stretch!important}
+ #preview-wa-modal>div{width:calc(100vw - .5rem)!important;min-width:0!important;max-width:calc(100vw - .5rem)!important;height:calc(100dvh - .5rem)!important;min-height:0!important;max-height:calc(100dvh - .5rem)!important;margin:.25rem!important;resize:none!important;overflow:auto!important;border-radius:1rem!important}
+ #preview-wa-modal>div>div:nth-child(2){padding:.65rem!important}
+ #preview-wa-modal input{width:100%!important;min-height:42px}
+ #preview-wa-modal table{min-width:760px}
+ #wo-modal>div{width:calc(100vw - 1rem)!important;max-width:calc(100vw - 1rem)!important;max-height:94dvh!important}
+ #toast-container{left:.5rem!important;right:.5rem!important;bottom:.5rem!important;max-width:none!important}
+}
+@media(max-width:380px){#preview-wa-modal>div>div:first-child{padding:.5rem .65rem!important}#preview-wa-modal h3{font-size:.78rem!important}}
+
+</style>
 </head>
 <body class="bg-slate-50 text-slate-800 antialiased min-h-screen flex flex-col">
 
