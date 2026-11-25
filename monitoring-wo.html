@@ -861,7 +861,7 @@
 
         function normalizeStatus(rawStatus) {
             const s = cleanText(rawStatus).toLowerCase().trim();
-            if (!s) return 'New';
+            if (!s) return 'Unknown';
             // Periksa status negatif lebih dahulu: kata 'unsuccessful' mengandung substring 'success'.
             // Semua variasi penulisan cancel digabung menjadi satu status sesuai sumber: Cancelled.
             if (s.includes('cancel') || s.includes('batal')) return 'Cancelled';
@@ -874,7 +874,7 @@
             if (s.includes('prog') || s.includes('jalan') || s.includes('otw') || s.includes('start') || s.includes('assign') || s.includes('en route') || s.includes('arriv')) {
                 return 'In Progress';
             }
-            return 'New';
+            return 'Other';
         }
 
         // ============================================================================
@@ -1213,7 +1213,7 @@
                     serviceStatus: cleanText(col(r, 'serviceStatus')) || '-',
                     appointmentDate: normalizeAppointmentDate(rawDate) || cleanText(rawDate) || '-',
                     slotTime: cleanText(col(r, 'slotTime')),
-                    appointmentStatus: statusAM || 'New',
+                    appointmentStatus: statusAM || 'Unknown',
                     unsuccessfulCategory: cleanText(col(r, 'unsuccessfulCategory')) || '-',
                     unsucessfulSubCategory: cleanText(col(r, 'unsucessfulSubCategory')) || '-',
                     woRepitation: Number(col(r, 'woRepitation')) || 1,
@@ -1309,7 +1309,6 @@
             let cComp = 0;
             let cUnsucc = 0;
             let cCancelled = 0;
-            let cResch = 0;
             let totalRep = 0;
 
             filteredWorkOrders.forEach(wo => {
@@ -1329,7 +1328,7 @@
             const woBersihPct = total > 0 ? ((woBersih / total) * 100).toFixed(1) : '0.0';
             const successRate = total > 0 ? ((cComp / total) * 100).toFixed(1) : '0.0';
             const newPct = total > 0 ? ((cNew / total) * 100).toFixed(1) : '0.0';
-            const unsuccAndResch = cUnsucc + cResch;
+            const unsuccAndResch = cUnsucc;
             const unsuccPct = total > 0 ? ((unsuccAndResch / total) * 100).toFixed(1) : '0.0';
 
             const setText = (id, text) => {
@@ -1358,7 +1357,7 @@
             setText('kpi-cancelled-pct', `${(total > 0 ? (cCancelled / total) * 100 : 0).toFixed(1)}%`);
 
             setText('kpi-unsuccessful', unsuccAndResch.toLocaleString('id-ID'));
-            setText('kpi-unsucc-detail', `Unsucc: ${cUnsucc} | Resch: ${cResch}`);
+            setText('kpi-unsucc-detail', `Appointment Status: Unsuccessful`);
             setText('kpi-unsucc-pct', `${unsuccPct}%`);
         }
 
