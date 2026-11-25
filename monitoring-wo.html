@@ -862,6 +862,8 @@
         function normalizeStatus(rawStatus) {
             const s = cleanText(rawStatus).toLowerCase().trim();
             if (!s) return 'Unknown';
+            // Status New harus dikenali secara eksplisit, bukan jatuh ke kategori Other.
+            if (s === 'new' || s.startsWith('new ') || s.includes('new appointment')) return 'New';
             // Periksa status negatif lebih dahulu: kata 'unsuccessful' mengandung substring 'success'.
             // Semua variasi penulisan cancel digabung menjadi satu status sesuai sumber: Cancelled.
             if (s.includes('cancel') || s.includes('batal')) return 'Cancelled';
@@ -1193,8 +1195,8 @@
                 return i === undefined ? fallback : (r[i] ?? fallback);
             };
             return matrix.slice(1).map((r, idx) => {
-                // Kolom AM (indeks 38) adalah sumber KPI appointmentStatus.
-                const statusAM = cleanText(r[38]);
+                // Utamakan nama header agar tidak bergantung pada posisi kolom; AM (indeks 38) sebagai fallback lama.
+                const statusAM = cleanText(col(r, 'appointmentStatus', col(r, 'Appointment Status', r[38] ?? '')));
                 let bsm = cleanText(col(r, 'bsmName', r[78] ?? ''));
                 let asm = cleanText(col(r, 'asmName', r[76] ?? ''));
                 if (!bsm || bsm.toLowerCase() === 'null' || bsm === '-') bsm = '';
