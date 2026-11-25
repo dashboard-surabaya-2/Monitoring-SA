@@ -358,7 +358,7 @@
         </section>
 
         <!-- 2. KARTU KPI (ANGKA DAPAT DIKLIK UNTUK PREVIEW & REPORT WA) -->
-        <section class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-4">
+        <section class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
             <!-- KPI 1: Total WO -->
             <div class="bg-white rounded-2xl border border-slate-200/90 p-5 shadow-xs hover:shadow-md transition">
                 <div class="flex items-start justify-between">
@@ -436,6 +436,46 @@
                 <div class="mt-4 pt-3 border-t border-slate-100 flex items-center justify-between text-xs">
                     <span id="kpi-new-detail" class="text-slate-600 font-medium truncate">New: 0 | Progress: 0</span>
                     <span id="kpi-new-pct" class="font-bold text-indigo-700 bg-indigo-50 px-2 py-0.5 rounded-md shrink-0">0.0%</span>
+                </div>
+            </div>
+
+            <!-- KPI 6: On Progress -->
+            <div class="bg-white rounded-2xl border border-amber-200/90 p-5 shadow-xs hover:shadow-md transition">
+                <div class="flex items-start justify-between">
+                    <div>
+                        <p class="text-xs font-bold text-amber-700 uppercase tracking-wider">In Progress</p>
+                        <button type="button" onclick="openKPIPreviewWA('IN_PROGRESS')" title="Klik untuk Preview & Report WA" class="text-left group mt-1.5 flex items-baseline gap-1.5">
+                            <span id="kpi-in-progress" class="text-3xl font-extrabold text-amber-600 group-hover:text-amber-700 underline decoration-dotted decoration-amber-300 underline-offset-4 transition">0</span>
+                            <i data-lucide="message-square-text" class="w-4 h-4 text-amber-400 group-hover:text-amber-600 transition"></i>
+                        </button>
+                    </div>
+                    <div class="w-11 h-11 rounded-xl bg-amber-50 text-amber-600 flex items-center justify-center shrink-0">
+                        <i data-lucide="clock-3" class="w-5 h-5"></i>
+                    </div>
+                </div>
+                <div class="mt-4 pt-3 border-t border-amber-100 flex items-center justify-between text-xs">
+                    <span class="text-slate-500">Persentase dari Total WO</span>
+                    <span id="kpi-in-progress-pct" class="font-bold text-amber-700 bg-amber-50 px-2 py-0.5 rounded-md">0.0%</span>
+                </div>
+            </div>
+
+            <!-- KPI 7: Cancelled -->
+            <div class="bg-white rounded-2xl border border-slate-300/90 p-5 shadow-xs hover:shadow-md transition">
+                <div class="flex items-start justify-between">
+                    <div>
+                        <p class="text-xs font-bold text-slate-600 uppercase tracking-wider">Cancelled</p>
+                        <button type="button" onclick="openKPIPreviewWA('CANCELLED')" title="Klik untuk Preview & Report WA" class="text-left group mt-1.5 flex items-baseline gap-1.5">
+                            <span id="kpi-cancelled" class="text-3xl font-extrabold text-slate-700 group-hover:text-slate-900 underline decoration-dotted decoration-slate-300 underline-offset-4 transition">0</span>
+                            <i data-lucide="message-square-text" class="w-4 h-4 text-slate-400 group-hover:text-slate-700 transition"></i>
+                        </button>
+                    </div>
+                    <div class="w-11 h-11 rounded-xl bg-slate-100 text-slate-600 flex items-center justify-center shrink-0">
+                        <i data-lucide="ban" class="w-5 h-5"></i>
+                    </div>
+                </div>
+                <div class="mt-4 pt-3 border-t border-slate-100 flex items-center justify-between text-xs">
+                    <span class="text-slate-500">Persentase dari Total WO</span>
+                    <span id="kpi-cancelled-pct" class="font-bold text-slate-700 bg-slate-100 px-2 py-0.5 rounded-md">0.0%</span>
                 </div>
             </div>
 
@@ -1265,6 +1305,7 @@
             let cProg = 0;
             let cComp = 0;
             let cUnsucc = 0;
+            let cCancelled = 0;
             let cResch = 0;
             let totalRep = 0;
 
@@ -1274,6 +1315,7 @@
                 else if (st === 'On Progress') cProg++;
                 else if (st === 'Completed') cComp++;
                 else if (st === 'Unsuccessful') cUnsucc++;
+                else if (st === 'Cancelled') cCancelled++;
                 
 
                 totalRep += Number(wo.woRepitation) || 1;
@@ -1308,6 +1350,10 @@
             setText('kpi-new-progress', newAndProg.toLocaleString('id-ID'));
             setText('kpi-new-detail', `New: ${cNew} | Progress: ${cProg}`);
             setText('kpi-new-pct', `${newAndProgPct}%`);
+            setText('kpi-in-progress', cProg.toLocaleString('id-ID'));
+            setText('kpi-in-progress-pct', `${(total > 0 ? (cProg / total) * 100 : 0).toFixed(1)}%`);
+            setText('kpi-cancelled', cCancelled.toLocaleString('id-ID'));
+            setText('kpi-cancelled-pct', `${(total > 0 ? (cCancelled / total) * 100 : 0).toFixed(1)}%`);
 
             setText('kpi-unsuccessful', unsuccAndResch.toLocaleString('id-ID'));
             setText('kpi-unsucc-detail', `Unsucc: ${cUnsucc} | Resch: ${cResch}`);
@@ -1793,7 +1839,9 @@
             if (metricType === 'WO_BERSIH') return ['Completed', 'New', 'On Progress'].includes(st);
             if (metricType === 'COMPLETED') return st === 'Completed';
             if (metricType === 'NEW_PROGRESS') return ['New', 'On Progress'].includes(st);
-            if (metricType === 'UNSUCCESSFUL') return ['Unsuccessful'].includes(st);
+            if (metricType === 'UNSUCCESSFUL') return st === 'Unsuccessful';
+            if (metricType === 'IN_PROGRESS') return st === 'On Progress';
+            if (metricType === 'CANCELLED') return st === 'Cancelled';
             return true;
         }
 
@@ -1803,7 +1851,9 @@
                 WO_BERSIH: 'WO Bersih (Completed + New + On Progress)',
                 COMPLETED: 'Completed / Successful',
                 NEW_PROGRESS: 'New & On Progress',
-                UNSUCCESSFUL: 'Unsuccessful'
+                UNSUCCESSFUL: 'Unsuccessful',
+                IN_PROGRESS: 'In Progress',
+                CANCELLED: 'Cancelled'
             };
             return labels[metricType] || metricType;
         }
