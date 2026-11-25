@@ -429,11 +429,11 @@
                 </div>
             </div>
 
-            <!-- KPI 5: Unsuccessful / Reschedule -->
+            <!-- KPI 5: Unsuccessful -->
             <div class="bg-white rounded-2xl border border-slate-200/90 p-5 shadow-xs hover:shadow-md transition sm:col-span-2 lg:col-span-1">
                 <div class="flex items-start justify-between">
                     <div>
-                        <p class="text-xs font-bold text-slate-500 uppercase tracking-wider">Unsuccessful / Reschedule</p>
+                        <p class="text-xs font-bold text-slate-500 uppercase tracking-wider">Unsuccessful</p>
                         <button type="button" onclick="openKPIPreviewWA('UNSUCCESSFUL')" title="Klik untuk Preview & Report WA" class="text-left group mt-1.5 flex items-baseline gap-1.5">
                             <span id="kpi-unsuccessful" class="text-3xl font-extrabold text-rose-600 group-hover:text-rose-700 underline decoration-dotted decoration-rose-300 underline-offset-4 transition">0</span>
                             <i data-lucide="message-square-text" class="w-4 h-4 text-rose-400 group-hover:text-rose-600 transition"></i>
@@ -506,7 +506,7 @@
                 <div class="flex items-center justify-between mb-4">
                     <div>
                         <h3 class="text-base font-bold text-slate-900">Distribusi Status WO per Slot Time</h3>
-                        <p class="text-xs text-slate-500">Perbandingan Completed, On Progress, New, dan Unsuccessful/Reschedule</p>
+                        <p class="text-xs text-slate-500">Perbandingan Completed, On Progress, New, dan Unsuccessful</p>
                     </div>
                     <div class="w-9 h-9 rounded-lg bg-blue-50 text-blue-600 flex items-center justify-center shrink-0">
                         <i data-lucide="bar-chart-3" class="w-5 h-5"></i>
@@ -699,7 +699,7 @@
             const statuses = [
                 'Completed', 'Successful', 'Done',
                 'New', 'On Progress',
-                'Unsuccessful', 'Reschedule'
+                'Unsuccessful'
             ];
 
             const rows = [];
@@ -715,7 +715,7 @@
                 let unsuccCat = '-';
                 let unsuccSub = '-';
                 let woRep = 1;
-                if (normStat === 'Unsuccessful' || normStat === 'Reschedule') {
+                if (normStat === 'Unsuccessful') {
                     const pick = unsuccOptions[i % unsuccOptions.length];
                     unsuccCat = pick.cat;
                     unsuccSub = pick.sub;
@@ -778,7 +778,7 @@
         }
 
         function normalizePersonKey(name) {
-            return cleanText(name).toLowerCase().replace(/\s*\.\s*$/, '').replace(/\s+/g, ' ');
+            return cleanText(name).normalize('NFKC').toLowerCase().replace(/[\u200B-\u200D\uFEFF]/g, '').replace(/[.\s,;:]+$/g, '').replace(/\s+/g, ' ');
         }
 
         function getEffectiveArea(wo) {
@@ -810,19 +810,19 @@
         }
 
         function normalizeStatus(rawStatus) {
-            const s = cleanText(rawStatus).toLowerCase();
+            const s = cleanText(rawStatus).toLowerCase().trim();
             if (!s) return 'New';
-            if (s.includes('comp') || s.includes('succ') || s.includes('done') || s.includes('selesai') || s.includes('active')) {
+            // Periksa status negatif lebih dahulu: kata 'unsuccessful' mengandung substring 'success'.
+            // Semua variasi penulisan cancel digabung menjadi satu status sesuai sumber: Cancelled.
+            if (s.includes('cancel') || s.includes('batal')) return 'Cancelled';
+            if (s.includes('unsuccess') || s.includes('unsucc') || s.includes('fail') || s.includes('gagal')) {
+                return 'Unsuccessful';
+            }
+            if (s === 'successful' || s === 'successfully' || s === 'completed' || s === 'complete' || s === 'done' || s === 'selesai' || s === 'active' || s.includes('comp')) {
                 return 'Completed';
             }
             if (s.includes('prog') || s.includes('jalan') || s.includes('otw') || s.includes('start') || s.includes('assign') || s.includes('en route') || s.includes('arriv')) {
                 return 'On Progress';
-            }
-            if (s.includes('unsucc') || s.includes('fail') || s.includes('gagal') || s.includes('cancel') || s.includes('batal')) {
-                return 'Unsuccessful';
-            }
-            if (s.includes('resch') || s.includes('ulang') || s.includes('pending')) {
-                return 'Reschedule';
             }
             return 'New';
         }
@@ -857,7 +857,9 @@
             const contractorSelect = document.getElementById('filter-contractor');
 
             // 1. Populasi BSM dari seluruh data
-            const allBSMs = [...new Set(rawWorkOrders.map(d => cleanText(d.bsmName)).filter(v => v && v !== '-' && v.toLowerCase() !== 'null'))].sort((a, b) => a.localeCompare(b, 'id'));
+            const bsmByKey = new Map();
+            rawWorkOrders.map(d => cleanText(d.bsmName)).filter(v => v && v !== '-' && v.toLowerCase() !== 'null').forEach(name => { const key = normalizePersonKey(name); if (key && !bsmByKey.has(key)) bsmByKey.set(key, name); });
+            const allBSMs = [...bsmByKey.values()].sort((a, b) => a.localeCompare(b, 'id'));
             if (bsmSelect) {
                 bsmSelect.innerHTML = `<option value="ALL">Semua BSM (${allBSMs.length})</option>`;
                 allBSMs.forEach(name => {
@@ -885,7 +887,9 @@
                 if (activeBSM === 'ALL') return true;
                 return normalizePersonKey(d.bsmName) === normalizePersonKey(activeBSM);
             });
-            const allASMs = [...new Set(asmSource.map(d => cleanText(d.asmName)).filter(Boolean))].sort((a, b) => a.localeCompare(b, 'id'));
+            const asmByKey = new Map();
+            asmSource.map(d => cleanText(d.asmName)).filter(v => v && v !== '-').forEach(name => { const key = normalizePersonKey(name); if (key && !asmByKey.has(key)) asmByKey.set(key, name); });
+            const allASMs = [...asmByKey.values()].sort((a, b) => a.localeCompare(b, 'id'));
             if (asmSelect) {
                 asmSelect.innerHTML = `<option value="ALL">Semua ASM (${allASMs.length})</option>`;
                 allASMs.forEach(name => {
@@ -1120,7 +1124,7 @@
 
         function mapSheetRows(matrix) {
             if (!matrix || matrix.length < 2) throw new Error('Tab Google Sheets kosong atau tidak memiliki baris data.');
-            const headers = matrix[0].map(h => cleanText(h).replace(/^\uFEFF/, ''));
+            const headers = matrix[0].map(h => cleanText(h).replace(/^\uFEFF/, '').normalize('NFKC'));
             const index = Object.fromEntries(headers.map((h, i) => [h.toLowerCase(), i]));
             const col = (r, name, fallback = '') => {
                 const i = index[String(name).toLowerCase()];
@@ -1129,7 +1133,8 @@
             return matrix.slice(1).map((r, idx) => {
                 // Kolom AM (indeks 38) adalah sumber KPI appointmentStatus.
                 const statusAM = cleanText(r[38]);
-                let bsm = cleanText(col(r, 'bsmName'));
+                let bsm = cleanText(col(r, 'bsmName', r[78] ?? ''));
+                let asm = cleanText(col(r, 'asmName', r[76] ?? ''));
                 if (!bsm || bsm.toLowerCase() === 'null' || bsm === '-') bsm = '';
                 const rawDate = col(r, 'appointmentDate');
                 return {
@@ -1150,8 +1155,8 @@
                     unsuccessfulCategory: cleanText(col(r, 'unsuccessfulCategory')) || '-',
                     unsucessfulSubCategory: cleanText(col(r, 'unsucessfulSubCategory')) || '-',
                     woRepitation: Number(col(r, 'woRepitation')) || 1,
-                    asmName: cleanText(col(r, 'asmName')) || '-',
-                    bsmName: bsm,
+                    asmName: asm.replace(/\s*\.\s*$/, '') || '-',
+                    bsmName: bsm.replace(/\s*\.\s*$/, ''),
                     statusWO: cleanText(col(r, 'Status WO')) || '-'
                 };
             }).filter(x => x.workOrderNumber && x.workOrderNumber !== '-');
@@ -1250,7 +1255,7 @@
                 else if (st === 'On Progress') cProg++;
                 else if (st === 'Completed') cComp++;
                 else if (st === 'Unsuccessful') cUnsucc++;
-                else if (st === 'Reschedule') cResch++;
+                
 
                 totalRep += Number(wo.woRepitation) || 1;
             });
@@ -1318,7 +1323,7 @@
                     if (st === 'New') cNew++;
                     else if (st === 'On Progress') cProg++;
                     else if (st === 'Completed') cComp++;
-                    else if (st === 'Unsuccessful' || st === 'Reschedule') cUnsucc++;
+                    else if (st === 'Unsuccessful') cUnsucc++;
 
                     const effArea = getEffectiveArea(wo);
                     areaCounts[effArea] = (areaCounts[effArea] || 0) + 1;
@@ -1460,7 +1465,7 @@
                     dComp.push(items.filter(w => normalizeStatus(w.appointmentStatus) === 'Completed').length);
                     dProg.push(items.filter(w => normalizeStatus(w.appointmentStatus) === 'On Progress').length);
                     dNew.push(items.filter(w => normalizeStatus(w.appointmentStatus) === 'New').length);
-                    dUnsucc.push(items.filter(w => ['Unsuccessful', 'Reschedule'].includes(normalizeStatus(w.appointmentStatus))).length);
+                    dUnsucc.push(items.filter(w => ['Unsuccessful'].includes(normalizeStatus(w.appointmentStatus))).length);
                 });
 
                 if (slotChartInstance) {
@@ -1475,7 +1480,7 @@
                             { label: 'Completed / Successful', data: dComp, backgroundColor: '#10b981', borderRadius: 4 },
                             { label: 'On Progress', data: dProg, backgroundColor: '#f59e0b', borderRadius: 4 },
                             { label: 'New', data: dNew, backgroundColor: '#3b82f6', borderRadius: 4 },
-                            { label: 'Unsuccessful / Reschedule', data: dUnsucc, backgroundColor: '#f43f5e', borderRadius: 4 }
+                            { label: 'Unsuccessful', data: dUnsucc, backgroundColor: '#f43f5e', borderRadius: 4 }
                         ]
                     },
                     options: {
@@ -1542,7 +1547,7 @@
                 filteredWorkOrders.forEach(w => {
                     const st = normalizeStatus(w.appointmentStatus);
                     const rawCat = cleanText(w.unsuccessfulCategory);
-                    if (st === 'Unsuccessful' || st === 'Reschedule' || (rawCat && rawCat !== '-')) {
+                    if (st === 'Unsuccessful' || (rawCat && rawCat !== '-')) {
                         const label = (rawCat && rawCat !== '-') ? rawCat : 'Lainnya';
                         catMap[label] = (catMap[label] || 0) + 1;
                     }
@@ -1622,8 +1627,8 @@
             if (norm === 'Unsuccessful') {
                 return `<span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-bold bg-rose-50 text-rose-700 border border-rose-200"><span class="w-1.5 h-1.5 rounded-full bg-rose-500"></span>${label}</span>`;
             }
-            if (norm === 'Reschedule') {
-                return `<span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-bold bg-purple-50 text-purple-700 border border-purple-200"><span class="w-1.5 h-1.5 rounded-full bg-purple-500"></span>${label}</span>`;
+            if (norm === 'Cancelled') {
+                return `<span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-bold bg-slate-100 text-slate-700 border border-slate-200"><span class="w-1.5 h-1.5 rounded-full bg-slate-500"></span>${label}</span>`;
             }
             return `<span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-bold bg-sky-50 text-sky-700 border border-sky-200"><span class="w-1.5 h-1.5 rounded-full bg-sky-500"></span>${label}</span>`;
         }
@@ -1769,7 +1774,7 @@
             if (metricType === 'WO_BERSIH') return ['Completed', 'New', 'On Progress'].includes(st);
             if (metricType === 'COMPLETED') return st === 'Completed';
             if (metricType === 'NEW_PROGRESS') return ['New', 'On Progress'].includes(st);
-            if (metricType === 'UNSUCCESSFUL') return ['Unsuccessful', 'Reschedule'].includes(st);
+            if (metricType === 'UNSUCCESSFUL') return ['Unsuccessful'].includes(st);
             return true;
         }
 
@@ -1779,7 +1784,7 @@
                 WO_BERSIH: 'WO Bersih (Completed + New + On Progress)',
                 COMPLETED: 'Completed / Successful',
                 NEW_PROGRESS: 'New & On Progress',
-                UNSUCCESSFUL: 'Unsuccessful / Reschedule'
+                UNSUCCESSFUL: 'Unsuccessful'
             };
             return labels[metricType] || metricType;
         }
