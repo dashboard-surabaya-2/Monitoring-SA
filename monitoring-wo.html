@@ -32,7 +32,7 @@
     <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
 
     <!-- Lucide Icons -->
-    <script src="https://unpkg.com/lucide@latest"></script>
+    <script src="https://unpkg.com/lucide@0.468.0"></script>
 
     <style>
         ::-webkit-scrollbar {
@@ -1796,7 +1796,7 @@ html.dark option { background:#0f172a; color:#f1f5f9; }
             const norm = normalizeStatus(rawStatus);
             const label = cleanText(rawStatus) || norm;
             if (norm === 'Completed') {
-                return `<span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-bold bg-emerald-50 text-emerald-700 border border-emerald-200"><span class="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>${label}</span>`;
+                return `<span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-bold bg-emerald-50 text-emerald-700 border border-emerald-200"><span class="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>${escapeHTML(label)}</span>`;
             }
             if (norm === 'In Progress') {
                 return `<span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-bold bg-amber-50 text-amber-700 border border-amber-200"><span class="w-1.5 h-1.5 rounded-full bg-amber-500"></span>${label}</span>`;
@@ -1815,7 +1815,7 @@ html.dark option { background:#0f172a; color:#f1f5f9; }
             const found = STANDARD_SLOTS.find(s => s.key === norm) || STANDARD_SLOTS[STANDARD_SLOTS.length - 1];
             return `<span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-semibold border ${found.badgeClass}">
                 <span class="w-1.5 h-1.5 rounded-full" style="background-color:${found.dotColor}"></span>
-                ${norm}
+                ${escapeHTML(norm)}
             </span>`;
         }
 
@@ -1883,7 +1883,7 @@ html.dark option { background:#0f172a; color:#f1f5f9; }
 
                 return `
                     <tr onclick="openWOModal(decodeURIComponent('${encodedWO}'))" class="hover:bg-blue-50/50 cursor-pointer transition">
-                        <td class="py-3 px-4 font-bold text-blue-700">${escapeHTML(wo.workOrderNumber)}</td>
+                        <td class="py-3 px-4 font-bold text-blue-700">${wo.workOrderNumber}</td>
                         <td class="py-3 px-4">
                             <div class="font-semibold text-slate-900">${escapeHTML(wo.endUserName || '-')}</div>
                             <div class="text-[11px] text-slate-500">${escapeHTML(wo.customerId || '-')}</div>
@@ -2025,8 +2025,8 @@ html.dark option { background:#0f172a; color:#f1f5f9; }
             if (!wo) return;
             openPreviewWAModal({
                 title: `Report WA — ${escapeHTML(wo.workOrderNumber)}`,
-                subtitle: `${escapeHTML(wo.endUserName || '-')} • ${escapeHTML(getEffectiveArea(wo))} • ${escapeHTML(normalizeSlotTime(wo.slotTime))}`,
-                filterSummary: `WO: ${escapeHTML(wo.workOrderNumber)} • BSM: ${wo.bsmName || '-'} • ASM: ${escapeHTML(wo.asmName || '-')} • AE: ${escapeHTML(wo.salesName || '-')}`,
+                subtitle: `${wo.endUserName || '-'} • ${getEffectiveArea(wo)} • ${normalizeSlotTime(wo.slotTime)}`,
+                filterSummary: `WO: ${escapeHTML(wo.workOrderNumber)} • BSM: ${wo.bsmName || '-'} • ASM: ${wo.asmName || '-'} • AE: ${wo.salesName || '-'}`,
                 records: [wo]
             });
         }
@@ -2227,7 +2227,7 @@ html.dark option { background:#0f172a; color:#f1f5f9; }
             const contentEl = document.getElementById('modal-content');
             if (!modal || !titleEl || !contentEl) return;
 
-            titleEl.textContent = `${escapeHTML(wo.workOrderNumber)} — ${escapeHTML(wo.endUserName || '-')}`;
+            titleEl.textContent = `${wo.workOrderNumber} — ${wo.endUserName || '-'}`;
 
             const items = [
                 { label: 'Work Order Number', value: wo.workOrderNumber },
