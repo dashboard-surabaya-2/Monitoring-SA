@@ -1773,7 +1773,7 @@ html.dark option { background:#0f172a; color:#f1f5f9; }
         if (delayFilter === 'ALL_UNPAID' && b === 'PAID') return false;
         if (delayFilter !== 'ALL' && delayFilter !== 'ALL_UNPAID' && b !== delayFilter) return false;
         if (q) {
-          const hay = `${escapeHTML(r.subscription_id)} ${escapeHTML(r.order_id)} ${r.name} ${r.asm_name} ${r.sales_agent_name} ${r.clustername}`.toLowerCase();
+          const hay = `${r.subscription_id} ${r.order_id} ${r.name} ${r.asm_name} ${r.sales_agent_name} ${r.clustername}`.toLowerCase();
           if (!hay.includes(q)) return false;
         }
         return true;
