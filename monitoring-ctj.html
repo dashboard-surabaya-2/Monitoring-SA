@@ -159,10 +159,17 @@ html.dark input::placeholder,html.dark textarea::placeholder { color:#94a3b8!imp
 html.dark option { background:#0f172a; color:#f1f5f9; }
 
   #ctj-cluster-map .ctj-map-pin{background:transparent;border:0}
-  #ctj-cluster-map .ctj-map-pin span{display:block;width:16px;height:16px;border:3px solid #fff;border-radius:50%;background:#4f46e5;box-shadow:0 1px 7px rgba(15,23,42,.5)}
-  #ctj-cluster-map .ctj-map-pin-zonk span{background:#e11d48;width:18px;height:18px}
+  #ctj-cluster-map .ctj-map-pin span{display:block;width:16px;height:16px;border:3px solid #fff;border-radius:50%;background:#64748b;box-shadow:0 1px 7px rgba(15,23,42,.5)}
+  #ctj-cluster-map .ctj-map-pin.pen-low span{background:#e11d48}
+  #ctj-cluster-map .ctj-map-pin.pen-medium span{background:#f97316}
+  #ctj-cluster-map .ctj-map-pin.pen-good span{background:#fbbf24}
+  #ctj-cluster-map .ctj-map-pin.pen-high span{background:#059669}
+  #ctj-cluster-map .ctj-map-pin.ctj-map-pin-zonk span{background:#e11d48;width:18px;height:18px;border-radius:4px}
+  #ctj-cluster-map .ctj-map-pin.visit-good span{background:#059669}
+  #ctj-cluster-map .ctj-map-pin.visit-low span{background:#f97316}
   #ctj-cluster-map .marker-cluster div{background:#4f46e5;color:#fff;font-weight:800}
   #ctj-cluster-map .marker-cluster{background:rgba(79,70,229,.22)}
+  html.dark #map-cluster-search,html.dark #map-condition-filter,html.dark #map-color-mode{background:#1e293b;color:#f1f5f9;border-color:#475569}
   @media(max-width:640px){#ctj-cluster-map{height:430px!important}}
 </style>
 </head>
@@ -517,9 +524,26 @@ html.dark option { background:#0f172a; color:#f1f5f9; }
         </div>
         <div class="flex flex-wrap gap-2 text-xs font-semibold">
           <span class="rounded-lg bg-indigo-50 text-indigo-700 px-3 py-2">Cluster pada peta: <b id="map-cluster-count">0</b></span>
-          <button id="map-zonk-toggle" type="button" onclick="toggleZonkMap()" aria-pressed="false" class="rounded-lg bg-rose-50 hover:bg-rose-100 text-rose-700 border border-rose-200 px-3 py-2 font-bold transition"> <i class="fa-solid fa-triangle-exclamation mr-1"></i>Cluster ZONK: <b id="map-zonk-count">0</b> <span id="map-zonk-action" class="ml-1 underline">Tampilkan</span></button>
+          <button id="map-zonk-toggle" type="button" onclick="toggleZonkMap()" aria-pressed="false" class="rounded-lg bg-rose-50 hover:bg-rose-100 text-rose-700 border border-rose-200 px-3 py-2 font-bold transition"><i class="fa-solid fa-triangle-exclamation mr-1"></i>ZONK: <b id="map-zonk-count">0</b> <span id="map-zonk-action" class="ml-1 underline">Tampilkan</span></button>
           <span class="rounded-lg bg-amber-50 text-amber-700 px-3 py-2">Tanpa koordinat: <b id="map-missing-count">0</b></span>
-          <a id="map-traffic-link" href="https://www.google.com/maps" target="_blank" rel="noopener noreferrer" class="rounded-lg bg-sky-50 hover:bg-sky-100 text-sky-700 border border-sky-200 px-3 py-2 font-bold transition"><i class="fa-solid fa-car-side mr-1"></i>Lalu Lintas Live</a>
+          <button type="button" onclick="locateNearestCTJCluster()" class="rounded-lg bg-emerald-50 hover:bg-emerald-100 text-emerald-700 border border-emerald-200 px-3 py-2"><i class="fa-solid fa-location-crosshairs mr-1"></i>Cluster Terdekat</button>
+          <button type="button" onclick="openSelectedCTJRoute()" class="rounded-lg bg-violet-50 hover:bg-violet-100 text-violet-700 border border-violet-200 px-3 py-2"><i class="fa-solid fa-route mr-1"></i>Rute Pilihan (<b id="map-route-count">0</b>)</button>
+          <a id="map-traffic-link" href="https://www.google.com/maps" target="_blank" rel="noopener noreferrer" class="rounded-lg bg-sky-50 hover:bg-sky-100 text-sky-700 border border-sky-200 px-3 py-2"><i class="fa-solid fa-car-side mr-1"></i>Cek Lalu Lintas</a>
+        </div>
+        <div class="mt-3 grid grid-cols-1 sm:grid-cols-3 gap-2">
+          <div class="sm:col-span-1 flex gap-2">
+            <input id="map-cluster-search" type="search" placeholder="Cari nama / ID cluster..." class="w-full rounded-lg border border-slate-200 px-3 py-2 text-xs focus:ring-2 focus:ring-indigo-300 outline-none" onkeydown="if(event.key==='Enter')searchCTJClusterOnMap()" />
+            <button type="button" onclick="searchCTJClusterOnMap()" class="rounded-lg bg-indigo-600 hover:bg-indigo-700 text-white px-3 py-2 text-xs font-bold"><i class="fa-solid fa-magnifying-glass"></i></button>
+          </div>
+          <select id="map-condition-filter" onchange="renderCTJClusterMap()" class="rounded-lg border border-slate-200 px-3 py-2 text-xs bg-white text-slate-700">
+            <option value="ALL">Semua kondisi cluster</option><option value="LOW">Penetrasi rendah (&lt;10%)</option><option value="MEDIUM">Penetrasi sedang (10–&lt;20%)</option><option value="HIGH">Penetrasi tinggi (≥20%)</option><option value="UNVISITED">Belum ada visit MTD</option><option value="ZONK">ZONK SA saja</option>
+          </select>
+          <select id="map-color-mode" onchange="renderCTJClusterMap()" class="rounded-lg border border-slate-200 px-3 py-2 text-xs bg-white text-slate-700">
+            <option value="PEN">Warna titik: Penetrasi</option><option value="VISIT">Warna titik: Visit MTD</option><option value="ZONK">Warna titik: Status SA</option>
+          </select>
+        </div>
+        <div class="flex flex-wrap items-center gap-x-4 gap-y-1 mt-2 text-[11px] text-slate-500">
+          <span class="font-bold text-slate-600">Legenda penetrasi:</span><span><i class="inline-block w-2.5 h-2.5 rounded-full bg-rose-600 mr-1"></i>&lt;10%</span><span><i class="inline-block w-2.5 h-2.5 rounded-full bg-orange-500 mr-1"></i>10–&lt;20%</span><span><i class="inline-block w-2.5 h-2.5 rounded-full bg-amber-400 mr-1"></i>20–&lt;30%</span><span><i class="inline-block w-2.5 h-2.5 rounded-full bg-emerald-600 mr-1"></i>≥30%</span>
         </div>
       </div>
       <div class="p-2 sm:p-4">
@@ -1069,6 +1093,8 @@ html.dark option { background:#0f172a; color:#f1f5f9; }
     let ctjLeafletMap = null;
     let ctjClusterMarkers = null;
     let mapShowZonkOnly = false;
+    let selectedCTJRouteStops = [];
+    let ctjMapMarkerIndex = [];
     function initCTJClusterMap() {
       const el = document.getElementById('ctj-cluster-map');
       if (!el || typeof L === 'undefined') return;
@@ -1147,17 +1173,81 @@ html.dark option { background:#0f172a; color:#f1f5f9; }
       renderCTJClusterMap();
     }
 
+    function getCTJMapPenetration(d) {
+      return (typeof d.penRateNum === 'number' && Number.isFinite(d.penRateNum))
+        ? d.penRateNum : (d.hpTotal > 0 ? (d.totalSubs / d.hpTotal) * 100 : 0);
+    }
+    function getCTJMapMarkerClass(d) {
+      const mode = document.getElementById('map-color-mode')?.value || 'PEN';
+      if (mode === 'ZONK') return d.isZonkSA ? 'ctj-map-pin-zonk' : 'pen-high';
+      if (mode === 'VISIT') return d.visitMTD > 0 ? 'visit-good' : 'visit-low';
+      const p = getCTJMapPenetration(d);
+      return p < 10 ? 'pen-low' : p < 20 ? 'pen-medium' : p < 30 ? 'pen-good' : 'pen-high';
+    }
+    function addCTJRouteStop(latitude, longitude, name) {
+      const key = Number(latitude).toFixed(6)+','+Number(longitude).toFixed(6);
+      if (selectedCTJRouteStops.some(x => x.key === key)) {
+        showToast('Cluster sudah ada dalam rute pilihan.');
+        return;
+      }
+      selectedCTJRouteStops.push({key,lat:Number(latitude),lon:Number(longitude),name:String(name||'Cluster')});
+      const count = document.getElementById('map-route-count');
+      if (count) count.textContent = selectedCTJRouteStops.length;
+      showToast('Cluster ditambahkan ke rute pilihan.');
+    }
+    function openSelectedCTJRoute() {
+      if (!selectedCTJRouteStops.length) {
+        showToast('Pilih cluster dari popup peta terlebih dahulu.', true);
+        return;
+      }
+      if (selectedCTJRouteStops.length > 9) {
+        showToast('Maksimal 9 cluster dalam satu rute.', true);
+        return;
+      }
+      const stops = selectedCTJRouteStops;
+      const destination = stops[stops.length-1];
+      const waypoints = stops.slice(0,-1).map(x=>x.lat+','+x.lon).join('|');
+      let url = 'https://www.google.com/maps/dir/?api=1&destination='+encodeURIComponent(destination.lat+','+destination.lon)+'&travelmode=driving';
+      if (waypoints) url += '&waypoints='+encodeURIComponent(waypoints);
+      window.open(url,'_blank','noopener');
+    }
+    function searchCTJClusterOnMap() {
+      const input = document.getElementById('map-cluster-search');
+      const q = String(input?.value||'').trim().toLowerCase();
+      if (!q) { showToast('Masukkan nama atau ID cluster.', true); return; }
+      const match = ctjMapMarkerIndex.find(x => (String(x.data.clusterName)+' '+String(x.data.clusterId)).toLowerCase().includes(q));
+      if (!match) { showToast('Cluster tidak ditemukan pada hasil filter saat ini.', true); return; }
+      ctjLeafletMap.setView([match.lat,match.lon],16);
+      match.marker.openPopup();
+    }
+    function locateNearestCTJCluster() {
+      if (!navigator.geolocation) { showToast('Browser tidak mendukung GPS.', true); return; }
+      const candidates = ctjMapMarkerIndex;
+      if (!candidates.length) { showToast('Tidak ada cluster berkoordinat pada filter saat ini.', true); return; }
+      showToast('Mengambil lokasi perangkat...');
+      navigator.geolocation.getCurrentPosition(position => {
+        const lat=position.coords.latitude, lon=position.coords.longitude;
+        const nearest=candidates.reduce((best,x)=>{
+          const dLat=(x.lat-lat)*Math.PI/180, dLon=(x.lon-lon)*Math.PI/180;
+          const a=Math.sin(dLat/2)**2+Math.cos(lat*Math.PI/180)*Math.cos(x.lat*Math.PI/180)*Math.sin(dLon/2)**2;
+          const km=6371*2*Math.atan2(Math.sqrt(a),Math.sqrt(1-a));
+          return !best||km<best.km?{...x,km}:best;
+        },null);
+        ctjLeafletMap.setView([nearest.lat,nearest.lon],16);
+        nearest.marker.openPopup();
+        showToast('Cluster terdekat: '+(nearest.data.clusterName||nearest.data.clusterId)+' • '+nearest.km.toFixed(1)+' km garis lurus.');
+      },error=>showToast(error.code===1?'Izin GPS ditolak. Aktifkan lokasi browser.':'Lokasi GPS tidak berhasil diperoleh.',true),
+      {enableHighAccuracy:true,timeout:15000,maximumAge:60000});
+    }
     function renderCTJClusterMap() {
       const countEl = document.getElementById('map-cluster-count');
       const missingEl = document.getElementById('map-missing-count');
       if (!countEl || !missingEl) return;
-      if (typeof L === 'undefined') {
-        countEl.textContent = 'Peta gagal dimuat';
-        return;
-      }
+      if (typeof L === 'undefined') { countEl.textContent = 'Peta gagal dimuat'; return; }
       initCTJClusterMap();
       if (!ctjLeafletMap || !ctjClusterMarkers) return;
       ctjClusterMarkers.clearLayers();
+      ctjMapMarkerIndex = [];
 
       const zonkCountEl = document.getElementById('map-zonk-count');
       const zonkToggle = document.getElementById('map-zonk-toggle');
@@ -1171,8 +1261,17 @@ html.dark option { background:#0f172a; color:#f1f5f9; }
       }
       if (zonkAction) zonkAction.textContent = mapShowZonkOnly ? 'Tampilkan Semua' : 'Tampilkan';
 
-      // Hanya koordinat numerik yang benar-benar tersedia; null/N/A/kosong tidak boleh menjadi titik.
-      const mapSource = mapShowZonkOnly ? filteredClusterData.filter(d => d.isZonkSA) : filteredClusterData;
+      const mapCondition = document.getElementById('map-condition-filter')?.value || 'ALL';
+      let mapSource = mapShowZonkOnly ? filteredClusterData.filter(d => d.isZonkSA) : filteredClusterData;
+      mapSource = mapSource.filter(d => {
+        const p=getCTJMapPenetration(d);
+        if (mapCondition==='LOW') return p<10;
+        if (mapCondition==='MEDIUM') return p>=10&&p<20;
+        if (mapCondition==='HIGH') return p>=20;
+        if (mapCondition==='UNVISITED') return d.visitMTD<=0;
+        if (mapCondition==='ZONK') return d.isZonkSA;
+        return true;
+      });
       const withCoordinates = mapSource.filter(d =>
         d.latitude !== null && d.latitude !== undefined && d.longitude !== null && d.longitude !== undefined &&
         String(d.latitude).trim() !== '' && String(d.longitude).trim() !== '' &&
@@ -1184,51 +1283,50 @@ html.dark option { background:#0f172a; color:#f1f5f9; }
 
       const bounds = [];
       withCoordinates.forEach(d => {
-        const lat = Number(d.latitude), lon = Number(d.longitude);
-        const name = escapeHTML(d.clusterName || d.clusterId || 'Cluster');
-        const hp = formatNumber(d.hpTotal);
-        const subs = formatNumber(d.totalSubs);
-        const penetration = (typeof d.penRateNum === 'number' && Number.isFinite(d.penRateNum))
-          ? d.penRateNum : (d.hpTotal > 0 ? (d.totalSubs / d.hpTotal) * 100 : 0);
-        const routeBoxId = 'ctj-route-' + String(d.clusterId || '').replace(/[^a-zA-Z0-9_-]/g, '');
-        const routeLinkId = 'ctj-route-link-' + String(d.clusterId || '').replace(/[^a-zA-Z0-9_-]/g, '');
-        const popup = `
-          <div style="min-width:220px;font-family:Inter,Arial,sans-serif;color:#0f172a">
+        const lat=Number(d.latitude), lon=Number(d.longitude);
+        const name=escapeHTML(d.clusterName||d.clusterId||'Cluster');
+        const hp=formatNumber(d.hpTotal), subs=formatNumber(d.totalSubs);
+        const penetration=getCTJMapPenetration(d);
+        const routeBoxId='ctj-route-'+String(d.clusterId||'').replace(/[^a-zA-Z0-9_-]/g,'');
+        const routeLinkId='ctj-route-link-'+String(d.clusterId||'').replace(/[^a-zA-Z0-9_-]/g,'');
+        const safeRouteName=String(d.clusterName||d.clusterId||'Cluster').replace(/\\/g,'\\\\').replace(/'/g,"\\'");
+        const popup=`
+          <div style="min-width:235px;font-family:Inter,Arial,sans-serif;color:#0f172a">
             <div style="font-weight:800;font-size:14px;margin-bottom:8px;color:#3730a3">${name}</div>
             <div style="display:grid;grid-template-columns:1fr auto;gap:5px 12px;font-size:12px;margin-bottom:10px">
-              <span>Total HP</span><b>${hp}</b>
-              <span>Total Subs</span><b>${subs}</b>
+              <span>ASM / AE</span><b>${escapeHTML(d.asm)} / ${escapeHTML(d.ae)}</b>
+              <span>Kecamatan</span><b>${escapeHTML(d.kecamatan)}</b>
+              <span>Total HP</span><b>${hp}</b><span>Total Subs</span><b>${subs}</b>
               <span>Penetrasi</span><b>${penetration.toFixed(2)}%</b>
+              <span>Visit MTD</span><b>${formatNumber(d.visitMTD)}</b>
+              <span>Status SA</span><b style="color:${d.isZonkSA?'#e11d48':'#059669'}">${escapeHTML(d.statusSA)}</b>
+              <span>Status Visit</span><b>${escapeHTML(d.statusVisitSheet)}</b>
+              <span>RFS</span><b>${escapeHTML(d.rfsClass)}</b>
             </div>
-            <div id="${routeBoxId}" style="font-size:12px;line-height:1.5;padding:8px;background:#f1f5f9;border-radius:8px;margin-bottom:8px">Tekan tombol untuk menghitung jarak dan waktu dari lokasi Anda.</div>
-            <button type="button" onclick="routeToCTJCluster(${lat},${lon},'${routeBoxId}','${routeLinkId}')" style="width:100%;background:#4f46e5;color:white;border:0;border-radius:8px;padding:9px;font-size:12px;font-weight:800;cursor:pointer;margin-bottom:6px"> <i class="fa-solid fa-route"></i> Hitung Jarak & Waktu Tempuh</button>
-            <a id="${routeLinkId}" href="https://www.google.com/maps/dir/?api=1&destination=${lat},${lon}&travelmode=driving" target="_blank" rel="noopener noreferrer" style="display:block;text-align:center;background:#16a34a;color:white;border-radius:8px;padding:9px;font-size:12px;font-weight:800;text-decoration:none"><i class="fa-solid fa-location-arrow"></i> Buka Navigasi Google Maps</a>
+            <button type="button" onclick="addCTJRouteStop(${lat},${lon},'${safeRouteName}')" style="width:100%;background:#7c3aed;color:white;border:0;border-radius:8px;padding:8px;font-size:12px;font-weight:800;cursor:pointer;margin-bottom:6px"><i class="fa-solid fa-plus"></i> Tambah ke Rute Pilihan</button>
+            <div id="${routeBoxId}" style="font-size:12px;line-height:1.5;padding:8px;background:#f1f5f9;border-radius:8px;margin-bottom:8px">Hitung estimasi jarak dari lokasi GPS Anda.</div>
+            <button type="button" onclick="routeToCTJCluster(${lat},${lon},'${routeBoxId}','${routeLinkId}')" style="width:100%;background:#4f46e5;color:white;border:0;border-radius:8px;padding:8px;font-size:12px;font-weight:800;cursor:pointer;margin-bottom:6px"><i class="fa-solid fa-route"></i> Hitung Jarak & Waktu</button>
+            <a id="${routeLinkId}" href="https://www.google.com/maps/dir/?api=1&destination=${lat},${lon}&travelmode=driving" target="_blank" rel="noopener noreferrer" style="display:block;text-align:center;background:#16a34a;color:white;border-radius:8px;padding:8px;font-size:12px;font-weight:800;text-decoration:none"><i class="fa-solid fa-location-arrow"></i> Navigasi ke Cluster</a>
           </div>`;
-        const marker = L.marker([lat, lon], {
-          title: d.clusterName || d.clusterId || 'Cluster',
-          icon: L.divIcon({
-            className: 'ctj-map-pin' + (d.isZonkSA ? ' ctj-map-pin-zonk' : ''),
-            html: '<span></span>',
-            iconSize: [18, 18], iconAnchor: [9, 9]
-          })
-        }).bindPopup(popup, { maxWidth: 260 });
+        const marker=L.marker([lat,lon],{
+          title:d.clusterName||d.clusterId||'Cluster',
+          icon:L.divIcon({className:'ctj-map-pin '+getCTJMapMarkerClass(d),html:'<span></span>',iconSize:[18,18],iconAnchor:[9,9]})
+        }).bindPopup(popup,{maxWidth:285});
         marker.addTo(ctjClusterMarkers);
-        bounds.push([lat, lon]);
+        ctjMapMarkerIndex.push({data:d,lat,lon,marker});
+        bounds.push([lat,lon]);
       });
+      if (bounds.length===1) ctjLeafletMap.setView(bounds[0],15);
+      else if (bounds.length>1) ctjLeafletMap.fitBounds(bounds,{padding:[48,48],maxZoom:12,animate:false});
+      else ctjLeafletMap.setView([-7.7,112.5],8);
 
-      // Fokus otomatis pada sebaran titik cluster, bukan tampilan peta yang terlalu luas.
-      if (bounds.length === 1) ctjLeafletMap.setView(bounds[0], 15);
-      else if (bounds.length > 1) ctjLeafletMap.fitBounds(bounds, { padding: [48, 48], maxZoom: 12, animate: false });
-      else ctjLeafletMap.setView([-7.7, 112.5], 8);
-
-      // Lalu lintas real-time dibuka melalui Google Maps; tidak disimulasikan di peta internal.
-      const trafficLink = document.getElementById('map-traffic-link');
+      const trafficLink=document.getElementById('map-traffic-link');
       if (trafficLink) {
-        const center = ctjLeafletMap.getCenter();
-        const zoom = Math.max(10, Math.min(16, ctjLeafletMap.getZoom()));
-        trafficLink.href = 'https://www.google.com/maps/@' + center.lat.toFixed(5) + ',' + center.lng.toFixed(5) + ',' + zoom + 'z/data=!5m1!1e1';
+        const center=ctjLeafletMap.getCenter();
+        const zoom=Math.max(10,Math.min(16,ctjLeafletMap.getZoom()));
+        trafficLink.href='https://www.google.com/maps/@'+center.lat.toFixed(5)+','+center.lng.toFixed(5)+','+zoom+'z/data=!5m1!1e1';
       }
-      setTimeout(() => ctjLeafletMap.invalidateSize(), 150);
+      setTimeout(()=>ctjLeafletMap.invalidateSize(),150);
     }
 
     // Normalisasi baris CSV dari Google Sheets menjadi objek standar
