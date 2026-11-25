@@ -2276,9 +2276,9 @@ html.dark option { background:#0f172a; color:#f1f5f9; }
  const key='moraRepublic:theme';
  function apply(v){const dark=v==='dark';document.documentElement.classList.toggle('dark',dark);const i=document.getElementById('sharedThemeIcon'),l=document.getElementById('sharedThemeLabel');if(i)i.textContent=dark?'☀️':'🌙';if(l)l.textContent=dark?'Light Mode':'Dark Mode';}
  window.toggleSharedTheme=function(){const next=document.documentElement.classList.contains('dark')?'light':'dark';try{localStorage.setItem(key,next)}catch(e){}apply(next)};
- try{apply(localStorage.getItem(key)||'light')}catch(e){apply('light')}
- window.addEventListener('storage',e=>{if(e.key===key)apply(e.newValue||'light')});
-})();
+ // Dashboard WO dan CTJ selalu dibuka dalam Light Mode; pengguna tetap bisa mengaktifkan Dark Mode secara manual.
+ apply('light');
+})();;
 </script>
 </body>
 </html>
