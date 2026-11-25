@@ -253,6 +253,15 @@ html.dark option { background:#0f172a; color:#f1f5f9; }
   #ctj-cluster-map .marker-cluster div{background:#4f46e5;color:#fff;font-weight:800}
   #ctj-cluster-map .marker-cluster{background:rgba(79,70,229,.22)}
   html.dark #map-cluster-search,html.dark #map-condition-filter,html.dark #map-color-mode,html.dark #map-priority-color-filter{background:#1e293b;color:#f1f5f9;border-color:#475569}
+  .ctj-map-search-wrap{position:relative;z-index:30}
+  .ctj-map-search-suggestions{position:absolute;top:calc(100% + 5px);left:0;right:0;max-height:250px;overflow-y:auto;background:#fff;border:1px solid #cbd5e1;border-radius:10px;box-shadow:0 12px 28px #0f172a20;z-index:1000;padding:4px}
+  .ctj-map-search-suggestion{display:block;width:100%;text-align:left;padding:9px 10px;border-radius:7px;color:#1e293b;font-size:11px}
+  .ctj-map-search-suggestion:hover,.ctj-map-search-suggestion:focus{background:#eef2ff;outline:none}
+  .ctj-map-search-suggestion small{display:block;color:#64748b;font-size:9px;margin-top:2px}
+  .ctj-map-search-empty{padding:10px;color:#64748b;font-size:10px}
+  html.dark .ctj-map-search-suggestions{background:#0f172a;border-color:#475569}
+  html.dark .ctj-map-search-suggestion{color:#e2e8f0}
+  html.dark .ctj-map-search-suggestion:hover,html.dark .ctj-map-search-suggestion:focus{background:#1e293b}
   @media(max-width:640px){#ctj-cluster-map{height:430px!important}}
 </style>
 </head>
@@ -638,9 +647,10 @@ html.dark option { background:#0f172a; color:#f1f5f9; }
           <div class="ctj-map-divider"></div>
           <div class="ctj-map-panel-title"><i class="fa-solid fa-filter"></i> Filter Peta</div>
           <label class="ctj-map-label" for="map-cluster-search">Cari Cluster</label>
-          <div class="flex gap-1.5 mb-3">
-            <input id="map-cluster-search" type="search" placeholder="Nama / ID cluster..." class="ctj-map-input flex-1 min-w-0" onkeydown="if(event.key==='Enter')searchCTJClusterOnMap()" />
+          <div class="ctj-map-search-wrap flex gap-1.5 mb-3">
+            <input id="map-cluster-search" type="search" placeholder="Nama / ID cluster..." class="ctj-map-input flex-1 min-w-0" autocomplete="off" oninput="showCTJClusterSuggestions()" onfocus="showCTJClusterSuggestions()" onkeydown="if(event.key==='Enter'){event.preventDefault();searchCTJClusterOnMap()}else if(event.key==='Escape)hideCTJClusterSuggestions()" />
             <button type="button" onclick="searchCTJClusterOnMap()" class="ctj-map-search-btn" aria-label="Cari cluster"><i class="fa-solid fa-magnifying-glass"></i></button>
+            <div id="map-cluster-suggestions" class="ctj-map-search-suggestions hidden" role="listbox" aria-label="Saran nama cluster"></div>
           </div>
           <label class="ctj-map-label" for="map-kecamatan-filter">Kecamatan</label>
           <select id="map-kecamatan-filter" onchange="renderCTJClusterMap()" class="ctj-map-select mb-3">
@@ -1467,14 +1477,49 @@ html.dark option { background:#0f172a; color:#f1f5f9; }
       if (waypoints) url += '&waypoints='+encodeURIComponent(waypoints);
       window.open(url,'_blank','noopener');
     }
-    function searchCTJClusterOnMap() {
-      const input = document.getElementById('map-cluster-search');
-      const q = String(input?.value||'').trim().toLowerCase();
-      if (!q) { showToast('Masukkan nama atau ID cluster.', true); return; }
-      const match = ctjMapMarkerIndex.find(x => (String(x.data.clusterName)+' '+String(x.data.clusterId)).toLowerCase().includes(q));
-      if (!match) { showToast('Cluster tidak ditemukan pada hasil filter saat ini.', true); return; }
+    function hideCTJClusterSuggestions() {
+      const box=document.getElementById('map-cluster-suggestions');
+      if(box) box.classList.add('hidden');
+    }
+    function showCTJClusterSuggestions() {
+      const input=document.getElementById('map-cluster-search');
+      const box=document.getElementById('map-cluster-suggestions');
+      if(!input||!box) return;
+      const q=String(input.value||'').trim().toLocaleLowerCase('id');
+      if(!q){box.classList.add('hidden');box.innerHTML='';return;}
+      const matches=ctjMapMarkerIndex.filter(x=>
+        (String(x.data.clusterName||'')+' '+String(x.data.clusterId||'')).toLocaleLowerCase('id').includes(q)
+      ).slice(0,10);
+      if(!matches.length){
+        box.innerHTML='<div class="ctj-map-search-empty">Cluster tidak ditemukan pada hasil filter peta saat ini.</div>';
+        box.classList.remove('hidden');return;
+      }
+      box.innerHTML=matches.map((x,index)=>{
+        const name=escapeHTML(x.data.clusterName||x.data.clusterId||'Cluster');
+        const id=escapeHTML(x.data.clusterId||'-');
+        const kec=escapeHTML(x.data.kecamatan||'Kecamatan -');
+        return `<button type="button" class="ctj-map-search-suggestion" role="option" onmousedown="event.preventDefault()" onclick="selectCTJClusterSuggestion(${ctjMapMarkerIndex.indexOf(x)})"><span style="font-weight:800">${name}</span><small>ID: ${id} • ${kec}</small></button>`;
+      }).join('');
+      box.classList.remove('hidden');
+    }
+    function selectCTJClusterSuggestion(index) {
+      const match=ctjMapMarkerIndex[index];
+      if(!match) return;
+      const input=document.getElementById('map-cluster-search');
+      if(input) input.value=match.data.clusterName||match.data.clusterId||'';
+      hideCTJClusterSuggestions();
       ctjLeafletMap.setView([match.lat,match.lon],16);
       match.marker.openPopup();
+      showCTJMapDetail(match.data,match.lat,match.lon);
+    }
+    function searchCTJClusterOnMap() {
+      const input = document.getElementById('map-cluster-search');
+      const q = String(input?.value||'').trim().toLocaleLowerCase('id');
+      if (!q) { showToast('Masukkan nama atau ID cluster.', true); return; }
+      const match = ctjMapMarkerIndex.find(x => (String(x.data.clusterName||'')+' '+String(x.data.clusterId||'')).toLocaleLowerCase('id').includes(q));
+      if (!match) { showToast('Cluster tidak ditemukan pada hasil filter saat ini.', true); return; }
+      const index=ctjMapMarkerIndex.indexOf(match);
+      selectCTJClusterSuggestion(index);
     }
     function locateNearestCTJCluster() {
       if (!navigator.geolocation) { showToast('Browser tidak mendukung GPS.', true); return; }
