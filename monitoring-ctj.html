@@ -5,6 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Dashboard Monitoring Cluster Tanggung Jawab (CTJ)</title>
 
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" crossorigin="" />
   <!-- Google Fonts: Plus Jakarta Sans & Inter -->
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
@@ -155,6 +156,9 @@ html.dark input,html.dark select,html.dark textarea { color:#f1f5f9!important; }
 html.dark input::placeholder,html.dark textarea::placeholder { color:#94a3b8!important; opacity:1; }
 html.dark option { background:#0f172a; color:#f1f5f9; }
 
+  #ctj-cluster-map .leaflet-tooltip.ctj-cluster-label{background:rgba(255,255,255,.94);border:1px solid #c7d2fe;border-radius:6px;color:#1e1b4b;font-size:10px;font-weight:800;padding:3px 6px;box-shadow:0 2px 7px rgba(15,23,42,.16)}
+  #ctj-cluster-map .leaflet-tooltip-top:before{border-top-color:#c7d2fe}
+  @media(max-width:640px){#ctj-cluster-map{height:430px!important}#ctj-cluster-map .leaflet-tooltip.ctj-cluster-label{font-size:9px;padding:2px 4px}}
 </style>
 </head>
 <body class="antialiased min-h-screen flex flex-col">
@@ -496,6 +500,24 @@ html.dark option { background:#0f172a; color:#f1f5f9; }
             <!-- Populated by JS -->
           </tbody>
         </table>
+      </div>
+    </section>
+
+    <!-- Peta Sebaran Cluster -->
+    <section class="bg-white rounded-2xl shadow-card border border-slate-200/80 overflow-hidden">
+      <div class="p-4 sm:p-5 border-b border-slate-100 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
+        <div>
+          <h2 class="font-display text-base sm:text-lg font-extrabold text-slate-800 flex items-center gap-2"><i class="fa-solid fa-map-location-dot text-indigo-600"></i> Peta Sebaran Cluster</h2>
+          <p class="text-xs text-slate-500 mt-1">Klik titik atau nama cluster untuk melihat Total HP, Total Subs, dan penetrasi.</p>
+        </div>
+        <div class="flex flex-wrap gap-2 text-xs font-semibold">
+          <span class="rounded-lg bg-indigo-50 text-indigo-700 px-3 py-2">Cluster pada peta: <b id="map-cluster-count">0</b></span>
+          <span class="rounded-lg bg-amber-50 text-amber-700 px-3 py-2">Tanpa koordinat: <b id="map-missing-count">0</b></span>
+        </div>
+      </div>
+      <div class="p-2 sm:p-4">
+        <div id="ctj-cluster-map" class="w-full rounded-xl border border-slate-200 overflow-hidden" style="height:520px;z-index:1"></div>
+        <p class="text-[11px] text-slate-500 mt-2 px-1">Peta mengikuti filter BM, ASM, AE, Kota, RFS, Status SA, dan pencarian yang sedang aktif.</p>
       </div>
     </section>
 
@@ -921,6 +943,7 @@ html.dark option { background:#0f172a; color:#f1f5f9; }
   <!-- ===================================================================== -->
   <!-- JAVASCRIPT LOGIC                                                      -->
   <!-- ===================================================================== -->
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" crossorigin=""></script>
   <script>
     // Konfigurasi Google Sheet ID & Endpoints
     const SHEET_ID = '1p7IheHnt4xPdBMRMgF1DPiu4_NluZLKS4MY3Ktb0OGE';
@@ -1032,6 +1055,72 @@ html.dark option { background:#0f172a; color:#f1f5f9; }
         toast.classList.add('hidden');
         toast.classList.remove('flex');
       }, 3000);
+    }
+
+    // Peta interaktif sebaran cluster berdasarkan koordinat LONG/LAT
+    let ctjLeafletMap = null;
+    let ctjClusterMarkers = null;
+    function initCTJClusterMap() {
+      const el = document.getElementById('ctj-cluster-map');
+      if (!el || typeof L === 'undefined') return;
+      if (!ctjLeafletMap) {
+        ctjLeafletMap = L.map(el, { scrollWheelZoom: true }).setView([-7.32, 112.72], 10);
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+          maxZoom: 19, attribution: '&copy; <a href="https://www.openstreetmap.org/copyright" target="_blank">OpenStreetMap</a>'
+        }).addTo(ctjLeafletMap);
+        ctjClusterMarkers = L.layerGroup().addTo(ctjLeafletMap);
+      }
+      setTimeout(() => ctjLeafletMap.invalidateSize(), 120);
+    }
+
+    function renderCTJClusterMap() {
+      const countEl = document.getElementById('map-cluster-count');
+      const missingEl = document.getElementById('map-missing-count');
+      if (!countEl || !missingEl) return;
+      if (typeof L === 'undefined') {
+        countEl.textContent = 'Peta gagal dimuat';
+        return;
+      }
+      initCTJClusterMap();
+      if (!ctjLeafletMap || !ctjClusterMarkers) return;
+      ctjClusterMarkers.clearLayers();
+
+      const withCoordinates = filteredClusterData.filter(d =>
+        Number.isFinite(Number(d.latitude)) && Number.isFinite(Number(d.longitude)) &&
+        Math.abs(Number(d.latitude)) <= 90 && Math.abs(Number(d.longitude)) <= 180
+      );
+      countEl.textContent = formatNumber(withCoordinates.length);
+      missingEl.textContent = formatNumber(filteredClusterData.length - withCoordinates.length);
+
+      const bounds = [];
+      withCoordinates.forEach(d => {
+        const lat = Number(d.latitude), lon = Number(d.longitude);
+        const name = escapeHTML(d.clusterName || d.clusterId || 'Cluster');
+        const hp = formatNumber(d.hpTotal);
+        const subs = formatNumber(d.totalSubs);
+        const penetration = (typeof d.penRateNum === 'number' && Number.isFinite(d.penRateNum))
+          ? d.penRateNum : (d.hpTotal > 0 ? (d.totalSubs / d.hpTotal) * 100 : 0);
+        const popup = `
+          <div style="min-width:190px;font-family:Inter,Arial,sans-serif;color:#0f172a">
+            <div style="font-weight:800;font-size:14px;margin-bottom:8px;color:#3730a3">${name}</div>
+            <div style="display:grid;grid-template-columns:1fr auto;gap:5px 12px;font-size:12px">
+              <span>Total HP</span><b>${hp}</b>
+              <span>Total Subs</span><b>${subs}</b>
+              <span>Penetrasi</span><b>${penetration.toFixed(2)}%</b>
+            </div>
+          </div>`;
+        const marker = L.circleMarker([lat, lon], {
+          radius: 7, color: '#ffffff', weight: 2, fillColor: '#4f46e5', fillOpacity: 0.95
+        }).bindTooltip(name, { permanent: true, direction: 'top', offset: [0, -7], className: 'ctj-cluster-label' })
+          .bindPopup(popup, { maxWidth: 260 });
+        marker.addTo(ctjClusterMarkers);
+        bounds.push([lat, lon]);
+      });
+
+      if (bounds.length === 1) ctjLeafletMap.setView(bounds[0], 15);
+      else if (bounds.length > 1) ctjLeafletMap.fitBounds(bounds, { padding: [30, 30], maxZoom: 14 });
+      else ctjLeafletMap.setView([-7.32, 112.72], 10);
+      setTimeout(() => ctjLeafletMap.invalidateSize(), 150);
     }
 
     // Normalisasi baris CSV dari Google Sheets menjadi objek standar
@@ -1609,6 +1698,7 @@ html.dark option { background:#0f172a; color:#f1f5f9; }
       renderVisitTable();
       renderZonkTable();
       renderAllAndTeamTables();
+      renderCTJClusterMap();
     }
 
     function updateKPICards(selectedBM) {
