@@ -533,7 +533,7 @@
                             <th class="py-3.5 px-3 text-center">Total WO</th>
                             <th class="py-3.5 px-3 text-center">WO Bersih</th>
                             <th class="py-3.5 px-3 text-center">Completed</th>
-                            <th class="py-3.5 px-3 text-center">New & Prog</th>
+                            <th class="py-3.5 px-3 text-center">New</th>
                             <th class="py-3.5 px-3 text-center">Unsucc / Resch</th>
                             <th class="py-3.5 px-4 min-w-[160px]">Success Rate (%)</th>
                             <th class="py-3.5 px-4 sm:px-6">Dominasi Area / Kontraktor</th>
@@ -1400,7 +1400,7 @@
                 });
 
                 const bersih = cComp + cNew + cProg;
-                const newProg = cNew + cProg;
+                const newProg = cNew;
 
                 grandTotal += total;
                 grandBersih += bersih;
@@ -1459,7 +1459,7 @@
                             <button type="button" onclick="event.stopPropagation(); openSlotCellPreviewWA('${safeSlot}', 'COMPLETED')" class="inline-flex items-center justify-center min-w-[32px] px-2 py-1 rounded-md text-xs font-bold bg-emerald-50 text-emerald-700 hover:bg-emerald-100 transition">${cComp}</button>
                         </td>
                         <td class="py-3.5 px-3 text-center">
-                            <button type="button" onclick="event.stopPropagation(); openSlotCellPreviewWA('${safeSlot}', 'NEW_PROGRESS')" class="inline-flex items-center justify-center min-w-[32px] px-2 py-1 rounded-md text-xs font-bold bg-indigo-50 text-indigo-700 hover:bg-indigo-100 transition">${newProg}</button>
+                            <button type="button" onclick="event.stopPropagation(); openSlotCellPreviewWA('${safeSlot}', 'NEW')" class="inline-flex items-center justify-center min-w-[32px] px-2 py-1 rounded-md text-xs font-bold bg-indigo-50 text-indigo-700 hover:bg-indigo-100 transition">${newProg}</button>
                         </td>
                         <td class="py-3.5 px-3 text-center">
                             <button type="button" onclick="event.stopPropagation(); openSlotCellPreviewWA('${safeSlot}', 'UNSUCCESSFUL')" class="inline-flex items-center justify-center min-w-[32px] px-2 py-1 rounded-md text-xs font-bold bg-rose-50 text-rose-700 hover:bg-rose-100 transition">${cUnsucc}</button>
@@ -1498,7 +1498,7 @@
                         <button type="button" onclick="openSlotCellPreviewWA('${encodeURIComponent('ALL')}', 'COMPLETED')" class="text-emerald-300 hover:text-white underline decoration-dotted underline-offset-4">${grandComp}</button>
                     </td>
                     <td class="py-4 px-3 text-center">
-                        <button type="button" onclick="openSlotCellPreviewWA('${encodeURIComponent('ALL')}', 'NEW_PROGRESS')" class="text-indigo-300 hover:text-white underline decoration-dotted underline-offset-4">${grandNewProg}</button>
+                        <button type="button" onclick="openSlotCellPreviewWA('${encodeURIComponent('ALL')}', 'NEW')" class="text-indigo-300 hover:text-white underline decoration-dotted underline-offset-4">${grandNewProg}</button>
                     </td>
                     <td class="py-4 px-3 text-center">
                         <button type="button" onclick="openSlotCellPreviewWA('${encodeURIComponent('ALL')}', 'UNSUCCESSFUL')" class="text-rose-300 hover:text-white underline decoration-dotted underline-offset-4">${grandUnsucc}</button>
@@ -1844,7 +1844,7 @@
             if (metricType === 'UNSUCCESSFUL') return st === 'Unsuccessful';
             if (metricType === 'IN_PROGRESS') return st === 'In Progress';
             if (metricType === 'CANCELLED') return st === 'Cancelled';
-            return true;
+            return false;
         }
 
         function getMetricTitle(metricType) {
