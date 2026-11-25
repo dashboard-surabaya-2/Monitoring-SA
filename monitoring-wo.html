@@ -2138,11 +2138,14 @@ html.dark option { background:#0f172a; color:#f1f5f9; }
             const activeFilter = [previewWAState.filterSummary || '-', query ? `Pencarian: ${query}` : ''].filter(Boolean).join(' • ');
 
             const lines = [
-                `*REPORT MONITORING WO — SURABAYA & SIDOARJO*`,
+                `📋 *MONITORING WORK ORDER (WO)*`,
+                `MORA REPUBLIC • SURABAYA 2`,
                 `Waktu: ${nowStr}`,
                 `Kategori: *${previewWAState.title || 'Preview WO'}*`,
                 `Filter: ${activeFilter}`,
                 `Total WO: *${records.length}*`,
+                `━━━━━━━━━━━━━━━━━━`,
+                `*DAFTAR WORK ORDER*`,
                 ``
             ];
 
@@ -2158,7 +2161,7 @@ html.dark option { background:#0f172a; color:#f1f5f9; }
                     const ae = wo.salesName || '-';
                     const appointmentSt = wo.appointmentStatus || '-';
                     const woSt = wo.statusWO || '-';
-                    lines.push(`${idx + 1}. *${wo.workOrderNumber}* — ${cust} | ${area} • ${slot}\n   ${appointmentSt} / ${woSt} • ASM: ${asm} • AE: ${ae}`);
+                    lines.push(`${idx + 1}. *${wo.workOrderNumber}* — ${cust}\n   Area: ${area} | Slot: ${slot}\n   Appointment: ${appointmentSt} | Status: ${woSt}\n   ASM: ${asm} | AE: ${ae}`);
                 });
 
                 if (records.length > maxShow) {
