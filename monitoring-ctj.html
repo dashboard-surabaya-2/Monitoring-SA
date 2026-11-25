@@ -270,9 +270,9 @@ html.dark option { background:#0f172a; color:#f1f5f9; }
 <body class="antialiased min-h-screen flex flex-col">
   <!-- Navigasi cepat dashboard untuk HP -->
   <nav class="mobile-dashboard-nav" aria-label="Navigasi dashboard">
-    <a target="_top" href="index.html?dashboard=sa" onclick="event.preventDefault(); window.top.location.assign(new URL('index.html?dashboard=sa', window.top.location.href).href); return false;"><span aria-hidden="true">⌂</span><small>Dashboard</small></a>
-    <a target="_top" href="index.html?dashboard=wo" onclick="event.preventDefault(); window.top.location.assign(new URL('index.html?dashboard=wo', window.top.location.href).href); return false;"><span aria-hidden="true">▣</span><small>Monitoring WO</small></a>
-    <a target="_top" href="index.html?dashboard=ctj" onclick="event.preventDefault(); window.top.location.assign(new URL('index.html?dashboard=ctj', window.top.location.href).href); return false;" class="active" aria-current="page"><span aria-hidden="true">⌖</span><small>Monitoring CTJ</small></a>
+    <a href="index.html?dashboard=sa" onclick="event.preventDefault(); if(window.parent!==window){window.parent.postMessage({type:'MORA_DASHBOARD_NAVIGATE',dashboard:'sa'},window.location.origin);}else{window.location.href='index.html?dashboard=sa';} return false;"><span aria-hidden="true">⌂</span><small>Dashboard</small></a>
+    <a href="index.html?dashboard=wo" onclick="event.preventDefault(); if(window.parent!==window){window.parent.postMessage({type:'MORA_DASHBOARD_NAVIGATE',dashboard:'wo'},window.location.origin);}else{window.location.href='index.html?dashboard=wo';} return false;"><span aria-hidden="true">▣</span><small>Monitoring WO</small></a>
+    <a href="index.html?dashboard=ctj" onclick="event.preventDefault(); if(window.parent!==window){window.parent.postMessage({type:'MORA_DASHBOARD_NAVIGATE',dashboard:'ctj'},window.location.origin);}else{window.location.href='index.html?dashboard=ctj';} return false;" class="active" aria-current="page"><span aria-hidden="true">⌖</span><small>Monitoring CTJ</small></a>
   </nav>
 
 
