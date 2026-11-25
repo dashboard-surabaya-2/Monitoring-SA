@@ -254,9 +254,9 @@ html.dark option { background:#0f172a; color:#f1f5f9; }
             </select>
           </div>
 
-          <div class="flex items-center gap-1.5 bg-amber-50/70 border border-amber-200/80 rounded-xl px-3 py-1.5" title="Jumlah hari tersisa sampai akhir bulan (24 Nov - 30 Nov = 7 hari)">
+          <div class="flex items-center gap-1.5 bg-amber-50/70 border border-amber-200/80 rounded-xl px-3 py-1.5" title="Dihitung otomatis setiap hari, termasuk hari ini sampai tanggal terakhir bulan berjalan">
             <label for="remaining-days-input" class="font-semibold text-amber-900">Sisa Hari Bln Ini:</label>
-            <input id="remaining-days-input" type="number" min="1" max="31" value="7" onchange="applyFilters()" class="w-12 text-center font-bold text-amber-800 bg-white border border-amber-300 rounded-lg py-0.5 focus:outline-none focus:ring-2 focus:ring-amber-400" />
+            <input id="remaining-days-input" type="number" min="1" max="31" value="6" readonly aria-label="Sisa hari bulan ini dihitung otomatis" class="w-12 text-center font-bold text-amber-800 bg-white border border-amber-300 rounded-lg py-0.5 focus:outline-none focus:ring-2 focus:ring-amber-400 cursor-default" />
             <span class="text-amber-800 font-medium">hari</span>
           </div>
 
@@ -1263,7 +1263,7 @@ html.dark option { background:#0f172a; color:#f1f5f9; }
       document.getElementById('filter-sa').value = 'ALL';
       document.getElementById('filter-search').value = '';
       document.getElementById('week-target-select').value = '20';
-      document.getElementById('remaining-days-input').value = '7';
+      updateRemainingDaysDisplay();
       updateDependentDropdowns();
       applyFilters();
       showToast('Filter dikembalikan ke default BM Benny Hadiawan (Week 4)');
@@ -1368,7 +1368,7 @@ html.dark option { background:#0f172a; color:#f1f5f9; }
       const selectedCity = document.getElementById('filter-city').value;
       const selectedSA = document.getElementById('filter-sa').value;
       const searchQuery = document.getElementById('filter-search').value.trim().toLowerCase();
-      const remainingDays = Math.max(1, parseInt(document.getElementById('remaining-days-input').value, 10) || 7);
+      const remainingDays = updateRemainingDaysDisplay();
 
       const contextData = rawClusterData
         .filter(item => {
@@ -1481,6 +1481,23 @@ html.dark option { background:#0f172a; color:#f1f5f9; }
     }
 
     // Core Filter & Kalkulasi KPI
+    // Hitung sisa hari kalender bulan berjalan, termasuk hari ini.
+    function getRemainingCalendarDays() {
+      const now = new Date();
+      const lastDay = new Date(now.getFullYear(), now.getMonth() + 1, 0).getDate();
+      return Math.max(1, lastDay - now.getDate() + 1);
+    }
+
+    function updateRemainingDaysDisplay() {
+      const input = document.getElementById('remaining-days-input');
+      if (!input) return getRemainingCalendarDays();
+      const remaining = getRemainingCalendarDays();
+      input.value = String(remaining);
+      const wrapper = input.closest('[title]');
+      if (wrapper) wrapper.title = 'Sisa hari kalender bulan ini (termasuk hari ini): ' + remaining + ' hari';
+      return remaining;
+    }
+
     function applyFilters() {
       const selectedBM = document.getElementById('filter-bm').value;
       const selectedASM = document.getElementById('filter-asm').value;
@@ -2212,7 +2229,17 @@ html.dark option { background:#0f172a; color:#f1f5f9; }
 
     // Inisialisasi saat halaman dimuat
     window.addEventListener('DOMContentLoaded', () => {
+      updateRemainingDaysDisplay();
       fetchGoogleSheetData(false);
+      let lastCalendarDate = new Date().toDateString();
+      window.setInterval(() => {
+        const currentCalendarDate = new Date().toDateString();
+        if (currentCalendarDate !== lastCalendarDate) {
+          lastCalendarDate = currentCalendarDate;
+          updateRemainingDaysDisplay();
+          if (typeof applyFilters === 'function') applyFilters();
+        }
+      }, 60000);
     });
   </script>
 
