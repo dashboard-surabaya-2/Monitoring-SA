@@ -160,6 +160,7 @@ html.dark option { background:#0f172a; color:#f1f5f9; }
 
   #ctj-cluster-map .ctj-map-pin{background:transparent;border:0}
   #ctj-cluster-map .ctj-map-pin span{display:block;width:16px;height:16px;border:3px solid #fff;border-radius:50%;background:#4f46e5;box-shadow:0 1px 7px rgba(15,23,42,.5)}
+  #ctj-cluster-map .ctj-map-pin-zonk span{background:#e11d48;width:18px;height:18px}
   #ctj-cluster-map .marker-cluster div{background:#4f46e5;color:#fff;font-weight:800}
   #ctj-cluster-map .marker-cluster{background:rgba(79,70,229,.22)}
   @media(max-width:640px){#ctj-cluster-map{height:430px!important}}
@@ -516,6 +517,7 @@ html.dark option { background:#0f172a; color:#f1f5f9; }
         </div>
         <div class="flex flex-wrap gap-2 text-xs font-semibold">
           <span class="rounded-lg bg-indigo-50 text-indigo-700 px-3 py-2">Cluster pada peta: <b id="map-cluster-count">0</b></span>
+          <button id="map-zonk-toggle" type="button" onclick="toggleZonkMap()" aria-pressed="false" class="rounded-lg bg-rose-50 hover:bg-rose-100 text-rose-700 border border-rose-200 px-3 py-2 font-bold transition"> <i class="fa-solid fa-triangle-exclamation mr-1"></i>Cluster ZONK: <b id="map-zonk-count">0</b> <span id="map-zonk-action" class="ml-1 underline">Tampilkan</span></button>
           <span class="rounded-lg bg-amber-50 text-amber-700 px-3 py-2">Tanpa koordinat: <b id="map-missing-count">0</b></span>
         </div>
       </div>
@@ -1065,6 +1067,7 @@ html.dark option { background:#0f172a; color:#f1f5f9; }
     // Peta interaktif sebaran cluster berdasarkan koordinat LONG/LAT
     let ctjLeafletMap = null;
     let ctjClusterMarkers = null;
+    let mapShowZonkOnly = false;
     function initCTJClusterMap() {
       const el = document.getElementById('ctj-cluster-map');
       if (!el || typeof L === 'undefined') return;
@@ -1081,6 +1084,11 @@ html.dark option { background:#0f172a; color:#f1f5f9; }
       setTimeout(() => ctjLeafletMap.invalidateSize(), 120);
     }
 
+    function toggleZonkMap() {
+      mapShowZonkOnly = !mapShowZonkOnly;
+      renderCTJClusterMap();
+    }
+
     function renderCTJClusterMap() {
       const countEl = document.getElementById('map-cluster-count');
       const missingEl = document.getElementById('map-missing-count');
@@ -1093,15 +1101,28 @@ html.dark option { background:#0f172a; color:#f1f5f9; }
       if (!ctjLeafletMap || !ctjClusterMarkers) return;
       ctjClusterMarkers.clearLayers();
 
-      // Hanya koordinat numerik yang benar-benar tersedia; null/N/A/kosong tidak boleh menjadi titik (Number(null) = 0).
-      const withCoordinates = filteredClusterData.filter(d =>
+      const zonkCountEl = document.getElementById('map-zonk-count');
+      const zonkToggle = document.getElementById('map-zonk-toggle');
+      const zonkAction = document.getElementById('map-zonk-action');
+      const zonkTotal = filteredClusterData.filter(d => d.isZonkSA).length;
+      if (zonkCountEl) zonkCountEl.textContent = formatNumber(zonkTotal);
+      if (zonkToggle) {
+        zonkToggle.setAttribute('aria-pressed', String(mapShowZonkOnly));
+        zonkToggle.classList.toggle('ring-2', mapShowZonkOnly);
+        zonkToggle.classList.toggle('ring-rose-300', mapShowZonkOnly);
+      }
+      if (zonkAction) zonkAction.textContent = mapShowZonkOnly ? 'Tampilkan Semua' : 'Tampilkan';
+
+      // Hanya koordinat numerik yang benar-benar tersedia; null/N/A/kosong tidak boleh menjadi titik.
+      const mapSource = mapShowZonkOnly ? filteredClusterData.filter(d => d.isZonkSA) : filteredClusterData;
+      const withCoordinates = mapSource.filter(d =>
         d.latitude !== null && d.latitude !== undefined && d.longitude !== null && d.longitude !== undefined &&
         String(d.latitude).trim() !== '' && String(d.longitude).trim() !== '' &&
         Number.isFinite(Number(d.latitude)) && Number.isFinite(Number(d.longitude)) &&
         Math.abs(Number(d.latitude)) <= 90 && Math.abs(Number(d.longitude)) <= 180
       );
       countEl.textContent = formatNumber(withCoordinates.length);
-      missingEl.textContent = formatNumber(filteredClusterData.length - withCoordinates.length);
+      missingEl.textContent = formatNumber(mapSource.length - withCoordinates.length);
 
       const bounds = [];
       withCoordinates.forEach(d => {
@@ -1123,7 +1144,7 @@ html.dark option { background:#0f172a; color:#f1f5f9; }
         const marker = L.marker([lat, lon], {
           title: d.clusterName || d.clusterId || 'Cluster',
           icon: L.divIcon({
-            className: 'ctj-map-pin',
+            className: 'ctj-map-pin' + (d.isZonkSA ? ' ctj-map-pin-zonk' : ''),
             html: '<span></span>',
             iconSize: [18, 18], iconAnchor: [9, 9]
           })
