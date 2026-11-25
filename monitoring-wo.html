@@ -2018,20 +2018,37 @@
                     <td class="py-2 px-3 font-semibold text-indigo-700">${wo.salesName || '-'}</td>
                 </tr>
             `).join('');
+            // Perbarui teks WA setiap kali kata pencarian berubah.
+            regenerateWAReportText();
         }
 
         function regenerateWAReportText() {
             const ta = document.getElementById('wa-report-textarea');
             if (!ta) return;
 
-            const records = previewWAState.records || [];
+            // Samakan isi laporan WA dengan hasil pencarian pada tabel preview.
+            const query = cleanText(document.getElementById('wa-preview-search')?.value || '').toLowerCase();
+            const records = (previewWAState.records || []).filter(wo => {
+                if (!query) return true;
+                return [
+                    wo.workOrderNumber,
+                    wo.customerId,
+                    wo.endUserName,
+                    getEffectiveArea(wo),
+                    normalizeSlotTime(wo.slotTime),
+                    wo.appointmentStatus,
+                    wo.asmName,
+                    wo.salesName
+                ].join(' ').toLowerCase().includes(query);
+            });
             const nowStr = new Date().toLocaleString('id-ID', { dateStyle: 'medium', timeStyle: 'short' });
+            const activeFilter = [previewWAState.filterSummary || '-', query ? `Pencarian: ${query}` : ''].filter(Boolean).join(' • ');
 
             const lines = [
                 `*REPORT MONITORING WO — SURABAYA & SIDOARJO*`,
                 `Waktu: ${nowStr}`,
                 `Kategori: *${previewWAState.title || 'Preview WO'}*`,
-                `Filter: ${previewWAState.filterSummary || '-'}`,
+                `Filter: ${activeFilter}`,
                 `Total WO: *${records.length}*`,
                 ``
             ];
