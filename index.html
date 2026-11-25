@@ -90,6 +90,27 @@
 }
 @media(max-width:380px){h1{overflow-wrap:anywhere}}
 
+
+  /* Mobile polish v2: compact dashboard controls and readable data */
+  @media (max-width:640px){
+    body>div.relative{padding-bottom:1.25rem!important}
+    header{gap:.75rem!important}
+    header h1{font-size:1.15rem!important;line-height:1.35!important}
+    #mainTabSA,#mainTabCTJ,#mainTabWO{min-height:44px!important;border-radius:.85rem!important;line-height:1.25!important}
+    #tabBtn1,#tabBtn2{min-height:42px!important;white-space:normal!important;line-height:1.25!important}
+    select,input,button{font-size: max(12px, .82rem)}
+    .glass-card{border-radius:1rem!important}
+    .overflow-x-auto{max-width:100%;overscroll-behavior-x:contain}
+    table th,table td{padding:.55rem .6rem!important;white-space:nowrap}
+    canvas{max-width:100%!important}
+    #waModal>div{display:flex;flex-direction:column;overflow:hidden}
+    #waPreviewText{min-height:42vh!important;max-height:58vh!important;font-size:13px!important;line-height:1.55!important}
+  }
+  @media (max-width:380px){
+    #mainTabSA,#mainTabCTJ,#mainTabWO{font-size:.68rem!important;padding:.55rem .35rem!important}
+    .glass-card{padding:.8rem!important}
+  }
+
 </style>
 </head>
 <body class="bg-slate-50 text-slate-900 dark:bg-[#080d1a] dark:text-slate-100 min-h-screen relative overflow-x-hidden">
