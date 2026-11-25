@@ -2168,14 +2168,11 @@ html.dark option { background:#0f172a; color:#f1f5f9; }
                     slotRecords.slice(0, maxShow - shown).forEach(wo => {
                         itemNumber++;
                         shown++;
-                        const area = getEffectiveArea(wo);
-                        const cust = wo.endUserName || '-';
                         const customerId = wo.customerId || '-';
-                        const asm = wo.asmName || '-';
                         const ae = wo.salesName || '-';
-                        const appointmentSt = wo.appointmentStatus || '-';
-                        const woSt = wo.statusWO || '-';
-                        lines.push(`${itemNumber}. *AE: ${ae}* | Customer ID: *${customerId}*\n   WO: ${wo.workOrderNumber || '-'} — ${cust}\n   Area: ${area}\n   Appointment: ${appointmentSt} | Status WO: ${woSt}\n   ASM: ${asm}`);
+                        const ikr = wo.contractorName || '-';
+                        const cluster = wo.clusterName || '-';
+                        lines.push(`${itemNumber}. *AE: ${ae}*\n   CID: *${customerId}*\n   IKR: ${ikr}\n   Cluster: ${cluster}`);
                     });
                     lines.push('');
                 }
