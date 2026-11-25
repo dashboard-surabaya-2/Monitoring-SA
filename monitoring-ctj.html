@@ -1259,7 +1259,8 @@ html.dark option { background:#0f172a; color:#f1f5f9; }
         .replace(/&/g, '&amp;')
         .replace(/</g, '&lt;')
         .replace(/>/g, '&gt;')
-        .replace(/"/g, '&quot;');
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#39;');
     }
 
     // Peta lokasi cluster dari koordinat LONG/LAT Google Sheets
@@ -1850,7 +1851,7 @@ html.dark option { background:#0f172a; color:#f1f5f9; }
         const penetration=getCTJMapPenetration(d);
         const routeBoxId='ctj-route-'+String(d.clusterId||'').replace(/[^a-zA-Z0-9_-]/g,'');
         const routeLinkId='ctj-route-link-'+String(d.clusterId||'').replace(/[^a-zA-Z0-9_-]/g,'');
-        const safeRouteName=String(d.clusterName||d.clusterId||'Cluster').replace(/\\/g,'\\\\').replace(/'/g,"\\'");
+        const safeRouteName=encodeURIComponent(String(d.clusterName||d.clusterId||'Cluster'));
         const popup=`
           <div style="min-width:235px;font-family:Inter,Arial,sans-serif;color:#0f172a">
             <div style="font-weight:800;font-size:14px;margin-bottom:8px;color:#3730a3">${name}</div>
@@ -1860,12 +1861,12 @@ html.dark option { background:#0f172a; color:#f1f5f9; }
               <span>Penetrasi</span><b>${penetration.toFixed(2)}%</b>
               <span>Visit MTD</span><b>${formatNumber(d.visitMTD)}</b>
               <span>Prioritas Gabungan</span><b style="color:${getCTJMapPriority(d).score>=70?'#e11d48':getCTJMapPriority(d).score>=45?'#ea580c':getCTJMapPriority(d).score>=20?'#d97706':'#059669'}">${getCTJMapPriority(d).level} (${getCTJMapPriority(d).score}/95)</b>
-              <span>Alasan Prioritas</span><b>${[d.isZonkSA?'ZONK SA':'',penetration<10?'Penetrasi <10%':penetration<20?'Penetrasi <20%':'',Number(d.visitMTD||0)<=0?'Belum ada visit':'',d.isUnderTarget?'Visit belum target':''].filter(Boolean).join(', ')||'Kondisi relatif baik'}</b>
+              <span>Alasan Prioritas</span><b>${escapeHTML([d.isZonkSA?'ZONK SA':'',penetration<10?'Penetrasi <10%':penetration<20?'Penetrasi <20%':'',Number(d.visitMTD||0)<=0?'Belum ada visit':'',d.isUnderTarget?'Visit belum target':''].filter(Boolean).join(', ')||'Kondisi relatif baik')}</b>
               <span>Status SA</span><b style="color:${d.isZonkSA?'#e11d48':'#059669'}">${d.isZonkSA?'ZONK SA':'ADA SA'}</b>
               <span>Status Visit</span><b>${escapeHTML(d.statusVisitSheet)}</b>
               <span>RFS</span><b>${escapeHTML(d.rfsClass)}</b>
             </div>
-            <button type="button" onclick="addCTJRouteStop(${lat},${lon},'${safeRouteName}')" style="width:100%;background:#7c3aed;color:white;border:0;border-radius:8px;padding:8px;font-size:12px;font-weight:800;cursor:pointer;margin-bottom:6px"><i class="fa-solid fa-plus"></i> Tambah ke Rute Pilihan</button>
+            <button type="button" onclick="addCTJRouteStop(${lat},${lon},decodeURIComponent('${safeRouteName}'))" style="width:100%;background:#7c3aed;color:white;border:0;border-radius:8px;padding:8px;font-size:12px;font-weight:800;cursor:pointer;margin-bottom:6px"><i class="fa-solid fa-plus"></i> Tambah ke Rute Pilihan</button>
             <div id="${routeBoxId}" style="font-size:12px;line-height:1.5;padding:8px;background:#f1f5f9;border-radius:8px;margin-bottom:8px">Hitung estimasi jarak dari lokasi GPS Anda.</div>
             <button type="button" onclick="routeToCTJCluster(${lat},${lon},'${routeBoxId}','${routeLinkId}')" style="width:100%;background:#4f46e5;color:white;border:0;border-radius:8px;padding:8px;font-size:12px;font-weight:800;cursor:pointer;margin-bottom:6px"><i class="fa-solid fa-route"></i> Hitung Jarak & Waktu</button>
             <a id="${routeLinkId}" href="https://www.google.com/maps/dir/?api=1&destination=${lat},${lon}&travelmode=driving" target="_blank" rel="noopener noreferrer" style="display:block;text-align:center;background:#16a34a;color:white;border-radius:8px;padding:8px;font-size:12px;font-weight:800;text-decoration:none"><i class="fa-solid fa-location-arrow"></i> Navigasi ke Cluster</a>
