@@ -538,13 +538,17 @@ html.dark option { background:#0f172a; color:#f1f5f9; }
           <select id="map-condition-filter" onchange="renderCTJClusterMap()" class="rounded-lg border border-slate-200 px-3 py-2 text-xs bg-white text-slate-700">
             <option value="ALL">Semua kondisi cluster</option><option value="LOW">Penetrasi rendah (&lt;10%)</option><option value="MEDIUM">Penetrasi sedang (10–&lt;20%)</option><option value="HIGH">Penetrasi tinggi (≥20%)</option><option value="UNVISITED">Belum ada visit MTD</option><option value="ZONK">ZONK SA saja</option>
           </select>
+          <select id="map-role-mode" onchange="changeCTJMapRoleMode()" class="rounded-lg border border-slate-200 px-3 py-2 text-xs bg-white text-slate-700 font-semibold">
+            <option value="ASM">Mode ASM • Semua wilayah terfilter</option><option value="AE">Mode AE • Fokus AE terpilih</option>
+          </select>
           <select id="map-color-mode" onchange="renderCTJClusterMap()" class="rounded-lg border border-slate-200 px-3 py-2 text-xs bg-white text-slate-700">
-            <option value="PEN">Warna titik: Penetrasi</option><option value="VISIT">Warna titik: Visit MTD</option><option value="ZONK">Warna titik: Status SA</option>
+            <option value="PRIORITY">Warna titik: Prioritas Gabungan</option><option value="PEN">Warna titik: Penetrasi</option><option value="VISIT">Warna titik: Visit MTD</option><option value="ZONK">Warna titik: Status SA</option>
           </select>
         </div>
         <div class="flex flex-wrap items-center gap-x-4 gap-y-1 mt-2 text-[11px] text-slate-500">
-          <span class="font-bold text-slate-600">Legenda penetrasi:</span><span><i class="inline-block w-2.5 h-2.5 rounded-full bg-rose-600 mr-1"></i>&lt;10%</span><span><i class="inline-block w-2.5 h-2.5 rounded-full bg-orange-500 mr-1"></i>10–&lt;20%</span><span><i class="inline-block w-2.5 h-2.5 rounded-full bg-amber-400 mr-1"></i>20–&lt;30%</span><span><i class="inline-block w-2.5 h-2.5 rounded-full bg-emerald-600 mr-1"></i>≥30%</span>
+          <span class="font-bold text-slate-600">Prioritas gabungan:</span><span><i class="inline-block w-2.5 h-2.5 rounded-full bg-rose-600 mr-1"></i>Sangat tinggi</span><span><i class="inline-block w-2.5 h-2.5 rounded-full bg-orange-500 mr-1"></i>Tinggi</span><span><i class="inline-block w-2.5 h-2.5 rounded-full bg-amber-400 mr-1"></i>Sedang</span><span><i class="inline-block w-2.5 h-2.5 rounded-full bg-emerald-600 mr-1"></i>Rendah</span>
         </div>
+        <p id="map-role-hint" class="text-[11px] text-slate-500 mt-1">Mode ASM: peta mengikuti filter wilayah dan tim yang dipilih. Prioritas menggabungkan status ZONK, penetrasi, dan pencapaian visit.</p>
       </div>
       <div class="p-2 sm:p-4">
         <div id="ctj-cluster-map" class="w-full rounded-xl border border-slate-200 overflow-hidden" style="height:520px;z-index:1"></div>
@@ -1177,11 +1181,39 @@ html.dark option { background:#0f172a; color:#f1f5f9; }
       return (typeof d.penRateNum === 'number' && Number.isFinite(d.penRateNum))
         ? d.penRateNum : (d.hpTotal > 0 ? (d.totalSubs / d.hpTotal) * 100 : 0);
     }
+    function getCTJMapPriority(d) {
+      const p = getCTJMapPenetration(d);
+      let score = 0;
+      if (d.isZonkSA) score += 35;
+      if (p < 10) score += 25; else if (p < 20) score += 15;
+      if (Number(d.visitMTD || 0) <= 0) score += 20;
+      if (d.isUnderTarget) score += 15;
+      const level = score >= 70 ? 'Sangat tinggi' : score >= 45 ? 'Tinggi' : score >= 20 ? 'Sedang' : 'Rendah';
+      return {score,level};
+    }
+    function changeCTJMapRoleMode() {
+      const mode = document.getElementById('map-role-mode')?.value || 'ASM';
+      const aeFilter = document.getElementById('filter-ae');
+      if (mode === 'AE' && (!aeFilter || aeFilter.value === 'ALL')) {
+        document.getElementById('map-role-mode').value = 'ASM';
+        showToast('Pilih nama AE pada filter utama terlebih dahulu untuk menggunakan Mode AE.', true);
+        return;
+      }
+      const hint = document.getElementById('map-role-hint');
+      if (hint) hint.textContent = mode === 'AE'
+        ? 'Mode AE aktif: peta mengikuti AE yang dipilih pada filter utama. Cluster prioritas ditandai berdasarkan gabungan indikator.'
+        : 'Mode ASM: peta mengikuti filter wilayah dan tim yang dipilih. Prioritas menggabungkan status ZONK, penetrasi, dan pencapaian visit.';
+      renderCTJClusterMap();
+    }
     function getCTJMapMarkerClass(d) {
-      const mode = document.getElementById('map-color-mode')?.value || 'PEN';
+      const mode = document.getElementById('map-color-mode')?.value || 'PRIORITY';
+      const p = getCTJMapPenetration(d);
       if (mode === 'ZONK') return d.isZonkSA ? 'ctj-map-pin-zonk' : 'pen-high';
       if (mode === 'VISIT') return d.visitMTD > 0 ? 'visit-good' : 'visit-low';
-      const p = getCTJMapPenetration(d);
+      if (mode === 'PRIORITY') {
+        const score = getCTJMapPriority(d).score;
+        return score >= 70 ? 'pen-low' : score >= 45 ? 'pen-medium' : score >= 20 ? 'pen-good' : 'pen-high';
+      }
       return p < 10 ? 'pen-low' : p < 20 ? 'pen-medium' : p < 30 ? 'pen-good' : 'pen-high';
     }
     function addCTJRouteStop(latitude, longitude, name) {
@@ -1299,6 +1331,8 @@ html.dark option { background:#0f172a; color:#f1f5f9; }
               <span>Total HP</span><b>${hp}</b><span>Total Subs</span><b>${subs}</b>
               <span>Penetrasi</span><b>${penetration.toFixed(2)}%</b>
               <span>Visit MTD</span><b>${formatNumber(d.visitMTD)}</b>
+              <span>Prioritas Gabungan</span><b style="color:${getCTJMapPriority(d).score>=70?'#e11d48':getCTJMapPriority(d).score>=45?'#ea580c':getCTJMapPriority(d).score>=20?'#d97706':'#059669'}">${getCTJMapPriority(d).level} (${getCTJMapPriority(d).score}/95)</b>
+              <span>Alasan Prioritas</span><b>${[d.isZonkSA?'ZONK SA':'',penetration<10?'Penetrasi <10%':penetration<20?'Penetrasi <20%':'',Number(d.visitMTD||0)<=0?'Belum ada visit':'',d.isUnderTarget?'Visit belum target':''].filter(Boolean).join(', ')||'Kondisi relatif baik'}</b>
               <span>Status SA</span><b style="color:${d.isZonkSA?'#e11d48':'#059669'}">${escapeHTML(d.statusSA)}</b>
               <span>Status Visit</span><b>${escapeHTML(d.statusVisitSheet)}</b>
               <span>RFS</span><b>${escapeHTML(d.rfsClass)}</b>
