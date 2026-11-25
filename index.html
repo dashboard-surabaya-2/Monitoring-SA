@@ -18,8 +18,9 @@
           localStorage.setItem(MAIN_DASHBOARD_STORAGE_KEY, requested);
           return requested;
         }
-        const saved = localStorage.getItem(MAIN_DASHBOARD_STORAGE_KEY);
-        return ['sa', 'ctj', 'wo'].includes(saved) ? saved : 'sa';
+        // Saat membuka URL utama tanpa parameter, selalu mulai dari Performa SA.
+        // Pilihan WO/CTJ hanya aktif bila navigasi secara eksplisit membawa parameter dashboard.
+        return 'sa';
       } catch (error) {
         return 'sa';
       }
