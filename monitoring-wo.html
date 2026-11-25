@@ -85,9 +85,27 @@
       table th,table td{white-space:nowrap}
     }
 
+
+  /* Navigasi antar-dashboard khusus layar HP */
+  .mobile-dashboard-nav{display:none}
+  @media(max-width:640px){
+    body{padding-bottom:calc(72px + env(safe-area-inset-bottom))!important}
+    .mobile-dashboard-nav{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:.25rem;position:fixed;left:0;right:0;bottom:0;z-index:80;padding:.45rem .5rem calc(.45rem + env(safe-area-inset-bottom));background:rgba(255,255,255,.97);border-top:1px solid #dbe2ea;box-shadow:0 -5px 18px rgba(15,23,42,.10);backdrop-filter:blur(12px)}
+    .mobile-dashboard-nav a{display:flex;min-width:0;min-height:52px;flex-direction:column;align-items:center;justify-content:center;gap:.12rem;border-radius:.75rem;color:#475569;text-decoration:none;font-weight:700}
+    .mobile-dashboard-nav a span{font-size:1.25rem;line-height:1.25}
+    .mobile-dashboard-nav a small{font-size:.68rem;line-height:1.2;white-space:nowrap}
+    .mobile-dashboard-nav a.active{background:#e0e7ff;color:#4338ca}
+  }
 </style>
 </head>
 <body class="bg-slate-50 text-slate-800 antialiased min-h-screen flex flex-col">
+    <!-- Navigasi cepat dashboard untuk HP -->
+    <nav class="mobile-dashboard-nav" aria-label="Navigasi dashboard">
+      <a href="index.html"><span aria-hidden="true">⌂</span><small>Dashboard</small></a>
+      <a href="monitoring-wo.html" class="active" aria-current="page"><span aria-hidden="true">▣</span><small>Monitoring WO</small></a>
+      <a href="monitoring-ctj.html"><span aria-hidden="true">⌖</span><small>Monitoring CTJ</small></a>
+    </nav>
+
 
     <!-- Toast Notification Container -->
     <div id="toast-container" class="fixed bottom-5 right-5 z-[70] flex flex-col gap-2 pointer-events-none max-w-sm"></div>
