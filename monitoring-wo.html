@@ -535,6 +535,7 @@
                             <th class="py-3.5 px-3 text-center">Completed</th>
                             <th class="py-3.5 px-3 text-center">New</th>
                             <th class="py-3.5 px-3 text-center">Unsucc / Resch</th>
+                            <th class="py-3.5 px-3 text-center">Cancelled</th>
                             <th class="py-3.5 px-4 min-w-[160px]">Success Rate (%)</th>
                             <th class="py-3.5 px-4 sm:px-6">Dominasi Area / Kontraktor</th>
                         </tr>
@@ -1376,13 +1377,14 @@
             let grandComp = 0;
             let grandNewProg = 0;
             let grandUnsucc = 0;
+            let grandCancelled = 0;
 
             let rowsHTML = '';
 
             STANDARD_SLOTS.forEach(slotObj => {
                 const itemsInSlot = baseForSlots.filter(d => normalizeSlotTime(d.slotTime) === slotObj.key);
                 const total = itemsInSlot.length;
-                let cNew = 0, cProg = 0, cComp = 0, cUnsucc = 0;
+                let cNew = 0, cProg = 0, cComp = 0, cUnsucc = 0, cCancelled = 0;
                 const areaCounts = {};
                 const contCounts = {};
 
@@ -1392,6 +1394,7 @@
                     else if (st === 'In Progress') cProg++;
                     else if (st === 'Completed') cComp++;
                     else if (st === 'Unsuccessful') cUnsucc++;
+                    else if (st === 'Cancelled') cCancelled++;
 
                     const effArea = getEffectiveArea(wo);
                     areaCounts[effArea] = (areaCounts[effArea] || 0) + 1;
@@ -1408,6 +1411,7 @@
                 grandComp += cComp;
                 grandNewProg += newProg;
                 grandUnsucc += cUnsucc;
+                grandCancelled += cCancelled;
 
                 const successRate = total > 0 ? ((cComp / total) * 100).toFixed(1) : '0.0';
                 const barWidth = total > 0 ? Math.min(100, Math.round((cComp / total) * 100)) : 0;
@@ -1465,6 +1469,9 @@
                         <td class="py-3.5 px-3 text-center">
                             <button type="button" onclick="event.stopPropagation(); openSlotCellPreviewWA('${safeSlot}', 'UNSUCCESSFUL')" class="inline-flex items-center justify-center min-w-[32px] px-2 py-1 rounded-md text-xs font-bold bg-rose-50 text-rose-700 hover:bg-rose-100 transition">${cUnsucc}</button>
                         </td>
+                        <td class="py-3.5 px-3 text-center">
+                            <button type="button" onclick="event.stopPropagation(); openSlotCellPreviewWA('${safeSlot}', 'CANCELLED')" class="inline-flex items-center justify-center min-w-[32px] px-2 py-1 rounded-md text-xs font-bold bg-slate-100 text-slate-700 hover:bg-slate-200 transition">${cCancelled}</button>
+                        </td>
                         <td class="py-3.5 px-4">
                             <div class="flex items-center gap-2.5">
                                 <div class="flex-1 h-2 bg-slate-200 rounded-full overflow-hidden">
@@ -1503,6 +1510,9 @@
                     </td>
                     <td class="py-4 px-3 text-center">
                         <button type="button" onclick="openSlotCellPreviewWA('${encodeURIComponent('ALL')}', 'UNSUCCESSFUL')" class="text-rose-300 hover:text-white underline decoration-dotted underline-offset-4">${grandUnsucc}</button>
+                    </td>
+                    <td class="py-4 px-3 text-center">
+                        <button type="button" onclick="openSlotCellPreviewWA('${encodeURIComponent('ALL')}', 'CANCELLED')" class="text-slate-300 hover:text-white underline decoration-dotted underline-offset-4">${grandCancelled}</button>
                     </td>
                     <td class="py-4 px-4">
                         <div class="flex items-center gap-2.5">
