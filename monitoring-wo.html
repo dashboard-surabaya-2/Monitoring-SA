@@ -65,7 +65,7 @@
 
     <!-- Modal Detail Preview & Report WA -->
     <div id="preview-wa-modal" class="fixed inset-0 z-50 hidden bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-3 sm:p-5">
-        <div class="bg-white rounded-2xl shadow-2xl max-w-6xl w-full overflow-hidden border border-slate-200 fade-in flex flex-col max-h-[96vh]">
+        <div class="bg-white rounded-2xl shadow-2xl w-[min(96vw,1152px)] h-[86vh] min-w-[min(620px,92vw)] min-h-[420px] max-w-[96vw] max-h-[96vh] border border-slate-200 fade-in flex flex-col resize overflow-auto">
             <!-- Header Modal -->
             <div class="px-4 sm:px-5 py-2.5 bg-slate-900 text-white flex items-center justify-between gap-3 shrink-0">
                 <div class="flex items-center gap-3 min-w-0">
@@ -83,7 +83,7 @@
             </div>
 
             <!-- Body Modal -->
-            <div class="p-3 sm:p-4 overflow-y-auto space-y-3 flex-1 min-h-0">
+            <div class="p-3 sm:p-4 space-y-3 flex-none">
                 <!-- Ringkasan Konteks -->
                 <div class="grid grid-cols-1 sm:grid-cols-3 gap-2 bg-slate-50 p-2.5 rounded-xl border border-slate-200">
                     <div>
@@ -112,7 +112,7 @@
                         </div>
                     </div>
 
-                    <div class="overflow-auto border border-slate-200 rounded-xl max-h-[34vh]">
+                    <div class="overflow-x-auto border border-slate-200 rounded-xl">
                         <table class="w-full text-left border-collapse whitespace-nowrap text-xs">
                             <thead class="bg-slate-100 text-slate-700 font-bold uppercase sticky top-0 z-10 border-b border-slate-200">
                                 <tr>
