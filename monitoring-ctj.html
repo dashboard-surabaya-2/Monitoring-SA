@@ -1064,9 +1064,9 @@ html.dark option { background:#0f172a; color:#f1f5f9; }
       const el = document.getElementById('ctj-cluster-map');
       if (!el || typeof L === 'undefined') return;
       if (!ctjLeafletMap) {
-        ctjLeafletMap = L.map(el, { scrollWheelZoom: true }).setView([-7.32, 112.72], 10);
-        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-          maxZoom: 19, attribution: '&copy; <a href="https://www.openstreetmap.org/copyright" target="_blank">OpenStreetMap</a>'
+        ctjLeafletMap = L.map(el, { scrollWheelZoom: true, zoomControl: true }).setView([-7.7, 112.5], 8);
+        L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png', {
+          maxZoom: 19, attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> &copy; <a href="https://carto.com/attributions">CARTO</a>'
         }).addTo(ctjLeafletMap);
         ctjClusterMarkers = L.layerGroup().addTo(ctjLeafletMap);
       }
@@ -1085,7 +1085,10 @@ html.dark option { background:#0f172a; color:#f1f5f9; }
       if (!ctjLeafletMap || !ctjClusterMarkers) return;
       ctjClusterMarkers.clearLayers();
 
+      // Hanya koordinat numerik yang benar-benar tersedia; null/N/A/kosong tidak boleh menjadi titik (Number(null) = 0).
       const withCoordinates = filteredClusterData.filter(d =>
+        d.latitude !== null && d.latitude !== undefined && d.longitude !== null && d.longitude !== undefined &&
+        String(d.latitude).trim() !== '' && String(d.longitude).trim() !== '' &&
         Number.isFinite(Number(d.latitude)) && Number.isFinite(Number(d.longitude)) &&
         Math.abs(Number(d.latitude)) <= 90 && Math.abs(Number(d.longitude)) <= 180
       );
@@ -1117,9 +1120,10 @@ html.dark option { background:#0f172a; color:#f1f5f9; }
         bounds.push([lat, lon]);
       });
 
+      // Fokus otomatis pada sebaran titik cluster, bukan tampilan peta yang terlalu luas.
       if (bounds.length === 1) ctjLeafletMap.setView(bounds[0], 15);
-      else if (bounds.length > 1) ctjLeafletMap.fitBounds(bounds, { padding: [30, 30], maxZoom: 14 });
-      else ctjLeafletMap.setView([-7.32, 112.72], 10);
+      else if (bounds.length > 1) ctjLeafletMap.fitBounds(bounds, { padding: [48, 48], maxZoom: 13, animate: false });
+      else ctjLeafletMap.setView([-7.7, 112.5], 8);
       setTimeout(() => ctjLeafletMap.invalidateSize(), 150);
     }
 
