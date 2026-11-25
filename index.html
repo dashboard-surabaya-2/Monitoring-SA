@@ -111,6 +111,26 @@
     .glass-card{padding:.8rem!important}
   }
 
+
+  /* Mobile compact header: keep dashboard controls within the first quarter */
+  @media(max-width:640px){
+    header{gap:.55rem!important;padding-bottom:.65rem!important}
+    header>div:first-child{align-items:center!important;gap:.55rem!important}
+    header>div:first-child>div:first-child{padding:.45rem .55rem!important;gap:.45rem!important;border-radius:1rem!important}
+    header>div:first-child>div:first-child>div:first-child{width:2.35rem!important;height:2.35rem!important}
+    header>div:first-child>div:nth-child(2){min-width:0;flex:1}
+    header>div:first-child>div:nth-child(2)>div:first-child{gap:.25rem!important;margin-bottom:.2rem!important}
+    header>div:first-child>div:nth-child(2) h1{font-size:1rem!important;line-height:1.15!important;margin-top:.15rem!important}
+    #syncStatusBadge{font-size:.65rem!important;line-height:1.2!important}
+    header>div:last-child{display:flex!important;flex-direction:row!important;flex-wrap:nowrap!important;align-items:center!important;gap:.4rem!important}
+    header>div:last-child button{min-height:40px!important;padding:.5rem .65rem!important;font-size:.7rem!important;white-space:nowrap}
+    header>div:last-child button[onclick="window.print()"]{display:none!important}
+    header>div:last-child button[onclick="openSheetModal()"]{flex:1;justify-content:center}
+    header>div:last-child button#themeBtn{flex:0 0 auto}
+    nav[aria-label="Navigasi dashboard"]{display:grid!important;grid-template-columns:repeat(3,minmax(0,1fr));gap:.35rem!important;margin-top:.6rem!important;margin-bottom:.7rem!important}
+    #mainTabSA,#mainTabWO,#mainTabCTJ{min-width:0!important;min-height:48px!important;padding:.45rem .3rem!important;font-size:.68rem!important;white-space:normal!important;text-align:center!important}
+    #mainTabSA span,#mainTabWO span,#mainTabCTJ span{display:block;margin:0!important}
+  }
 </style>
 </head>
 <body class="bg-slate-50 text-slate-900 dark:bg-[#080d1a] dark:text-slate-100 min-h-screen relative overflow-x-hidden">
