@@ -981,7 +981,7 @@ html.dark option { background:#0f172a; color:#f1f5f9; }
       const fillSelect = (id, items, defaultText) => {
         const el = document.getElementById(id);
         const current = el.value;
-        el.innerHTML = `<option value="ALL">${defaultText}</option>` + items.map(v => `<option value="${v}">${v}</option>`).join('');
+        el.innerHTML = `<option value="ALL">${escapeHTML(defaultText)}</option>` + items.map(v => `<option value="${escapeHTML(v)}">${escapeHTML(v)}</option>`).join('');
         if (items.includes(current)) el.value = current;
       };
 
@@ -1797,8 +1797,8 @@ html.dark option { background:#0f172a; color:#f1f5f9; }
             <td class="py-3 px-3 font-semibold text-slate-700 dark:text-slate-200">${escapeHTML(r.asm_name || '-')}</td>
             <td class="py-3 px-3 text-slate-600 dark:text-slate-300">${escapeHTML(r.sales_agent_name || '-')}</td>
             <td class="py-3 px-3 font-mono">
-              <div class="font-bold text-indigo-500">${r.subscription_id}</div>
-              <div class="text-[10px] text-slate-400">${r.order_id}</div>
+              <div class="font-bold text-indigo-500">${escapeHTML(r.subscription_id)}</div>
+              <div class="text-[10px] text-slate-400">${escapeHTML(r.order_id)}</div>
             </td>
             <td class="py-3 px-3">
               <div class="font-semibold">${escapeHTML(r.name)}</div>
