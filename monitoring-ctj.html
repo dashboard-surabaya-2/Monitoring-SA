@@ -1617,28 +1617,30 @@ html.dark option { background:#0f172a; color:#f1f5f9; }
     }
 
     function getCTJNearbyClusters(selected,lat,lon) {
-      // Kandidat diambil dari marker yang benar-benar sedang ditampilkan pada peta.
-      // Dengan demikian hasil mengikuti seluruh filter dan kondisi tampilan Maps.
-      const valid = ctjMapMarkerIndex
-        .filter(entry => entry.data !== selected &&
-          String(entry.data.clusterId || '') !== String(selected.clusterId || '') &&
-          Number.isFinite(Number(entry.lat)) && Number.isFinite(Number(entry.lon)) &&
-          Math.abs(Number(entry.lat)) <= 90 && Math.abs(Number(entry.lon)) <= 180)
-        .map(entry => entry.data);
-      return valid.map(item => {
-        const itemLat=Number(item.latitude), itemLon=Number(item.longitude);
-        const dLat=(itemLat-lat)*Math.PI/180, dLon=(itemLon-lon)*Math.PI/180;
-        const a=Math.sin(dLat/2)**2+Math.cos(lat*Math.PI/180)*Math.cos(itemLat*Math.PI/180)*Math.sin(dLon/2)**2;
+      // Pusat radius adalah koordinat cluster yang sedang dipilih.
+      // Kandidat hanya dari marker yang tampil setelah filter Maps diterapkan.
+      const valid = ctjMapMarkerIndex.filter(entry =>
+        entry.data !== selected &&
+        String(entry.data.clusterId || '') !== String(selected.clusterId || '') &&
+        Number.isFinite(Number(entry.lat)) && Number.isFinite(Number(entry.lon)) &&
+        Math.abs(Number(entry.lat)) <= 90 && Math.abs(Number(entry.lon)) <= 180
+      );
+      const centerLat=Number(lat), centerLon=Number(lon);
+      if (!Number.isFinite(centerLat) || !Number.isFinite(centerLon)) return [];
+      return valid.map(entry => {
+        const itemLat=Number(entry.lat), itemLon=Number(entry.lon);
+        const dLat=(itemLat-centerLat)*Math.PI/180, dLon=(itemLon-centerLon)*Math.PI/180;
+        const a=Math.sin(dLat/2)**2+Math.cos(centerLat*Math.PI/180)*Math.cos(itemLat*Math.PI/180)*Math.sin(dLon/2)**2;
         const km=6371*2*Math.atan2(Math.sqrt(a),Math.sqrt(1-a));
-        return {data:item,km};
-      }).sort((a,b)=>a.km-b.km).slice(0,5);
+        return {data:entry.data,km};
+      }).filter(item => item.km <= 5).sort((a,b)=>a.km-b.km).slice(0,5);
     }
 
     function renderCTJNearbyClusters(selected,lat,lon) {
       const list=document.getElementById('ctj-detail-nearby-list');
       if(!list) return;
       const nearby=getCTJNearbyClusters(selected,lat,lon);
-      if(!nearby.length){list.innerHTML='<div class="ctj-detail-nearby-empty">Tidak ada cluster lain dengan koordinat yang tersedia pada filter utama saat ini.</div>';return;}
+      if(!nearby.length){list.innerHTML='<div class="ctj-detail-nearby-empty">Tidak ada cluster lain dalam radius 5 KM dari cluster yang dipilih.</div>';return;}
       list.innerHTML=nearby.map(item=>{
         const d=item.data, pen=getCTJMapPenetration(d);
         const status=d.isZonkSA?'ZONK SA':'ADA SA';
