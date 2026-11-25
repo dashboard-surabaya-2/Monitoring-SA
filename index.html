@@ -56,6 +56,21 @@
       });
       window.scrollTo({ top: 0, behavior: 'smooth' });
     }
+
+    // Terima navigasi dari tombol bawah di dalam iframe WO/CTJ.
+    window.addEventListener('message', function(event) {
+      if (event.origin !== window.location.origin) return;
+      const frames = [
+        document.getElementById('woDashboardFrame'),
+        document.getElementById('ctjDashboardFrame')
+      ].filter(Boolean);
+      if (!frames.some(frame => frame.contentWindow === event.source)) return;
+      const message = event.data;
+      if (!message || message.type !== 'MORA_DASHBOARD_NAVIGATE') return;
+      if (['sa', 'wo', 'ctj'].includes(message.dashboard)) {
+        switchMainDashboard(message.dashboard);
+      }
+    });
   </script>
   <script>
     tailwind.config = {
