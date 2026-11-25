@@ -1593,8 +1593,8 @@ html.dark option { background:#0f172a; color:#f1f5f9; }
     function tab2RowLabel(r, idx) {
       const bucket = getDelayBucket(r);
       const days = parseInt(r.unpaid_days) || 0;
-      const status = bucket === 'PAID' ? '✅ PAID' : `⚠️ UNPAID ${days} hari`;
-      return `${idx + 1}. *${r.name || '-'}* | Sub ID: ${r.subscription_id || '-'} | AE: ${r.sales_agent_name || '-'} | ASM: ${r.asm_name || '-'} | Paket: ${r.plan || '-'} | Cluster: ${r.clustername || '-'} | Aktivasi: ${r.service_activation_date || '-'} | ${status} | Unpaid: ${bucket === 'PAID' ? '—' : `${days} hari`} | Tagihan: ${formatIDR(Number(r.invoice_amount)||0)}`;
+      const status = bucket === 'PAID' ? '✅ PAID' : `⚠️ Telat: *${days} hari*`;
+      return `${idx + 1}. *AE: ${r.sales_agent_name || '-'}*\nCustomer: ${r.name || '-'}\nSub ID: ${r.subscription_id || '-'}\nPaket: ${r.plan || '-'}\nCluster: ${r.clustername || '-'}\nAktivasi: ${r.service_activation_date || '-'}\n${status}\nTagihan: *${formatIDR(Number(r.invoice_amount)||0)}*`;
     }
 
     function showTab2KPIDetail(bucket) {
