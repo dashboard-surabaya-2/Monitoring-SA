@@ -1602,23 +1602,22 @@ html.dark option { background:#0f172a; color:#f1f5f9; }
       const asmSelect = document.getElementById('filterASM');
       const aeSelect = document.getElementById('filterAE');
       const planSelect = document.getElementById('filterPlan');
-      const asmText = asmSelect.selectedOptions[0]?.text || 'Semua ASM';
-      const aeText = aeSelect.selectedOptions[0]?.text || 'Semua AE';
-      const planText = planSelect.selectedOptions[0]?.text || 'Semua Paket';
+      const clean = value => String(value || '-')
+        .replace(/\*/g, '•')
+        .replace(/\s*\.\s*$/, '')
+        .trim();
+      const asmText = clean(asmSelect.selectedOptions[0]?.text || 'Semua ASM');
+      const aeText = clean(aeSelect.selectedOptions[0]?.text || 'Semua AE');
+      const planText = clean(planSelect.selectedOptions[0]?.text || 'Semua Paket');
       const allASM = asmSelect.value === 'ALL';
 
       const detailLines = rows.length ? rows.flatMap((r, i) => {
         const days = parseInt(r.unpaid_days) || 0;
-        const clean = value => String(value || '-').replace(/\\s+\\./g, '').trim();
-        const lines = [
-          `${i + 1}. *${clean(r.name)}* — *${days} hari*`
-        ];
-        // Nama ASM ditampilkan per pelanggan hanya jika report mencakup semua ASM.
+        const lines = [`${i + 1}. *${clean(r.name)}* — *${days} hari*`];
         if (allASM) lines.push(`   ASM: ${clean(r.asm_name)}`);
         lines.push(
-          `   AE: ${clean(r.sales_agent_name)} | Sub: ${r.subscription_id || '-'}`,
-          `   Paket: ${r.plan || '-'} | Tagihan: ${formatIDR(Number(r.invoice_amount) || 0)}`,
-          ''
+          `   AE: ${clean(r.sales_agent_name)} | Sub ID: ${r.subscription_id || '-'}`,
+          `   Paket: ${clean(r.plan)} | Tagihan: ${formatIDR(Number(r.invoice_amount) || 0)}`
         );
         return lines;
       }) : ['Tidak ada data UNPAID sesuai filter.'];
@@ -1637,7 +1636,7 @@ html.dark option { background:#0f172a; color:#f1f5f9; }
         `📋 *DAFTAR UNPAID — TERLAMA DI ATAS*`,
         '',
         ...detailLines
-      ].join('\\n').replace(/\\n{3,}/g, '\\n\\n').trim();
+      ].join('\\n');
       openWAModal('Report WhatsApp – SA Unpaid', report);
     }
 
