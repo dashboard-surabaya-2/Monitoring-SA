@@ -2120,7 +2120,8 @@ html.dark option { background:#0f172a; color:#f1f5f9; }
       let lines = [];
       lines.push(`📊 *MONITORING CLUSTER CTJ*`);
       lines.push(`MORA REPUBLIC • SURABAYA 2`);
-      lines.push(`Tanggal: *Selasa, 24 November 2026*`);
+      const reportDate = new Date().toLocaleDateString('id-ID', { weekday: 'long', day: '2-digit', month: 'long', year: 'numeric' });
+      lines.push(`Tanggal: *${reportDate}*`);
       lines.push(`BM: *${selectedBM === 'ALL' ? 'Semua BM' : selectedBM}*`);
       if (selectedASM !== 'ALL') lines.push(`ASM: *${selectedASM}*`);
       if (selectedAE !== 'ALL') lines.push(`AE: *${selectedAE}*`);
