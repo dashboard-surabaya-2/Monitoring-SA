@@ -1758,7 +1758,15 @@ html.dark option { background:#0f172a; color:#f1f5f9; }
         const marker=L.marker([lat,lon],{
           title:d.clusterName||d.clusterId||'Cluster',
           icon:L.divIcon({className:'ctj-map-pin '+getCTJMapMarkerClass(d),html:'<span></span>',iconSize:[18,18],iconAnchor:[9,9]})
-        }).bindPopup(popup,{maxWidth:285});
+        }).bindPopup(popup,{
+          maxWidth:285,
+          maxHeight:260,
+          autoClose:false,
+          closeOnClick:false,
+          autoPan:false,
+          keepInView:false,
+          className:'ctj-map-mobile-popup'
+        });
         marker.on('click', () => showCTJMapDetail(d,lat,lon));
         marker.addTo(ctjClusterMarkers);
         ctjMapMarkerIndex.push({data:d,lat,lon,marker});
