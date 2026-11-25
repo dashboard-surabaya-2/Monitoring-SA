@@ -158,6 +158,72 @@ html.dark input,html.dark select,html.dark textarea { color:#f1f5f9!important; }
 html.dark input::placeholder,html.dark textarea::placeholder { color:#94a3b8!important; opacity:1; }
 html.dark option { background:#0f172a; color:#f1f5f9; }
 
+  /* Premium CTJ map workspace */
+  #ctj-map-workspace{border-radius:22px}
+  .ctj-map-heading{background:linear-gradient(115deg,#f8fafc 0%,#eef2ff 55%,#ecfeff 100%);border-bottom:1px solid #e2e8f0}
+  .ctj-map-heading-icon{width:42px;height:42px;border-radius:14px;background:linear-gradient(135deg,#4338ca,#0891b2);color:#fff;display:grid;place-items:center;font-size:18px;box-shadow:0 8px 18px #4338ca33}
+  .ctj-map-stat,.ctj-map-chip{display:inline-flex;align-items:center;gap:7px;padding:8px 11px;border-radius:11px;background:#fff;border:1px solid #e2e8f0;color:#334155}
+  .ctj-map-chip{font-weight:800;transition:.18s}
+  .ctj-map-chip:hover{transform:translateY(-1px);box-shadow:0 5px 12px #0f172a12}
+  .ctj-map-chip-danger{background:#fff1f2;color:#be123c;border-color:#fecdd3}
+  .ctj-map-chip-green{background:#ecfdf5;color:#047857;border-color:#a7f3d0}
+  .ctj-map-chip-violet{background:#f5f3ff;color:#6d28d9;border-color:#ddd6fe}
+  .ctj-map-kpis{background:#f8fafc;border-bottom:1px solid #e2e8f0}
+  .ctj-map-kpi{background:#fff;border:1px solid #e2e8f0;border-radius:14px;padding:11px 13px;min-width:0;box-shadow:0 2px 7px #0f172a08}
+  .ctj-map-kpi span{display:flex;align-items:center;gap:7px;color:#64748b;font-size:10px;font-weight:800;text-transform:uppercase;letter-spacing:.035em}
+  .ctj-map-kpi span i{color:#4f46e5}
+  .ctj-map-kpi strong{display:block;font-family:'Plus Jakarta Sans',sans-serif;font-size:25px;line-height:1.25;color:#0f172a;margin-top:5px}
+  .ctj-map-kpi small{display:block;font-size:10px;color:#94a3b8;margin-top:2px}
+  .ctj-map-kpi.is-danger{background:linear-gradient(135deg,#fff,#fff1f2);border-color:#fecdd3}.ctj-map-kpi.is-danger span i,.ctj-map-kpi.is-danger strong{color:#e11d48}
+  .ctj-map-kpi.is-warning{background:linear-gradient(135deg,#fff,#fff7ed);border-color:#fed7aa}.ctj-map-kpi.is-warning span i,.ctj-map-kpi.is-warning strong{color:#ea580c}
+  .ctj-map-kpi.is-info{background:linear-gradient(135deg,#fff,#eff6ff);border-color:#bfdbfe}.ctj-map-kpi.is-info span i,.ctj-map-kpi.is-info strong{color:#2563eb}
+  .ctj-map-kpi.is-priority{background:linear-gradient(135deg,#fff,#f5f3ff);border-color:#ddd6fe}.ctj-map-kpi.is-priority span i,.ctj-map-kpi.is-priority strong{color:#7c3aed}
+  .ctj-map-layout{display:grid;grid-template-columns:230px minmax(0,1fr) 270px;min-height:620px}
+  .ctj-map-sidebar{background:#f8fafc;border-right:1px solid #e2e8f0}
+  .ctj-map-detail{background:#fff;border-left:1px solid #e2e8f0}
+  .ctj-map-panel-title{font-size:12px;font-weight:900;color:#1e293b;display:flex;align-items:center;gap:8px;margin-bottom:13px}
+  .ctj-map-panel-title i{color:#4f46e5}
+  .ctj-map-label{display:block;font-size:10px;font-weight:800;color:#64748b;margin:0 0 5px;text-transform:uppercase;letter-spacing:.04em}
+  .ctj-map-select,.ctj-map-input{width:100%;border:1px solid #cbd5e1;border-radius:9px;background:#fff;padding:9px 10px;font-size:11px;color:#334155;outline:none}
+  .ctj-map-select:focus,.ctj-map-input:focus{border-color:#818cf8;box-shadow:0 0 0 3px #818cf833}
+  .ctj-map-search-btn{background:#4338ca;color:#fff;border-radius:9px;padding:0 12px}
+  .ctj-map-apply{width:100%;padding:10px;border-radius:10px;background:#4338ca;color:#fff;font-size:11px;font-weight:900;box-shadow:0 5px 12px #4338ca30}
+  .ctj-map-divider{height:1px;background:#e2e8f0;margin:15px 0}
+  .ctj-map-legend{display:flex;align-items:center;gap:9px;margin:10px 0}
+  .ctj-map-legend b,.ctj-map-legend small{display:block;font-size:10px}.ctj-map-legend b{color:#334155}.ctj-map-legend small{color:#94a3b8}
+  .ctj-legend-dot{width:12px;height:12px;border-radius:50%;border:2px solid #fff;box-shadow:0 0 0 1px #cbd5e1;flex:none}
+  .ctj-legend-dot.red{background:#e11d48}.ctj-legend-dot.orange{background:#f97316}.ctj-legend-dot.yellow{background:#fbbf24}.ctj-legend-dot.green{background:#059669}
+  .ctj-map-traffic{display:flex;align-items:center;justify-content:center;gap:7px;background:#e0f2fe;color:#0369a1;border:1px solid #bae6fd;border-radius:10px;padding:10px;font-size:10px;font-weight:900}
+  .ctj-map-main{min-width:0;background:#e2e8f0}
+  .ctj-map-toolbar{height:38px;padding:0 13px;background:#fff;display:flex;align-items:center;justify-content:space-between;font-size:10px;font-weight:900;color:#334155;border-bottom:1px solid #e2e8f0}
+  .ctj-map-live-label{color:#64748b;font-size:9px;letter-spacing:.06em}.ctj-map-live-label i{font-size:7px;color:#10b981;margin-right:4px}
+  .ctj-map-bottom-tools{display:flex;flex-wrap:wrap;gap:6px;padding:9px;background:#fff;border-top:1px solid #e2e8f0}
+  .ctj-map-bottom-tools button{flex:1;min-width:90px;padding:8px 6px;border:1px solid #e2e8f0;border-radius:9px;background:#fff;color:#475569;font-size:10px;font-weight:800}
+  .ctj-map-bottom-tools button:hover{background:#eef2ff;color:#4338ca}
+  .ctj-map-detail-empty{min-height:260px;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;color:#94a3b8;padding:15px}
+  .ctj-map-detail-empty span{width:52px;height:52px;border-radius:18px;background:#eef2ff;color:#6366f1;display:grid;place-items:center;font-size:22px;margin-bottom:12px}
+  .ctj-map-detail-empty b{font-size:12px;color:#475569}.ctj-map-detail-empty p{font-size:10px;line-height:1.6;max-width:190px;margin-top:5px}
+  .ctj-detail-name{font-family:'Plus Jakarta Sans',sans-serif;font-size:16px;font-weight:900;color:#1e293b;overflow-wrap:anywhere}
+  .ctj-detail-owner{font-size:10px;color:#64748b;margin:4px 0 12px}
+  .ctj-detail-priority{display:inline-flex;padding:6px 9px;border-radius:8px;background:#fff1f2;color:#be123c;font-size:10px;font-weight:900;margin-bottom:12px}
+  .ctj-detail-metrics{display:grid;grid-template-columns:1fr 1fr;gap:7px}
+  .ctj-detail-metrics div{padding:10px;border-radius:10px;background:#f8fafc;border:1px solid #e2e8f0}
+  .ctj-detail-metrics small,.ctj-detail-metrics b{display:block}.ctj-detail-metrics small{font-size:9px;color:#94a3b8}.ctj-detail-metrics b{font-size:16px;color:#1e293b;margin-top:3px}
+  .ctj-detail-reasons{padding:11px;border-radius:10px;background:#fff7ed;border:1px solid #fed7aa;margin-top:10px;font-size:10px;color:#9a3412;line-height:1.6}
+  .ctj-detail-reasons p{margin-top:4px;color:#7c2d12}
+  .ctj-detail-location{font-size:10px;color:#64748b;margin:12px 0}
+  .ctj-detail-route-result{padding:9px;border-radius:9px;background:#f1f5f9;color:#64748b;font-size:10px;line-height:1.5;margin-bottom:8px}
+  .ctj-detail-action{display:flex;align-items:center;justify-content:center;gap:7px;width:100%;padding:10px;border-radius:9px;font-size:10px;font-weight:900;margin-top:7px;text-decoration:none}
+  .ctj-detail-action:disabled{opacity:.45;cursor:not-allowed}
+  .ctj-detail-action.primary{background:#4338ca;color:#fff}.ctj-detail-action.secondary{background:#f5f3ff;color:#6d28d9;border:1px solid #ddd6fe}.ctj-detail-action.success{background:#ecfdf5;color:#047857;border:1px solid #a7f3d0}
+  html.dark .ctj-map-heading,html.dark .ctj-map-kpis,html.dark .ctj-map-sidebar{background:#0f172a;border-color:#334155}
+  html.dark .ctj-map-kpi,html.dark .ctj-map-detail,html.dark .ctj-map-toolbar,html.dark .ctj-map-bottom-tools{background:#1e293b;border-color:#334155}
+  html.dark .ctj-map-kpi strong,html.dark .ctj-map-panel-title,html.dark .ctj-detail-name,html.dark .ctj-detail-metrics b{color:#f1f5f9}
+  html.dark .ctj-map-stat,html.dark .ctj-map-chip,html.dark .ctj-map-select,html.dark .ctj-map-input,html.dark .ctj-map-bottom-tools button{background:#0f172a;color:#e2e8f0;border-color:#475569}
+  html.dark .ctj-map-detail{border-color:#334155}
+  html.dark .ctj-detail-metrics div,html.dark .ctj-detail-route-result{background:#0f172a;border-color:#334155}
+  @media(max-width:1100px){.ctj-map-layout{grid-template-columns:210px minmax(0,1fr)}.ctj-map-detail{grid-column:1/-1;border-left:0;border-top:1px solid #e2e8f0}.ctj-map-detail-empty{min-height:130px}}
+  @media(max-width:680px){.ctj-map-layout{display:flex;flex-direction:column}.ctj-map-sidebar{border-right:0;border-bottom:1px solid #e2e8f0}.ctj-map-kpi strong{font-size:21px}#ctj-cluster-map{height:430px!important}.ctj-map-detail{border-left:0}.ctj-map-heading{align-items:flex-start}.ctj-map-stat,.ctj-map-chip{font-size:10px;padding:7px 8px}}
   #ctj-cluster-map .ctj-map-pin{background:transparent;border:0}
   #ctj-cluster-map .ctj-map-pin span{display:block;width:16px;height:16px;border:3px solid #fff;border-radius:50%;background:#64748b;box-shadow:0 1px 7px rgba(15,23,42,.5)}
   #ctj-cluster-map .ctj-map-pin.pen-low span{background:#e11d48}
@@ -515,44 +581,109 @@ html.dark option { background:#0f172a; color:#f1f5f9; }
       </div>
     </section>
 
-    <!-- Peta Sebaran Cluster -->
-    <section class="bg-white rounded-2xl shadow-card border border-slate-200/80 overflow-hidden">
-      <div class="p-4 sm:p-5 border-b border-slate-100 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
+    <!-- Peta Sebaran Cluster - Premium ASM & AE Workspace -->
+    <section id="ctj-map-workspace" class="bg-white rounded-2xl shadow-card border border-slate-200 overflow-hidden">
+      <div class="ctj-map-heading px-4 sm:px-5 py-4 flex flex-col lg:flex-row lg:items-center lg:justify-between gap-3">
         <div>
-          <h2 class="font-display text-base sm:text-lg font-extrabold text-slate-800 flex items-center gap-2"><i class="fa-solid fa-map-location-dot text-indigo-600"></i> Peta Sebaran Cluster</h2>
-          <p class="text-xs text-slate-500 mt-1">Klik titik atau nama cluster untuk melihat Total HP, Total Subs, dan penetrasi.</p>
+          <div class="flex items-center gap-2">
+            <span class="ctj-map-heading-icon"><i class="fa-solid fa-map-location-dot"></i></span>
+            <div>
+              <h2 class="font-display text-base sm:text-lg font-extrabold text-slate-900">Maps CTJ <span class="text-indigo-600">MoraRepublic</span></h2>
+              <p class="text-xs text-slate-500">Territory intelligence • Monitoring wilayah & panduan kunjungan</p>
+            </div>
+          </div>
         </div>
         <div class="flex flex-wrap gap-2 text-xs font-semibold">
-          <span class="rounded-lg bg-indigo-50 text-indigo-700 px-3 py-2">Cluster pada peta: <b id="map-cluster-count">0</b></span>
-          <button id="map-zonk-toggle" type="button" onclick="toggleZonkMap()" aria-pressed="false" class="rounded-lg bg-rose-50 hover:bg-rose-100 text-rose-700 border border-rose-200 px-3 py-2 font-bold transition"><i class="fa-solid fa-triangle-exclamation mr-1"></i>ZONK: <b id="map-zonk-count">0</b> <span id="map-zonk-action" class="ml-1 underline">Tampilkan</span></button>
-          <span class="rounded-lg bg-amber-50 text-amber-700 px-3 py-2">Tanpa koordinat: <b id="map-missing-count">0</b></span>
-          <button type="button" onclick="locateNearestCTJCluster()" class="rounded-lg bg-emerald-50 hover:bg-emerald-100 text-emerald-700 border border-emerald-200 px-3 py-2"><i class="fa-solid fa-location-crosshairs mr-1"></i>Cluster Terdekat</button>
-          <button type="button" onclick="openSelectedCTJRoute()" class="rounded-lg bg-violet-50 hover:bg-violet-100 text-violet-700 border border-violet-200 px-3 py-2"><i class="fa-solid fa-route mr-1"></i>Rute Pilihan (<b id="map-route-count">0</b>)</button>
-          <a id="map-traffic-link" href="https://www.google.com/maps" target="_blank" rel="noopener noreferrer" class="rounded-lg bg-sky-50 hover:bg-sky-100 text-sky-700 border border-sky-200 px-3 py-2"><i class="fa-solid fa-car-side mr-1"></i>Cek Lalu Lintas</a>
+          <span class="ctj-map-stat"><i class="fa-solid fa-location-dot text-indigo-500"></i> Cluster tampil <b id="map-cluster-count">0</b></span>
+          <button id="map-zonk-toggle" type="button" onclick="toggleZonkMap()" aria-pressed="false" class="ctj-map-chip ctj-map-chip-danger"><i class="fa-solid fa-triangle-exclamation"></i> ZONK <b id="map-zonk-count">0</b><span id="map-zonk-action" class="underline">Tampilkan</span></button>
+          <span class="ctj-map-stat"><i class="fa-solid fa-circle-exclamation text-amber-500"></i> Tanpa koordinat <b id="map-missing-count">0</b></span>
+          <button type="button" onclick="locateNearestCTJCluster()" class="ctj-map-chip ctj-map-chip-green"><i class="fa-solid fa-location-crosshairs"></i> Cluster Terdekat</button>
+          <button type="button" onclick="openSelectedCTJRoute()" class="ctj-map-chip ctj-map-chip-violet"><i class="fa-solid fa-route"></i> Rute (<b id="map-route-count">0</b>)</button>
         </div>
-        <div class="mt-3 grid grid-cols-1 sm:grid-cols-3 gap-2">
-          <div class="sm:col-span-1 flex gap-2">
-            <input id="map-cluster-search" type="search" placeholder="Cari nama / ID cluster..." class="w-full rounded-lg border border-slate-200 px-3 py-2 text-xs focus:ring-2 focus:ring-indigo-300 outline-none" onkeydown="if(event.key==='Enter')searchCTJClusterOnMap()" />
-            <button type="button" onclick="searchCTJClusterOnMap()" class="rounded-lg bg-indigo-600 hover:bg-indigo-700 text-white px-3 py-2 text-xs font-bold"><i class="fa-solid fa-magnifying-glass"></i></button>
+      </div>
+
+      <div class="ctj-map-kpis grid grid-cols-2 md:grid-cols-3 xl:grid-cols-5 gap-2.5 p-3 sm:p-4">
+        <div class="ctj-map-kpi"><span><i class="fa-solid fa-layer-group"></i> Total Cluster</span><strong id="map-kpi-total">0</strong><small>Data sesuai filter utama</small></div>
+        <div class="ctj-map-kpi is-danger"><span><i class="fa-solid fa-bullseye"></i> ZONK SA</span><strong id="map-kpi-zonk">0</strong><small id="map-kpi-zonk-pct">0% dari cluster</small></div>
+        <div class="ctj-map-kpi is-warning"><span><i class="fa-solid fa-arrow-trend-down"></i> Penetrasi &lt;10%</span><strong id="map-kpi-low">0</strong><small>Perlu pengembangan</small></div>
+        <div class="ctj-map-kpi is-info"><span><i class="fa-solid fa-calendar-xmark"></i> Belum Visit MTD</span><strong id="map-kpi-unvisited">0</strong><small>Visit MTD = 0</small></div>
+        <div class="ctj-map-kpi is-priority"><span><i class="fa-solid fa-fire"></i> Prioritas Tinggi</span><strong id="map-kpi-priority">0</strong><small>Skor prioritas ≥45</small></div>
+      </div>
+
+      <div class="ctj-map-layout">
+        <aside class="ctj-map-sidebar p-3 sm:p-4">
+          <div class="ctj-map-panel-title"><i class="fa-solid fa-sliders"></i> Pengaturan Peta</div>
+          <label class="ctj-map-label" for="map-role-mode">Mode Penggunaan</label>
+          <select id="map-role-mode" onchange="changeCTJMapRoleMode()" class="ctj-map-select">
+            <option value="ASM">ASM • Monitoring Wilayah</option><option value="AE">AE • Panduan Kunjungan</option>
+          </select>
+          <p id="map-role-hint" class="text-[11px] text-slate-500 mt-1 mb-3">Mode ASM: peta mengikuti filter wilayah dan tim yang dipilih.</p>
+          <div class="ctj-map-divider"></div>
+          <div class="ctj-map-panel-title"><i class="fa-solid fa-filter"></i> Filter Peta</div>
+          <label class="ctj-map-label" for="map-cluster-search">Cari Cluster</label>
+          <div class="flex gap-1.5 mb-3">
+            <input id="map-cluster-search" type="search" placeholder="Nama / ID cluster..." class="ctj-map-input flex-1 min-w-0" onkeydown="if(event.key==='Enter')searchCTJClusterOnMap()" />
+            <button type="button" onclick="searchCTJClusterOnMap()" class="ctj-map-search-btn" aria-label="Cari cluster"><i class="fa-solid fa-magnifying-glass"></i></button>
           </div>
-          <select id="map-condition-filter" onchange="renderCTJClusterMap()" class="rounded-lg border border-slate-200 px-3 py-2 text-xs bg-white text-slate-700">
+          <label class="ctj-map-label" for="map-condition-filter">Kondisi Cluster</label>
+          <select id="map-condition-filter" onchange="renderCTJClusterMap()" class="ctj-map-select mb-3">
             <option value="ALL">Semua kondisi cluster</option><option value="LOW">Penetrasi rendah (&lt;10%)</option><option value="MEDIUM">Penetrasi sedang (10–&lt;20%)</option><option value="HIGH">Penetrasi tinggi (≥20%)</option><option value="UNVISITED">Belum ada visit MTD</option><option value="ZONK">ZONK SA saja</option>
           </select>
-          <select id="map-role-mode" onchange="changeCTJMapRoleMode()" class="rounded-lg border border-slate-200 px-3 py-2 text-xs bg-white text-slate-700 font-semibold">
-            <option value="ASM">Mode ASM • Semua wilayah terfilter</option><option value="AE">Mode AE • Fokus AE terpilih</option>
+          <label class="ctj-map-label" for="map-color-mode">Warna Marker</label>
+          <select id="map-color-mode" onchange="renderCTJClusterMap()" class="ctj-map-select mb-3">
+            <option value="PRIORITY">Prioritas Gabungan</option><option value="PEN">Penetrasi</option><option value="VISIT">Visit MTD</option><option value="ZONK">Status SA</option>
           </select>
-          <select id="map-color-mode" onchange="renderCTJClusterMap()" class="rounded-lg border border-slate-200 px-3 py-2 text-xs bg-white text-slate-700">
-            <option value="PRIORITY">Warna titik: Prioritas Gabungan</option><option value="PEN">Warna titik: Penetrasi</option><option value="VISIT">Warna titik: Visit MTD</option><option value="ZONK">Warna titik: Status SA</option>
-          </select>
+          <button type="button" onclick="renderCTJClusterMap()" class="ctj-map-apply"><i class="fa-solid fa-check"></i> Terapkan Tampilan</button>
+          <div class="ctj-map-divider"></div>
+          <div class="ctj-map-panel-title"><i class="fa-solid fa-palette"></i> Legenda Prioritas</div>
+          <div class="ctj-map-legend"><span class="ctj-legend-dot red"></span><span><b>Sangat tinggi</b><small>Skor ≥70</small></span></div>
+          <div class="ctj-map-legend"><span class="ctj-legend-dot orange"></span><span><b>Tinggi</b><small>Skor 45–69</small></span></div>
+          <div class="ctj-map-legend"><span class="ctj-legend-dot yellow"></span><span><b>Sedang</b><small>Skor 20–44</small></span></div>
+          <div class="ctj-map-legend"><span class="ctj-legend-dot green"></span><span><b>Rendah</b><small>Skor &lt;20</small></span></div>
+          <div class="ctj-map-divider"></div>
+          <a id="map-traffic-link" href="https://www.google.com/maps" target="_blank" rel="noopener noreferrer" class="ctj-map-traffic"><i class="fa-solid fa-car-side"></i> Cek Lalu Lintas Google Maps <i class="fa-solid fa-arrow-up-right-from-square"></i></a>
+          <p class="text-[10px] leading-relaxed text-slate-400 mt-2">Peta dasar: OpenStreetMap. Satelit dan topografi tersedia melalui pilihan layer. Informasi kemacetan live dibuka melalui Google Maps.</p>
+        </aside>
+
+        <div class="ctj-map-main">
+          <div class="ctj-map-toolbar">
+            <span><i class="fa-solid fa-map"></i> Sebaran Cluster Surabaya & Sidoarjo</span>
+            <span class="ctj-map-live-label"><i class="fa-solid fa-circle"></i> DATA GOOGLE SHEETS</span>
+          </div>
+          <div id="ctj-cluster-map" class="w-full" style="height:620px;z-index:1"></div>
+          <div class="ctj-map-bottom-tools">
+            <button type="button" onclick="locateNearestCTJCluster()"><i class="fa-solid fa-crosshairs"></i> Lokasi Saya</button>
+            <button type="button" onclick="locateNearestCTJCluster()"><i class="fa-solid fa-location-dot"></i> Cluster Terdekat</button>
+            <button type="button" onclick="openSelectedCTJRoute()"><i class="fa-solid fa-route"></i> Rute Pilihan (<b id="map-route-count-bottom">0</b>)</button>
+          </div>
+          <p class="text-[10px] text-slate-400 px-3 py-2">Klik marker untuk melihat detail cluster, prioritas, estimasi rute, dan navigasi. Peta mengikuti filter BM, ASM, AE, Kota, RFS, Status SA, serta pencarian utama.</p>
         </div>
-        <div class="flex flex-wrap items-center gap-x-4 gap-y-1 mt-2 text-[11px] text-slate-500">
-          <span class="font-bold text-slate-600">Prioritas gabungan:</span><span><i class="inline-block w-2.5 h-2.5 rounded-full bg-rose-600 mr-1"></i>Sangat tinggi</span><span><i class="inline-block w-2.5 h-2.5 rounded-full bg-orange-500 mr-1"></i>Tinggi</span><span><i class="inline-block w-2.5 h-2.5 rounded-full bg-amber-400 mr-1"></i>Sedang</span><span><i class="inline-block w-2.5 h-2.5 rounded-full bg-emerald-600 mr-1"></i>Rendah</span>
-        </div>
-        <p id="map-role-hint" class="text-[11px] text-slate-500 mt-1">Mode ASM: peta mengikuti filter wilayah dan tim yang dipilih. Prioritas menggabungkan status ZONK, penetrasi, dan pencapaian visit.</p>
-      </div>
-      <div class="p-2 sm:p-4">
-        <div id="ctj-cluster-map" class="w-full rounded-xl border border-slate-200 overflow-hidden" style="height:520px;z-index:1"></div>
-        <p class="text-[11px] text-slate-500 mt-2 px-1">Peta mengikuti filter BM, ASM, AE, Kota, RFS, Status SA, dan pencarian yang sedang aktif.</p>
+
+        <aside class="ctj-map-detail p-3 sm:p-4" id="ctj-map-detail-panel">
+          <div class="ctj-map-panel-title"><i class="fa-solid fa-circle-info"></i> Detail Cluster</div>
+          <div id="ctj-map-detail-empty" class="ctj-map-detail-empty">
+            <span><i class="fa-solid fa-map-pin"></i></span>
+            <b>Pilih cluster pada peta</b>
+            <p>Informasi HP, Subs, penetrasi, visit, dan prioritas akan tampil di sini.</p>
+          </div>
+          <div id="ctj-map-detail-content" class="hidden">
+            <div class="ctj-detail-name" id="ctj-detail-name">-</div>
+            <div class="ctj-detail-owner" id="ctj-detail-owner">ASM - • AE -</div>
+            <div class="ctj-detail-priority" id="ctj-detail-priority">Prioritas -</div>
+            <div class="ctj-detail-metrics">
+              <div><small>Total HP</small><b id="ctj-detail-hp">0</b></div>
+              <div><small>Total Subs</small><b id="ctj-detail-subs">0</b></div>
+              <div><small>Penetrasi</small><b id="ctj-detail-pen">0%</b></div>
+              <div><small>Visit MTD</small><b id="ctj-detail-visit">0</b></div>
+            </div>
+            <div class="ctj-detail-reasons"><b><i class="fa-solid fa-list-check"></i> Alasan Prioritas</b><p id="ctj-detail-reasons">-</p></div>
+            <div class="ctj-detail-location" id="ctj-detail-location">-</div>
+            <div id="ctj-detail-route-result" class="ctj-detail-route-result">Pilih hitung jarak untuk melihat estimasi perjalanan dari lokasi GPS.</div>
+            <button type="button" id="ctj-detail-route-btn" class="ctj-detail-action primary" disabled><i class="fa-solid fa-route"></i> Hitung Jarak & Waktu</button>
+            <button type="button" id="ctj-detail-add-route" class="ctj-detail-action secondary" disabled><i class="fa-solid fa-plus"></i> Tambahkan ke Rute</button>
+            <a id="ctj-detail-navigation" class="ctj-detail-action success" href="#" target="_blank" rel="noopener noreferrer"><i class="fa-solid fa-location-arrow"></i> Navigasi Google Maps</a>
+          </div>
+        </aside>
       </div>
     </section>
 
@@ -1271,6 +1402,40 @@ html.dark option { background:#0f172a; color:#f1f5f9; }
       },error=>showToast(error.code===1?'Izin GPS ditolak. Aktifkan lokasi browser.':'Lokasi GPS tidak berhasil diperoleh.',true),
       {enableHighAccuracy:true,timeout:15000,maximumAge:60000});
     }
+    function showCTJMapDetail(d,lat,lon) {
+      const empty=document.getElementById('ctj-map-detail-empty');
+      const content=document.getElementById('ctj-map-detail-content');
+      if(empty) empty.classList.add('hidden');
+      if(content) content.classList.remove('hidden');
+      const priority=getCTJMapPriority(d), pen=getCTJMapPenetration(d);
+      const reasons=[];
+      if(d.isZonkSA) reasons.push('ZONK SA');
+      if(pen<10) reasons.push('Penetrasi di bawah 10%');
+      else if(pen<20) reasons.push('Penetrasi di bawah 20%');
+      if(Number(d.visitMTD||0)<=0) reasons.push('Belum ada visit MTD');
+      if(d.isUnderTarget) reasons.push('Visit belum mencapai target');
+      const levelColor=priority.score>=70?'#e11d48':priority.score>=45?'#ea580c':priority.score>=20?'#d97706':'#059669';
+      const set=(id,value)=>{const el=document.getElementById(id);if(el)el.textContent=value;};
+      set('ctj-detail-name',d.clusterName||d.clusterId||'Cluster');
+      set('ctj-detail-owner','ASM: '+(d.asm||'-')+' • AE: '+(d.ae||'-'));
+      set('ctj-detail-priority',priority.level+' • Skor '+priority.score+'/95');
+      const priorityEl=document.getElementById('ctj-detail-priority');if(priorityEl){priorityEl.style.color=levelColor;priorityEl.style.background=priority.score>=70?'#fff1f2':priority.score>=45?'#fff7ed':priority.score>=20?'#fefce8':'#ecfdf5';}
+      set('ctj-detail-hp',formatNumber(d.hpTotal));
+      set('ctj-detail-subs',formatNumber(d.totalSubs));
+      set('ctj-detail-pen',pen.toFixed(2).replace('.',',')+'%');
+      set('ctj-detail-visit',formatNumber(d.visitMTD));
+      set('ctj-detail-reasons',reasons.join(' • ')||'Kondisi relatif baik');
+      set('ctj-detail-location',[d.kecamatan,d.kotaAsli].filter(Boolean).join(', ')||'Lokasi cluster');
+      const routeResult=document.getElementById('ctj-detail-route-result');
+      if(routeResult) routeResult.textContent='Pilih hitung jarak untuk melihat estimasi perjalanan dari lokasi GPS.';
+      const routeBtn=document.getElementById('ctj-detail-route-btn');
+      const addBtn=document.getElementById('ctj-detail-add-route');
+      const nav=document.getElementById('ctj-detail-navigation');
+      if(routeBtn){routeBtn.disabled=false;routeBtn.onclick=()=>routeToCTJCluster(lat,lon,'ctj-detail-route-result','ctj-detail-navigation');}
+      if(addBtn){addBtn.disabled=false;addBtn.onclick=()=>addCTJRouteStop(lat,lon,d.clusterName||d.clusterId||'Cluster');}
+      if(nav) nav.href='https://www.google.com/maps/dir/?api=1&destination='+encodeURIComponent(lat+','+lon)+'&travelmode=driving';
+    }
+
     function renderCTJClusterMap() {
       const countEl = document.getElementById('map-cluster-count');
       const missingEl = document.getElementById('map-missing-count');
@@ -1285,6 +1450,19 @@ html.dark option { background:#0f172a; color:#f1f5f9; }
       const zonkToggle = document.getElementById('map-zonk-toggle');
       const zonkAction = document.getElementById('map-zonk-action');
       const zonkTotal = filteredClusterData.filter(d => d.isZonkSA).length;
+      const lowPenTotal = filteredClusterData.filter(d => getCTJMapPenetration(d) < 10).length;
+      const unvisitedTotal = filteredClusterData.filter(d => Number(d.visitMTD || 0) <= 0).length;
+      const highPriorityTotal = filteredClusterData.filter(d => getCTJMapPriority(d).score >= 45).length;
+      const setMapKPI = (id,value) => { const el=document.getElementById(id); if(el) el.textContent=formatNumber(value); };
+      setMapKPI('map-kpi-total',filteredClusterData.length);
+      setMapKPI('map-kpi-zonk',zonkTotal);
+      setMapKPI('map-kpi-low',lowPenTotal);
+      setMapKPI('map-kpi-unvisited',unvisitedTotal);
+      setMapKPI('map-kpi-priority',highPriorityTotal);
+      const zonkPct=document.getElementById('map-kpi-zonk-pct');
+      if(zonkPct) zonkPct.textContent=(filteredClusterData.length?(zonkTotal/filteredClusterData.length*100):0).toFixed(1).replace('.',',')+'% dari cluster';
+      const routeBottom=document.getElementById('map-route-count-bottom');
+      if(routeBottom) routeBottom.textContent=selectedCTJRouteStops.length;
       if (zonkCountEl) zonkCountEl.textContent = formatNumber(zonkTotal);
       if (zonkToggle) {
         zonkToggle.setAttribute('aria-pressed', String(mapShowZonkOnly));
@@ -1346,6 +1524,7 @@ html.dark option { background:#0f172a; color:#f1f5f9; }
           title:d.clusterName||d.clusterId||'Cluster',
           icon:L.divIcon({className:'ctj-map-pin '+getCTJMapMarkerClass(d),html:'<span></span>',iconSize:[18,18],iconAnchor:[9,9]})
         }).bindPopup(popup,{maxWidth:285});
+        marker.on('click', () => showCTJMapDetail(d,lat,lon));
         marker.addTo(ctjClusterMarkers);
         ctjMapMarkerIndex.push({data:d,lat,lon,marker});
         bounds.push([lat,lon]);
