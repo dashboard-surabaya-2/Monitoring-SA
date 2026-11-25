@@ -69,7 +69,18 @@
       70% { box-shadow: 0 0 0 12px rgba(37, 211, 102, 0); }
       100% { box-shadow: 0 0 0 0 rgba(37, 211, 102, 0); }
     }
-  </style>
+  /* Mobile usability: Monitoring CTJ */
+@media(max-width:640px){
+ html{-webkit-text-size-adjust:100%}body{overflow-x:hidden}
+ button,select,input{min-height:40px}
+ .overflow-x-auto,.overflow-auto{-webkit-overflow-scrolling:touch}
+ header .max-w-7xl{padding-left:.75rem!important;padding-right:.75rem!important}
+ [id^="modal-"]{padding:.25rem!important}
+ [id^="modal-"]>div{width:calc(100vw - 1rem)!important;max-width:calc(100vw - 1rem)!important;max-height:94dvh!important;min-width:0!important;margin:.5rem!important}
+ table{font-size:.72rem}#toast{max-width:calc(100vw - 1.5rem);white-space:normal}
+}
+
+</style>
 </head>
 <body class="antialiased min-h-screen flex flex-col">
 
