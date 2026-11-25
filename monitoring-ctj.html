@@ -2118,7 +2118,8 @@ html.dark option { background:#0f172a; color:#f1f5f9; }
       const onTargetCount = total - underVisitList.length;
 
       let lines = [];
-      lines.push(`*📊 REPORT MONITORING CLUSTER CTJ (WEEK 4)*`);
+      lines.push(`📊 *MONITORING CLUSTER CTJ*`);
+      lines.push(`MORA REPUBLIC • SURABAYA 2`);
       lines.push(`Tanggal: *Selasa, 24 November 2026*`);
       lines.push(`BM: *${selectedBM === 'ALL' ? 'Semua BM' : selectedBM}*`);
       if (selectedASM !== 'ALL') lines.push(`ASM: *${selectedASM}*`);
@@ -2126,8 +2127,8 @@ html.dark option { background:#0f172a; color:#f1f5f9; }
       if (selectedCity !== 'ALL') lines.push(`Area/Kota: *${selectedCity}*`);
       if (selectedRFS !== 'ALL') lines.push(`RFS Class: *${selectedRFS}*`);
       lines.push(`Acuan Target: *Min. ${targetVisit} Visit MTD* (Sisa ${remainingDays} hari s/d akhir bulan)`);
-      lines.push(`-----------------------------------`);
-      lines.push(`*RINGKASAN PERFORMA:*`);
+      lines.push(`━━━━━━━━━━━━━━━━━━`);
+      lines.push(`📌 *RINGKASAN PERFORMA*`);
       lines.push(`• Total Cluster CTJ: *${total}*`);
       lines.push(`• Cluster ZONK SA: *${zonkList.length}* (${total > 0 ? Math.round((zonkList.length / total) * 100) : 0}%)`);
       lines.push(`• Visit < Target (${targetVisit}): *${underVisitList.length}*`);
@@ -2138,37 +2139,37 @@ html.dark option { background:#0f172a; color:#f1f5f9; }
       if (includeRFS) {
         const rfsSummary = computeRFSSummary(filteredClusterData, targetVisit);
         lines.push(``);
-        lines.push(`*🗂️ RINGKASAN RFS CLASSIFICATION (${rfsSummary.length} Kategori):*`);
+        lines.push(`🗂️ *RINGKASAN RFS (${rfsSummary.length} KATEGORI)*`);
         if (rfsSummary.length === 0) {
           lines.push(`_Tidak ada data RFS._`);
         } else {
           rfsSummary.forEach((r, idx) => {
-            lines.push(`${idx + 1}. *${r.rfsClass}*: ${r.totalCluster} Cls • ZONK ${r.zonkSA} • <${targetVisit}V ${r.underTarget} (Daily ${r.wajibDaily}) • HP ${formatNumber(r.totalHP)} • Subs ${formatNumber(r.totalSubs)} • Pen ${r.avgPenRate.toFixed(1)}% • Visit ${formatNumber(r.totalVisitMTD)}`);
+            lines.push(`${idx + 1}. *${r.rfsClass}* — ${r.totalCluster} cluster\n   ZONK: ${r.zonkSA} | Kurang target: ${r.underTarget} | Wajib harian: ${r.wajibDaily}\n   HP: ${formatNumber(r.totalHP)} | Subs: ${formatNumber(r.totalSubs)} | Pen: ${r.avgPenRate.toFixed(1)}% | Visit: ${formatNumber(r.totalVisitMTD)}`);
           });
         }
       }
 
       if (includeUnderVisit) {
         lines.push(``);
-        lines.push(`*🚨 CLUSTER WAJIB VISIT TIAP HARI & KURANG TARGET (${underVisitList.length}):*`);
+        lines.push(`🚨 *CLUSTER WAJIB VISIT / KURANG TARGET (${underVisitList.length})*`);
         if (underVisitList.length === 0) {
           lines.push(`_Semua cluster sudah mencapai target minimal ${targetVisit} visit._`);
         } else {
           underVisitList.forEach((d, idx) => {
             const label = d.isCritical ? `KRITIS (${d.perDayNeeded.toFixed(1)}x/hr)` : `WAJIB TIAP HARI`;
-            lines.push(`${idx + 1}. *${d.clusterName}*: ${d.visitMTD}/${targetVisit} (kurang ${d.deficit}) • ${label} • AE ${d.ae}`);
+            lines.push(`${idx + 1}. *${d.clusterName}* — ${d.visitMTD}/${targetVisit} visit (kurang ${d.deficit})\n   ${label} | AE: ${d.ae}`);
           });
         }
       }
 
       if (includeZonk) {
         lines.push(``);
-        lines.push(`*⚠️ DETAIL CLUSTER ZONK SA (${zonkList.length}):*`);
+        lines.push(`⚠️ *DETAIL CLUSTER ZONK SA (${zonkList.length})*`);
         if (zonkList.length === 0) {
           lines.push(`_Nihil cluster ZONK SA._`);
         } else {
           zonkList.forEach((d, idx) => {
-            lines.push(`${idx + 1}. *${d.clusterName}* (${d.clusterId}) • ${d.kecamatan} • HP ${d.hpAvailable} • Visit ${d.visitMTD} • AE ${d.ae}`);
+            lines.push(`${idx + 1}. *${d.clusterName}* (${d.clusterId})\n   ${d.kecamatan} | HP: ${d.hpAvailable} | Visit: ${d.visitMTD}\n   AE: ${d.ae}`);
           });
         }
       }
