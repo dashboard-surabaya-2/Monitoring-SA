@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Dashboard Monitoring Work Order (WO) - Surabaya & Sidoarjo</title>
+    <title>Monitoring Work Order (WO)</title>
 
     <!-- Google Fonts: Inter -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -100,6 +100,12 @@
   /* Navigasi bawah tampil saat scroll, sembunyi saat diam, tetap tampil di ujung halaman */
   .mobile-dashboard-nav{transform:translateY(110%);opacity:0;pointer-events:none;transition:transform .22s ease,opacity .22s ease}
   .mobile-dashboard-nav.is-visible{transform:translateY(0);opacity:1;pointer-events:auto}
+
+  /* Header WO ringkas untuk layar HP */
+  @media(max-width:640px){
+    header h1{font-size:1rem!important;line-height:1.25!important}
+    header{padding-top:.65rem!important;padding-bottom:.65rem!important}
+  }
 </style>
 </head>
 <body class="bg-slate-50 text-slate-800 antialiased min-h-screen flex flex-col">
@@ -265,9 +271,7 @@
                                 Sampel "Monitoring Surabaya 2"
                             </span>
                         </div>
-                        <p class="text-xs sm:text-sm text-slate-500 mt-0.5">
-                            Monitoring IKR, performa BSM/ASM/AE, area (<code class="text-blue-600 font-semibold bg-blue-50 px-1.5 py-0.5 rounded">area asli</code>), dan klasifikasi jadwal (<code class="text-blue-600 font-semibold bg-blue-50 px-1.5 py-0.5 rounded">slotTime</code>).
-                        </p>
+                        
                     </div>
                 </div>
 
