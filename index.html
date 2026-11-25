@@ -1307,13 +1307,13 @@ html.dark option { background:#0f172a; color:#f1f5f9; }
       // ⚠️ KETENTUAN UTAMA: HANYA MENAMPILKAN AE YANG AKTIF DI BULAN INI SAJA
       const aeMap = {};
       novData.forEach(r => {
-        const k = `${r.sales_agent_name || 'Unknown AE'}|||${escapeHTML(r.asm_name || '-')}`;
+        const k = `${r.sales_agent_name || 'Unknown AE'}|||${r.asm_name || '-'}`;
         if (!aeMap[k]) aeMap[k] = { ae: r.sales_agent_name || 'Unknown AE', aeCode: r.sales_agent_code || '-', asm: r.asm_name || '-', nov: 0, oct: 0 };
         aeMap[k].nov++;
       });
       // Tarik data Oktober HANYA untuk AE yang sudah terdaftar aktif di November (tanpa memasukkan AE lama yang sudah keluar)
       octData.forEach(r => {
-        const k = `${r.sales_agent_name || 'Unknown AE'}|||${escapeHTML(r.asm_name || '-')}`;
+        const k = `${r.sales_agent_name || 'Unknown AE'}|||${r.asm_name || '-'}`;
         if (aeMap[k]) {
           aeMap[k].oct++;
         }
@@ -1348,7 +1348,7 @@ html.dark option { background:#0f172a; color:#f1f5f9; }
 
       // ⚠️ HANYA AMBIL DATA BULAN INI (NOVEMBER) SAJA
       getNovemberSA().forEach(r => {
-        const key = `${escapeHTML(r.asm_name || '-')}|||${escapeHTML(r.sales_agent_name || '-')}`;
+        const key = `${r.asm_name || '-'}|||${r.sales_agent_name || '-'}`;
         if (!grouped[key]) {
           grouped[key] = {
             asm: r.asm_name || '-',
@@ -1374,7 +1374,7 @@ html.dark option { background:#0f172a; color:#f1f5f9; }
 
       // Acuan target: capaian EOM bulan lalu (seluruh Oktober), bukan MTD tanggal yang sama.
       filteredData.filter(isOctoberFullEOMData).forEach(r => {
-        const key = `${escapeHTML(r.asm_name || '-')}|||${escapeHTML(r.sales_agent_name || '-')}`;
+        const key = `${r.asm_name || '-'}|||${r.sales_agent_name || '-'}`;
         if (grouped[key]) {
           grouped[key].prevMonth++;
         }
@@ -1512,7 +1512,7 @@ html.dark option { background:#0f172a; color:#f1f5f9; }
       const title = labels[type] || 'Detail SA';
       const totalRevenue = rows.reduce((sum, r) => sum + (Number(r.revenue_before_tax) || Number(r.invoice_amount) || 0), 0);
       const safe = value => String(value ?? '-').replace(/[&<>"']/g, ch => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[ch]));
-      const detailRows = rows.map((r, i) => `${i+1}. ${escapeHTML(r.name || '-')} | Sub: ${escapeHTML(r.subscription_id || '-')} | Tgl: ${r.service_activation_date || '-'} | Plan: ${escapeHTML(r.plan || '-')} | Cluster: ${escapeHTML(r.clustername || '-')} | ${getDelayBucket(r) === 'PAID' ? 'PAID' : 'UNPAID ('+(r.unpaid_days||0)+' hari)'} | ${formatIDR(r.revenue_before_tax || r.invoice_amount)}`);
+      const detailRows = rows.map((r, i) => `${i+1}. ${r.name || '-'} | Sub: ${r.subscription_id || '-'} | Tgl: ${r.service_activation_date || '-'} | Plan: ${r.plan || '-'} | Cluster: ${r.clustername || '-'} | ${getDelayBucket(r) === 'PAID' ? 'PAID' : 'UNPAID ('+(r.unpaid_days||0)+' hari)'} | ${formatIDR(r.revenue_before_tax || r.invoice_amount)}`);
       const waText = [
         '*DETAIL '+title.toUpperCase()+' – MORA REPUBLIC SURABAYA 2*',
         'ASM: '+asm,
@@ -1594,7 +1594,7 @@ html.dark option { background:#0f172a; color:#f1f5f9; }
       const bucket = getDelayBucket(r);
       const days = parseInt(r.unpaid_days) || 0;
       const status = bucket === 'PAID' ? '✅ PAID' : `⚠️ UNPAID ${days} hari`;
-      return `${idx + 1}. *${escapeHTML(r.name || '-')}* | Sub ID: ${escapeHTML(r.subscription_id || '-')} | AE: ${escapeHTML(r.sales_agent_name || '-')} | ASM: ${escapeHTML(r.asm_name || '-')} | Paket: ${escapeHTML(r.plan || '-')} | Cluster: ${escapeHTML(r.clustername || '-')} | Aktivasi: ${r.service_activation_date || '-'} | ${status} | Unpaid: ${bucket === 'PAID' ? '—' : `${days} hari`} | Tagihan: ${formatIDR(Number(r.invoice_amount)||0)}`;
+      return `${idx + 1}. *${r.name || '-'}* | Sub ID: ${r.subscription_id || '-'} | AE: ${r.sales_agent_name || '-'} | ASM: ${r.asm_name || '-'} | Paket: ${r.plan || '-'} | Cluster: ${r.clustername || '-'} | Aktivasi: ${r.service_activation_date || '-'} | ${status} | Unpaid: ${bucket === 'PAID' ? '—' : `${days} hari`} | Tagihan: ${formatIDR(Number(r.invoice_amount)||0)}`;
     }
 
     function showTab2KPIDetail(bucket) {
@@ -1773,7 +1773,7 @@ html.dark option { background:#0f172a; color:#f1f5f9; }
         if (delayFilter === 'ALL_UNPAID' && b === 'PAID') return false;
         if (delayFilter !== 'ALL' && delayFilter !== 'ALL_UNPAID' && b !== delayFilter) return false;
         if (q) {
-          const hay = `${r.subscription_id} ${r.order_id} ${r.name} ${r.asm_name} ${r.sales_agent_name} ${r.clustername}`.toLowerCase();
+          const hay = `${escapeHTML(r.subscription_id)} ${escapeHTML(r.order_id)} ${r.name} ${r.asm_name} ${r.sales_agent_name} ${r.clustername}`.toLowerCase();
           if (!hay.includes(q)) return false;
         }
         return true;
@@ -1801,12 +1801,12 @@ html.dark option { background:#0f172a; color:#f1f5f9; }
               <div class="text-[10px] text-slate-400">${r.order_id}</div>
             </td>
             <td class="py-3 px-3">
-              <div class="font-semibold">${r.name}</div>
+              <div class="font-semibold">${escapeHTML(r.name)}</div>
               <div class="text-[10px] text-slate-400 truncate max-w-[200px]">${escapeHTML(r.clustername || '-')}</div>
             </td>
             <td class="py-3 px-3">${escapeHTML(r.branch)}</td>
-            <td class="py-3 px-3 font-medium">${r.plan}</td>
-            <td class="py-3 px-3 font-mono">${r.service_activation_date}</td>
+            <td class="py-3 px-3 font-medium">${escapeHTML(r.plan)}</td>
+            <td class="py-3 px-3 font-mono">${escapeHTML(r.service_activation_date)}</td>
             <td class="py-3 px-3 text-right font-mono font-bold">${formatIDR(r.invoice_amount)}</td>
             <td class="py-3 px-3 text-center">${statusBadge}</td>
             <td class="py-3 px-3 text-center font-mono font-bold ${bucket === 'PAID' ? 'text-emerald-500' : days > 9 ? 'text-red-500' : days > 6 ? 'text-rose-500' : days > 3 ? 'text-orange-500' : 'text-amber-500'}">${bucket === 'PAID' ? '—' : `${days} hari`}</td>
@@ -2006,23 +2006,23 @@ html.dark option { background:#0f172a; color:#f1f5f9; }
         title = 'Ranking Pencapaian SA per AE';
         const map = {};
         novData.forEach(r => {
-          const k = `${r.sales_agent_name || 'Unknown AE'}|||${escapeHTML(r.asm_name || '-')}`;
+          const k = `${r.sales_agent_name || 'Unknown AE'}|||${r.asm_name || '-'}`;
           if (!map[k]) map[k] = { ae:r.sales_agent_name || 'Unknown AE', asm:r.asm_name || '-', code:r.sales_agent_code || '-', nov:0, oct:0 };
           map[k].nov++;
         });
         octData.forEach(r => {
-          const k = `${r.sales_agent_name || 'Unknown AE'}|||${escapeHTML(r.asm_name || '-')}`;
+          const k = `${r.sales_agent_name || 'Unknown AE'}|||${r.asm_name || '-'}`;
           if (map[k]) map[k].oct++;
         });
         const q = (document.getElementById('searchRankAE')?.value || '').toLowerCase();
-        const rows = Object.values(map).filter(r => `${escapeHTML(r.ae)} ${escapeHTML(r.asm)} ${r.code}`.toLowerCase().includes(q)).sort((a,b) => b.nov-a.nov || b.oct-a.oct);
+        const rows = Object.values(map).filter(r => `${r.ae} ${r.asm} ${r.code}`.toLowerCase().includes(q)).sort((a,b) => b.nov-a.nov || b.oct-a.oct);
         lines = ['🥇 *RANKING PENCAPAIAN SA PER AE*', 'MORA REPUBLIC • SURABAYA 2', `Periode: November 2026 (MTD s/d ${getCurrentCutoffDay()})`, '', '*HASIL RANKING*'];
         rows.forEach((r,i) => lines.push(`${i+1}. *${clean(r.ae)}* — ${r.nov} SA\n   ASM: ${clean(r.asm)} | ID: ${r.code}\n   Okt: ${r.oct} SA | Selisih: ${growth(r.nov,r.oct)}`));
         if (!rows.length) lines.push('_Tidak ada data untuk pencarian ini._');
       } else if (key === 'tab1Detail') {
         title = 'Rincian Performa SA Harian';
         const q = (document.getElementById('searchTab1')?.value || '').toLowerCase();
-        const rows = getAEPerformanceRows().filter(r => `${escapeHTML(r.asm)} ${escapeHTML(r.ae)} ${escapeHTML(r.aeCode)}`.toLowerCase().includes(q)).sort((a,b) => b.total-a.total || b.prevMonth-a.prevMonth);
+        const rows = getAEPerformanceRows().filter(r => `${r.asm} ${r.ae} ${r.aeCode}`.toLowerCase().includes(q)).sort((a,b) => b.total-a.total || b.prevMonth-a.prevMonth);
         lines = ['📊 *RINCIAN PERFORMA SA*', 'MORA REPUBLIC • SURABAYA 2', 'Periode: November 2026', `Total AE aktif: ${rows.length}`, '', '*DETAIL PENCAPAIAN*'];
         rows.forEach((r,i) => lines.push(`${i+1}. *${clean(r.ae)}* — ${r.total} SA / Target ${r.target}\n   ASM: ${clean(r.asm)} | Paid: ${r.paid} | Unpaid: ${r.unpaid}\n   Okt EOM: ${r.prevMonth} | Selisih: ${growth(r.total,r.prevMonth)}\n   Est. Revenue: ${formatIDR(r.revenue)}`));
         if (!rows.length) lines.push('_Tidak ada data untuk pencarian ini._');
@@ -2037,7 +2037,7 @@ html.dark option { background:#0f172a; color:#f1f5f9; }
         }).sort((a,b) => (parseInt(b.unpaid_days)||0) - (parseInt(a.unpaid_days)||0));
         const paid = rows.filter(r => getDelayBucket(r) === 'PAID').length;
         lines = ['📋 *DETAIL MONITORING SA PAID & UNPAID*', 'MORA REPUBLIC • SURABAYA 2', 'Periode: November 2026', `Total data: ${rows.length} | Paid: ${paid} | Unpaid: ${rows.length-paid}`, '', '*DAFTAR PELANGGAN*'];
-        rows.forEach((r,i) => lines.push(`${i+1}. *${clean(r.name)}* — ${getDelayBucket(r) === 'PAID' ? 'PAID' : 'UNPAID • '+(r.unpaid_days||0)+' hari'}\n   ASM: ${clean(r.asm_name)} | AE: ${clean(r.sales_agent_name)}\n   Sub ID: ${escapeHTML(r.subscription_id || '-')} | Paket: ${clean(r.plan)}\n   Tagihan: ${formatIDR(r.invoice_amount)}`));
+        rows.forEach((r,i) => lines.push(`${i+1}. *${clean(r.name)}* — ${getDelayBucket(r) === 'PAID' ? 'PAID' : 'UNPAID • '+(r.unpaid_days||0)+' hari'}\n   ASM: ${clean(r.asm_name)} | AE: ${clean(r.sales_agent_name)}\n   Sub ID: ${r.subscription_id || '-'} | Paket: ${clean(r.plan)}\n   Tagihan: ${formatIDR(r.invoice_amount)}`));
         if (!rows.length) lines.push('_Tidak ada data sesuai filter._');
       } else {
         lines = ['📊 *REPORT MONITORING SA*', 'MORA REPUBLIC • SURABAYA 2', 'Periode: November 2026'];
