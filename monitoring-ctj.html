@@ -1294,6 +1294,7 @@ html.dark option { background:#0f172a; color:#f1f5f9; }
     // Peta interaktif sebaran cluster berdasarkan koordinat LONG/LAT
     let ctjLeafletMap = null;
     let ctjClusterMarkers = null;
+    let ctjMapHasEnteredViewport = false;
     let mapShowZonkOnly = false;
     let selectedCTJRouteStops = [];
     let ctjMapMarkerIndex = [];
@@ -1319,7 +1320,8 @@ html.dark option { background:#0f172a; color:#f1f5f9; }
         }, null, { position: 'topright', collapsed: true }).addTo(ctjLeafletMap);
         ctjClusterMarkers = L.markerClusterGroup({
           showCoverageOnHover: false, spiderfyOnMaxZoom: true, zoomToBoundsOnClick: true,
-          maxClusterRadius: 48, disableClusteringAtZoom: 16
+          maxClusterRadius: 48, disableClusteringAtZoom: 16,
+          chunkedLoading: true, chunkInterval: 200, chunkDelay: 50
         }).addTo(ctjLeafletMap);
       }
       setTimeout(() => ctjLeafletMap.invalidateSize(), 120);
@@ -1641,6 +1643,8 @@ html.dark option { background:#0f172a; color:#f1f5f9; }
       const missingEl = document.getElementById('map-missing-count');
       if (!countEl || !missingEl) return;
       if (typeof L === 'undefined') { countEl.textContent = 'Peta gagal dimuat'; return; }
+      // Tunda pembuatan peta dan marker sampai area Maps mendekati layar pengguna.
+      if (!ctjMapHasEnteredViewport) return;
       initCTJClusterMap();
       if (!ctjLeafletMap || !ctjClusterMarkers) return;
       ctjClusterMarkers.clearLayers();
@@ -1728,6 +1732,7 @@ html.dark option { background:#0f172a; color:#f1f5f9; }
       missingEl.textContent = formatNumber(mapSource.length - withCoordinates.length);
 
       const bounds = [];
+      const markersToAdd = [];
       withCoordinates.forEach(d => {
         const lat=Number(d.latitude), lon=Number(d.longitude);
         const name=escapeHTML(d.clusterName||d.clusterId||'Cluster');
@@ -1768,10 +1773,12 @@ html.dark option { background:#0f172a; color:#f1f5f9; }
           className:'ctj-map-mobile-popup'
         });
         marker.on('click', () => showCTJMapDetail(d,lat,lon));
-        marker.addTo(ctjClusterMarkers);
+        markersToAdd.push(marker);
         ctjMapMarkerIndex.push({data:d,lat,lon,marker});
         bounds.push([lat,lon]);
       });
+      // Tambahkan marker bertahap agar HP tidak tersendat saat cluster berjumlah banyak.
+      if (markersToAdd.length) ctjClusterMarkers.addLayers(markersToAdd);
       if (bounds.length===1) ctjLeafletMap.setView(bounds[0],15);
       else if (bounds.length>1) ctjLeafletMap.fitBounds(bounds,{padding:[48,48],maxZoom:12,animate:false});
       else ctjLeafletMap.setView([-7.7,112.5],8);
@@ -3045,6 +3052,21 @@ html.dark option { background:#0f172a; color:#f1f5f9; }
     // Inisialisasi saat halaman dimuat
     window.addEventListener('DOMContentLoaded', () => {
       updateRemainingDaysDisplay();
+      // Lazy loading: peta baru dirender saat pengguna mendekati bagian Maps.
+      const mapWorkspace = document.getElementById('ctj-map-workspace');
+      if ('IntersectionObserver' in window && mapWorkspace) {
+        const mapObserver = new IntersectionObserver(entries => {
+          if (entries.some(entry => entry.isIntersecting)) {
+            ctjMapHasEnteredViewport = true;
+            mapObserver.disconnect();
+            renderCTJClusterMap();
+          }
+        }, { rootMargin: '250px 0px' });
+        mapObserver.observe(mapWorkspace);
+      } else {
+        ctjMapHasEnteredViewport = true;
+        renderCTJClusterMap();
+      }
       fetchGoogleSheetData(false);
       let lastCalendarDate = new Date().toDateString();
       window.setInterval(() => {
