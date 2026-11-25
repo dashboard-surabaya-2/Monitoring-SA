@@ -80,6 +80,21 @@
  table{font-size:.72rem}#toast{max-width:calc(100vw - 1.5rem);white-space:normal}
 }
 
+
+  /* Mobile polish v2: CTJ controls and table ergonomics */
+  @media(max-width:640px){
+    header{padding-top:.65rem!important;padding-bottom:.65rem!important}
+    header h1{font-size:1rem!important;line-height:1.35!important}
+    header .flex.items-center.gap-2\.5{align-self:stretch!important}
+    header button{min-height:42px!important}
+    main{padding-left:.65rem!important;padding-right:.65rem!important}
+    input,select,button{font-size:max(12px,.82rem)}
+    .overflow-x-auto{max-width:100%;overscroll-behavior-x:contain}
+    table th,table td{padding:.5rem .55rem!important;white-space:nowrap}
+    [id^="modal-"] textarea{font-size:13px!important;line-height:1.5!important}
+    [id^="modal-"] button{min-height:42px!important}
+  }
+
 </style>
 </head>
 <body class="antialiased min-h-screen flex flex-col">
