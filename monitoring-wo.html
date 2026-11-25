@@ -1494,9 +1494,9 @@ html.dark option { background:#0f172a; color:#f1f5f9; }
 
                 let dominanceHTML = '<span class="text-slate-400 text-xs italic">Tidak ada data</span>';
                 if (topArea || topCont) {
-                    const areaLine = topArea ? `<span class="font-semibold text-slate-800">${topArea[0]}</span> (${topArea[1]})` : '';
+                    const areaLine = topArea ? `<span class="font-semibold text-slate-800">${escapeHTML(topArea[0])}</span> (${topArea[1]})` : '';
                     const contShort = topCont ? (topCont[0].replace(/\s*PT$/i, '').slice(0, 22) + (topCont[0].length > 22 ? '...' : '')) : '';
-                    const contLine = topCont ? `<span class="text-slate-500 text-xs block truncate" title="${topCont[0]}">IKR: ${contShort} (${topCont[1]})</span>` : '';
+                    const contLine = topCont ? `<span class="text-slate-500 text-xs block truncate" title="${escapeHTML(topCont[0])}">IKR: ${escapeHTML(contShort)} (${topCont[1]})</span>` : '';
                     dominanceHTML = `<div class="leading-tight">${areaLine}${contLine}</div>`;
                 }
 
