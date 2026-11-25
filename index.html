@@ -36,6 +36,14 @@
       } catch (error) {
         console.warn('Preferensi dashboard terakhir tidak dapat disimpan.', error);
       }
+      // Simpan dashboard aktif pada URL agar tetap terbuka setelah halaman di-refresh.
+      try {
+        const url = new URL(window.location.href);
+        url.searchParams.set('dashboard', view);
+        window.history.replaceState({}, '', url.pathname + url.search + url.hash);
+      } catch (error) {
+        console.warn('URL dashboard aktif tidak dapat diperbarui.', error);
+      }
       const labels = { sa: 'mainTabSA', ctj: 'mainTabCTJ', wo: 'mainTabWO' };
       const panels = { sa: 'mainSAView', ctj: 'mainCTJView', wo: 'mainWOView' };
       const activeClass = 'px-4 py-2.5 rounded-xl text-xs sm:text-sm font-bold bg-indigo-600 text-white shadow-lg shadow-indigo-600/20 transition';
