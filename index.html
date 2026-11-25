@@ -1213,21 +1213,34 @@ html.dark option { background:#0f172a; color:#f1f5f9; }
 
       const novDataASM = getNovemberSA();
       const octDataASM = getOctoberMTDSA();
-      const allAsms = [...new Set([...novDataASM.map(r => r.asm_name), ...octDataASM.map(r => r.asm_name)].filter(Boolean))];
-      const asmSorted = allAsms.map(a => ({
-        name: a,
-        nov: novDataASM.filter(r => r.asm_name === a).length,
-        oct: octDataASM.filter(r => r.asm_name === a).length
-      })).sort((a, b) => b.nov - a.nov || b.oct - a.oct);
+      const selectedASMForChart = document.getElementById('filterASM')?.value || 'ALL';
+      const showAEContribution = selectedASMForChart !== 'ALL';
+      const contributionTitle = document.querySelector('#chartASMBar')?.closest('.rounded-2xl')?.querySelector('h3');
+      const contributionSubtitle = document.getElementById('subChartASMBar');
+      if (contributionTitle) contributionTitle.textContent = showAEContribution ? 'Kontribusi SA per Nama AE' : 'Kontribusi SA per Nama ASM';
+      if (contributionSubtitle) contributionSubtitle.textContent = showAEContribution
+        ? `ASM: ${selectedASMForChart.replace(' .', '')} • Perbandingan SA Bulan Ini (Nov) vs Bulan Lalu (Okt MTD)`
+        : 'Perbandingan SA Bulan Ini (Nov) vs Bulan Lalu (Okt MTD)';
+
+      const contributionKey = showAEContribution ? 'sales_agent_name' : 'asm_name';
+      const allContributionNames = [...new Set([
+        ...novDataASM.map(r => r[contributionKey]),
+        ...octDataASM.map(r => r[contributionKey])
+      ].filter(Boolean))];
+      const contributionSorted = allContributionNames.map(name => ({
+        name,
+        nov: novDataASM.filter(r => r[contributionKey] === name).length,
+        oct: octDataASM.filter(r => r[contributionKey] === name).length
+      })).sort((a, b) => b.nov - a.nov || b.oct - a.oct || a.name.localeCompare(b.name, 'id'));
 
       if (chartASMBarInstance) chartASMBarInstance.destroy();
       chartASMBarInstance = new Chart(document.getElementById('chartASMBar'), {
         type: 'bar',
         data: {
-          labels: asmSorted.map(x => x.name.replace(' .', '')),
+          labels: contributionSorted.map(x => x.name.replace(' .', '')),
           datasets: [
-            { label: 'Bulan Ini (Nov)', data: asmSorted.map(x => x.nov), backgroundColor: '#06b6d4', borderRadius: 4 },
-            { label: `Bulan Lalu (Okt s/d ${cutoff})`, data: asmSorted.map(x => x.oct), backgroundColor: '#6366f1', borderRadius: 4 }
+            { label: 'Bulan Ini (Nov)', data: contributionSorted.map(x => x.nov), backgroundColor: '#06b6d4', borderRadius: 4 },
+            { label: `Bulan Lalu (Okt s/d ${cutoff})`, data: contributionSorted.map(x => x.oct), backgroundColor: '#6366f1', borderRadius: 4 }
           ]
         },
         options: {
