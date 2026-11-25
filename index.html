@@ -1453,7 +1453,6 @@
       const labels = { SA: 'SA Bulan Ini', PAID: 'SA Paid', UNPAID: 'SA Unpaid' };
       const title = labels[type] || 'Detail SA';
       const totalRevenue = rows.reduce((sum, r) => sum + (Number(r.revenue_before_tax) || Number(r.invoice_amount) || 0), 0);
-      const fmt = value => Number(value || 0).toLocaleString('id-ID');
       const safe = value => String(value ?? '-').replace(/[&<>"']/g, ch => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[ch]));
       const detailRows = rows.map((r, i) => `${i+1}. ${r.name || '-'} | Sub: ${r.subscription_id || '-'} | Tgl: ${r.service_activation_date || '-'} | ${r.clustername || '-'} | ${getDelayBucket(r) === 'PAID' ? 'PAID' : 'UNPAID ('+(r.unpaid_days||0)+' hari)'} | ${formatIDR(r.revenue_before_tax || r.invoice_amount)}`);
       const waText = [
