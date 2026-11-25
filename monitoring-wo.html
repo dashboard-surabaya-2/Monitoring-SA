@@ -32,7 +32,7 @@
     <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
 
     <!-- Lucide Icons -->
-    <script src="https://unpkg.com/lucide@latest"></script>
+    <script src="https://unpkg.com/lucide@0.468.0"></script>
 
     <style>
         ::-webkit-scrollbar {
@@ -916,6 +916,12 @@ html.dark option { background:#0f172a; color:#f1f5f9; }
         // ============================================================================
         // 3. HELPER NORMALISASI & AREA ASLI (PRIORITAS KOLOM CD / INDEKS 81)
         // ============================================================================
+        function escapeHTML(value) {
+            return String(value ?? '').replace(/[&<>"']/g, ch => ({
+                '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'
+            }[ch]));
+        }
+
         function cleanText(val) {
             if (val === null || val === undefined) return '';
             return String(val).trim().replace(/\s+/g, ' ');
@@ -1007,13 +1013,7 @@ html.dark option { background:#0f172a; color:#f1f5f9; }
             rawWorkOrders.map(d => cleanText(d.bsmName)).filter(v => v && v !== '-' && v.toLowerCase() !== 'null').forEach(name => { const key = normalizePersonKey(name); if (key && !bsmByKey.has(key)) bsmByKey.set(key, name); });
             const allBSMs = [...bsmByKey.values()].sort((a, b) => a.localeCompare(b, 'id'));
             if (bsmSelect) {
-                bsmSelect.innerHTML = `<option value="ALL">Semua BSM (${allBSMs.length})</option>`;
-                allBSMs.forEach(name => {
-                    const opt = document.createElement('option');
-                    opt.value = name;
-                    opt.textContent = name;
-                    bsmSelect.appendChild(opt);
-                });
+                bsmSelect.innerHTML = `<option value="ALL">Semua BSM (${allBSMs.length})</option>` + allBSMs.map(v => `<option value="${escapeHTML(v)}">${escapeHTML(v)}</option>`).join('');
 
                 if (preferredBSM !== null && preferredBSM !== undefined) {
                     if (preferredBSM === 'DEFAULT_BENNY') {
@@ -1037,13 +1037,7 @@ html.dark option { background:#0f172a; color:#f1f5f9; }
             asmSource.map(d => cleanText(d.asmName)).filter(v => v && v !== '-').forEach(name => { const key = normalizePersonKey(name); if (key && !asmByKey.has(key)) asmByKey.set(key, name); });
             const allASMs = [...asmByKey.values()].sort((a, b) => a.localeCompare(b, 'id'));
             if (asmSelect) {
-                asmSelect.innerHTML = `<option value="ALL">Semua ASM (${allASMs.length})</option>`;
-                allASMs.forEach(name => {
-                    const opt = document.createElement('option');
-                    opt.value = name;
-                    opt.textContent = name;
-                    asmSelect.appendChild(opt);
-                });
+                asmSelect.innerHTML = `<option value="ALL">Semua ASM (${allASMs.length})</option>` + allASMs.map(v => `<option value="${escapeHTML(v)}">${escapeHTML(v)}</option>`).join('');
                 asmSelect.value = [...asmSelect.options].some(o => o.value === preferredASM) ? preferredASM : 'ALL';
             }
 
@@ -1056,13 +1050,7 @@ html.dark option { background:#0f172a; color:#f1f5f9; }
             });
             const allAEs = [...new Set(aeSource.map(d => cleanText(d.salesName)).filter(Boolean))].sort((a, b) => a.localeCompare(b, 'id'));
             if (aeSelect) {
-                aeSelect.innerHTML = `<option value="ALL">Semua AE (${allAEs.length})</option>`;
-                allAEs.forEach(name => {
-                    const opt = document.createElement('option');
-                    opt.value = name;
-                    opt.textContent = name;
-                    aeSelect.appendChild(opt);
-                });
+                aeSelect.innerHTML = `<option value="ALL">Semua AE (${allAEs.length})</option>` + allAEs.map(v => `<option value="${escapeHTML(v)}">${escapeHTML(v)}</option>`).join('');
                 aeSelect.value = [...aeSelect.options].some(o => o.value === preferredAE) ? preferredAE : 'ALL';
             }
 
@@ -1070,26 +1058,14 @@ html.dark option { background:#0f172a; color:#f1f5f9; }
             const prevArea = areaSelect ? areaSelect.value : 'ALL';
             const allAreas = [...new Set(rawWorkOrders.map(d => getEffectiveArea(d)).filter(Boolean))].sort((a, b) => a.localeCompare(b, 'id'));
             if (areaSelect) {
-                areaSelect.innerHTML = `<option value="ALL">Semua Area (${allAreas.length})</option>`;
-                allAreas.forEach(area => {
-                    const opt = document.createElement('option');
-                    opt.value = area;
-                    opt.textContent = area;
-                    areaSelect.appendChild(opt);
-                });
+                areaSelect.innerHTML = `<option value="ALL">Semua Area (${allAreas.length})</option>` + allAreas.map(v => `<option value="${escapeHTML(v)}">${escapeHTML(v)}</option>`).join('');
                 areaSelect.value = [...areaSelect.options].some(o => o.value === prevArea) ? prevArea : 'ALL';
             }
 
             const prevCont = contractorSelect ? contractorSelect.value : 'ALL';
             const allContractors = [...new Set(rawWorkOrders.map(d => cleanText(d.contractorName)).filter(Boolean))].sort((a, b) => a.localeCompare(b, 'id'));
             if (contractorSelect) {
-                contractorSelect.innerHTML = `<option value="ALL">Semua Kontraktor / IKR (${allContractors.length})</option>`;
-                allContractors.forEach(c => {
-                    const opt = document.createElement('option');
-                    opt.value = c;
-                    opt.textContent = c;
-                    contractorSelect.appendChild(opt);
-                });
+                contractorSelect.innerHTML = `<option value="ALL">Semua Kontraktor / IKR (${allContractors.length})</option>` + allContractors.map(v => `<option value="${escapeHTML(v)}">${escapeHTML(v)}</option>`).join('');
                 contractorSelect.value = [...contractorSelect.options].some(o => o.value === prevCont) ? prevCont : 'ALL';
             }
         }
@@ -1363,7 +1339,7 @@ html.dark option { background:#0f172a; color:#f1f5f9; }
 
             const statusTextEl = document.getElementById('filter-status-text');
             if (statusTextEl) {
-                statusTextEl.innerHTML = `Menampilkan <strong class="text-blue-600">${filteredWorkOrders.length}</strong> dari ${rawWorkOrders.length} Work Order • BSM: <strong class="text-slate-800">${crit.bsm === 'ALL' ? 'Semua' : crit.bsm}</strong>`;
+                statusTextEl.innerHTML = `Menampilkan <strong class="text-blue-600">${filteredWorkOrders.length}</strong> dari ${rawWorkOrders.length} Work Order • BSM: <strong class="text-slate-800">${escapeHTML(crit.bsm === 'ALL' ? 'Semua' : crit.bsm)}</strong>`;
             }
 
             currentPage = 1;
@@ -1518,9 +1494,9 @@ html.dark option { background:#0f172a; color:#f1f5f9; }
 
                 let dominanceHTML = '<span class="text-slate-400 text-xs italic">Tidak ada data</span>';
                 if (topArea || topCont) {
-                    const areaLine = topArea ? `<span class="font-semibold text-slate-800">${topArea[0]}</span> (${topArea[1]})` : '';
+                    const areaLine = topArea ? `<span class="font-semibold text-slate-800">${escapeHTML(topArea[0])}</span> (${topArea[1]})` : '';
                     const contShort = topCont ? (topCont[0].replace(/\s*PT$/i, '').slice(0, 22) + (topCont[0].length > 22 ? '...' : '')) : '';
-                    const contLine = topCont ? `<span class="text-slate-500 text-xs block truncate" title="${topCont[0]}">IKR: ${contShort} (${topCont[1]})</span>` : '';
+                    const contLine = topCont ? `<span class="text-slate-500 text-xs block truncate" title="${escapeHTML(topCont[0])}">IKR: ${escapeHTML(contShort)} (${topCont[1]})</span>` : '';
                     dominanceHTML = `<div class="leading-tight">${areaLine}${contLine}</div>`;
                 }
 
@@ -1790,18 +1766,18 @@ html.dark option { background:#0f172a; color:#f1f5f9; }
             const norm = normalizeStatus(rawStatus);
             const label = cleanText(rawStatus) || norm;
             if (norm === 'Completed') {
-                return `<span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-bold bg-emerald-50 text-emerald-700 border border-emerald-200"><span class="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>${label}</span>`;
+                return `<span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-bold bg-emerald-50 text-emerald-700 border border-emerald-200"><span class="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>${escapeHTML(label)}</span>`;
             }
             if (norm === 'In Progress') {
-                return `<span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-bold bg-amber-50 text-amber-700 border border-amber-200"><span class="w-1.5 h-1.5 rounded-full bg-amber-500"></span>${label}</span>`;
+                return `<span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-bold bg-amber-50 text-amber-700 border border-amber-200"><span class="w-1.5 h-1.5 rounded-full bg-amber-500"></span>${escapeHTML(label)}</span>`;
             }
             if (norm === 'Unsuccessful') {
-                return `<span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-bold bg-rose-50 text-rose-700 border border-rose-200"><span class="w-1.5 h-1.5 rounded-full bg-rose-500"></span>${label}</span>`;
+                return `<span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-bold bg-rose-50 text-rose-700 border border-rose-200"><span class="w-1.5 h-1.5 rounded-full bg-rose-500"></span>${escapeHTML(label)}</span>`;
             }
             if (norm === 'Cancelled') {
-                return `<span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-bold bg-slate-100 text-slate-700 border border-slate-200"><span class="w-1.5 h-1.5 rounded-full bg-slate-500"></span>${label}</span>`;
+                return `<span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-bold bg-slate-100 text-slate-700 border border-slate-200"><span class="w-1.5 h-1.5 rounded-full bg-slate-500"></span>${escapeHTML(label)}</span>`;
             }
-            return `<span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-bold bg-sky-50 text-sky-700 border border-sky-200"><span class="w-1.5 h-1.5 rounded-full bg-sky-500"></span>${label}</span>`;
+            return `<span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-bold bg-sky-50 text-sky-700 border border-sky-200"><span class="w-1.5 h-1.5 rounded-full bg-sky-500"></span>${escapeHTML(label)}</span>`;
         }
 
         function getSlotBadge(rawSlot) {
@@ -1809,7 +1785,7 @@ html.dark option { background:#0f172a; color:#f1f5f9; }
             const found = STANDARD_SLOTS.find(s => s.key === norm) || STANDARD_SLOTS[STANDARD_SLOTS.length - 1];
             return `<span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-semibold border ${found.badgeClass}">
                 <span class="w-1.5 h-1.5 rounded-full" style="background-color:${found.dotColor}"></span>
-                ${norm}
+                ${escapeHTML(norm)}
             </span>`;
         }
 
@@ -1870,31 +1846,31 @@ html.dark option { background:#0f172a; color:#f1f5f9; }
                     : `<span class="text-xs font-semibold text-slate-600">${repNum}x</span>`;
 
                 const kendalaText = (wo.unsucessfulSubCategory && wo.unsucessfulSubCategory !== '-')
-                    ? `<span class="text-xs text-rose-700 font-medium bg-rose-50 px-2 py-0.5 rounded border border-rose-100">${wo.unsucessfulSubCategory}</span>`
+                    ? `<span class="text-xs text-rose-700 font-medium bg-rose-50 px-2 py-0.5 rounded border border-rose-100">${escapeHTML(wo.unsucessfulSubCategory)}</span>`
                     : `<span class="text-xs text-slate-400">-</span>`;
 
-                const encodedWO = encodeURIComponent(wo.workOrderNumber);
+                const encodedWO = encodeURIComponent(wo.workOrderNumber).replace(/'/g, '%27');
 
                 return `
                     <tr onclick="openWOModal(decodeURIComponent('${encodedWO}'))" class="hover:bg-blue-50/50 cursor-pointer transition">
-                        <td class="py-3 px-4 font-bold text-blue-700">${wo.workOrderNumber}</td>
+                        <td class="py-3 px-4 font-bold text-blue-700">${escapeHTML(wo.workOrderNumber)}</td>
                         <td class="py-3 px-4">
-                            <div class="font-semibold text-slate-900">${wo.endUserName || '-'}</div>
-                            <div class="text-[11px] text-slate-500">${wo.customerId || '-'}</div>
+                            <div class="font-semibold text-slate-900">${escapeHTML(wo.endUserName || '-')}</div>
+                            <div class="text-[11px] text-slate-500">${escapeHTML(wo.customerId || '-')}</div>
                         </td>
-                        <td class="py-3 px-4 font-semibold text-slate-800">${wo.asmName || '-'}</td>
-                        <td class="py-3 px-4 font-semibold text-indigo-700">${wo.salesName || '-'}</td>
+                        <td class="py-3 px-4 font-semibold text-slate-800">${escapeHTML(wo.asmName || '-')}</td>
+                        <td class="py-3 px-4 font-semibold text-indigo-700">${escapeHTML(wo.salesName || '-')}</td>
                         <td class="py-3 px-4">
-                            <div class="font-bold text-slate-800">${effArea}</div>
-                            <div class="text-xs text-slate-500">${wo.clusterName || '-'}</div>
+                            <div class="font-bold text-slate-800">${escapeHTML(effArea)}</div>
+                            <div class="text-xs text-slate-500">${escapeHTML(wo.clusterName || '-')}</div>
                         </td>
                         <td class="py-3 px-4">
-                            <div class="font-medium text-slate-800">${wo.contractorName || '-'}</div>
-                            <div class="text-[11px] text-slate-500">${wo.vendorName || '-'}</div>
+                            <div class="font-medium text-slate-800">${escapeHTML(wo.contractorName || '-')}</div>
+                            <div class="text-[11px] text-slate-500">${escapeHTML(wo.vendorName || '-')}</div>
                         </td>
                         <td class="py-3 px-4">${getSlotBadge(wo.slotTime)}</td>
                         <td class="py-3 px-4">${getStatusBadge(wo.appointmentStatus)}</td>
-                        <td class="py-3 px-4 font-semibold text-slate-700">${wo.statusWO || '-'}</td>
+                        <td class="py-3 px-4 font-semibold text-slate-700">${escapeHTML(wo.statusWO || '-')}</td>
                         <td class="py-3 px-4 text-center">${repBadge}</td>
                         <td class="py-3 px-4">${kendalaText}</td>
                         <td class="py-3 px-4 text-center">
@@ -2018,9 +1994,9 @@ html.dark option { background:#0f172a; color:#f1f5f9; }
             const wo = rawWorkOrders.find(item => item.workOrderNumber === woNumber);
             if (!wo) return;
             openPreviewWAModal({
-                title: `Report WA — ${wo.workOrderNumber}`,
-                subtitle: `${wo.endUserName || '-'} • ${getEffectiveArea(wo)} • ${normalizeSlotTime(wo.slotTime)}`,
-                filterSummary: `WO: ${wo.workOrderNumber} • BSM: ${wo.bsmName || '-'} • ASM: ${wo.asmName || '-'} • AE: ${wo.salesName || '-'}`,
+                title: `Report WA — ${escapeHTML(wo.workOrderNumber)}`,
+                subtitle: `${escapeHTML(wo.endUserName || '-')} • ${escapeHTML(getEffectiveArea(wo))} • ${escapeHTML(normalizeSlotTime(wo.slotTime))}`, 
+                filterSummary: `WO: ${escapeHTML(wo.workOrderNumber)} • BSM: ${escapeHTML(wo.bsmName || '-')} • ASM: ${escapeHTML(wo.asmName || '-')} • AE: ${escapeHTML(wo.salesName || '-')}`, 
                 records: [wo]
             });
         }
@@ -2098,17 +2074,17 @@ html.dark option { background:#0f172a; color:#f1f5f9; }
 
             tbody.innerHTML = list.slice(0, 60).map(wo => `
                 <tr class="hover:bg-blue-50/40">
-                    <td class="py-2 px-3 font-bold text-blue-700">${wo.workOrderNumber}</td>
+                    <td class="py-2 px-3 font-bold text-blue-700">${escapeHTML(wo.workOrderNumber)}</td>
                     <td class="py-2 px-3">
-                        <div class="font-semibold text-slate-800">${wo.endUserName || '-'}</div>
-                        <div class="text-[11px] text-slate-500">${wo.customerId || '-'}</div>
+                        <div class="font-semibold text-slate-800">${escapeHTML(wo.endUserName || '-')}</div>
+                        <div class="text-[11px] text-slate-500">${escapeHTML(wo.customerId || '-')}</div>
                     </td>
-                    <td class="py-2 px-3 font-medium text-slate-700">${getEffectiveArea(wo)}</td>
-                    <td class="py-2 px-3 text-slate-700">${normalizeSlotTime(wo.slotTime)}</td>
-                    <td class="py-2 px-3 font-semibold text-slate-800">${wo.appointmentStatus || '-'}</td>
-                    <td class="py-2 px-3 font-semibold text-slate-700">${wo.statusWO || '-'}</td>
-                    <td class="py-2 px-3 font-semibold text-slate-800">${wo.asmName || '-'}</td>
-                    <td class="py-2 px-3 font-semibold text-indigo-700">${wo.salesName || '-'}</td>
+                    <td class="py-2 px-3 font-medium text-slate-700">${escapeHTML(getEffectiveArea(wo))}</td>
+                    <td class="py-2 px-3 text-slate-700">${escapeHTML(normalizeSlotTime(wo.slotTime))}</td>
+                    <td class="py-2 px-3 font-semibold text-slate-800">${escapeHTML(wo.appointmentStatus || '-')}</td>
+                    <td class="py-2 px-3 font-semibold text-slate-700">${escapeHTML(wo.statusWO || '-')}</td>
+                    <td class="py-2 px-3 font-semibold text-slate-800">${escapeHTML(wo.asmName || '-')}</td>
+                    <td class="py-2 px-3 font-semibold text-indigo-700">${escapeHTML(wo.salesName || '-')}</td>
                 </tr>
             `).join('');
             // Perbarui teks WA setiap kali kata pencarian berubah.
@@ -2247,7 +2223,7 @@ html.dark option { background:#0f172a; color:#f1f5f9; }
             contentEl.innerHTML = items.map(it => `
                 <div class="bg-slate-50 p-3 rounded-xl border border-slate-200/80">
                     <div class="text-[11px] font-semibold text-slate-500 uppercase tracking-wider">${it.label}</div>
-                    <div class="text-sm font-bold text-slate-900 mt-0.5 break-words">${cleanText(it.value) || '-'}</div>
+                    <div class="text-sm font-bold text-slate-900 mt-0.5 break-words">${escapeHTML(cleanText(it.value) || '-')}</div>
                 </div>
             `).join('');
 
@@ -2391,7 +2367,7 @@ html.dark option { background:#0f172a; color:#f1f5f9; }
 
                     const badge = document.getElementById('data-source-badge');
                     if (badge) {
-                        badge.innerHTML = `<span class="w-1.5 h-1.5 rounded-full bg-blue-600"></span> ${file.name} [Sheet: ${sheetName}] (${mapped.length} WO)`;
+                        badge.textContent = `Google Sheets/Excel • ${file.name} [Sheet: ${sheetName}] (${mapped.length} WO)`;
                         badge.className = 'inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-blue-50 text-blue-700 border border-blue-200';
                     }
 
@@ -2479,7 +2455,7 @@ html.dark option { background:#0f172a; color:#f1f5f9; }
             }
 
             toast.className = `pointer-events-auto flex items-center gap-2.5 px-4 py-3 rounded-xl shadow-lg border text-xs sm:text-sm font-semibold fade-in ${styleClass}`;
-            toast.innerHTML = `<i data-lucide="${iconName}" class="w-4 h-4 shrink-0"></i><span>${message}</span>`;
+            toast.innerHTML = `<i data-lucide="${iconName}" class="w-4 h-4 shrink-0"></i><span>${escapeHTML(message)}</span>`;
 
             container.appendChild(toast);
             if (window.lucide && typeof window.lucide.createIcons === 'function') {
