@@ -1952,6 +1952,15 @@
             renderPreviewWATable();
             regenerateWAReportText();
 
+            // Selalu mulai dari posisi tengah saat popup dibuka.
+            const panel = modal.firstElementChild;
+            if (panel) {
+                panel.style.position = '';
+                panel.style.left = '';
+                panel.style.top = '';
+                panel.style.margin = '';
+                panel.style.transform = '';
+            }
             modal.classList.remove('hidden');
             if (window.lucide && typeof window.lucide.createIcons === 'function') {
                 window.lucide.createIcons();
@@ -2367,6 +2376,67 @@
                 showToast(`Data Google Sheets belum dapat dimuat: ${err.message}`, 'error');
             }
         });
-    </script>
+    
+        // Drag popup dengan menahan bagian header (mouse atau layar sentuh).
+        (function enablePreviewModalDrag() {
+            const modal = document.getElementById('preview-wa-modal');
+            const panel = modal?.firstElementChild;
+            const header = panel?.firstElementChild;
+            if (!modal || !panel || !header) return;
+
+            header.style.cursor = 'grab';
+            header.style.userSelect = 'none';
+            header.style.touchAction = 'none';
+
+            let drag = null;
+            header.addEventListener('pointerdown', function (event) {
+                if (event.target.closest('button, a, input, textarea, select')) return;
+                if (event.button !== undefined && event.button !== 0) return;
+
+                const rect = panel.getBoundingClientRect();
+                panel.style.position = 'fixed';
+                panel.style.left = rect.left + 'px';
+                panel.style.top = rect.top + 'px';
+                panel.style.margin = '0';
+                panel.style.transform = 'none';
+
+                drag = {
+                    pointerId: event.pointerId,
+                    startX: event.clientX,
+                    startY: event.clientY,
+                    left: rect.left,
+                    top: rect.top
+                };
+                header.style.cursor = 'grabbing';
+                header.setPointerCapture(event.pointerId);
+                event.preventDefault();
+            });
+
+            header.addEventListener('pointermove', function (event) {
+                if (!drag || event.pointerId !== drag.pointerId) return;
+                const maxLeft = Math.max(0, window.innerWidth - panel.offsetWidth);
+                const maxTop = Math.max(0, window.innerHeight - panel.offsetHeight);
+                const left = Math.min(maxLeft, Math.max(0, drag.left + event.clientX - drag.startX));
+                const top = Math.min(maxTop, Math.max(0, drag.top + event.clientY - drag.startY));
+                panel.style.left = left + 'px';
+                panel.style.top = top + 'px';
+            });
+
+            function stopDrag(event) {
+                if (!drag || (event && event.pointerId !== drag.pointerId)) return;
+                drag = null;
+                header.style.cursor = 'grab';
+            }
+            header.addEventListener('pointerup', stopDrag);
+            header.addEventListener('pointercancel', stopDrag);
+            window.addEventListener('resize', function () {
+                if (!panel.style.position) return;
+                const maxLeft = Math.max(0, window.innerWidth - panel.offsetWidth);
+                const maxTop = Math.max(0, window.innerHeight - panel.offsetHeight);
+                panel.style.left = Math.min(parseFloat(panel.style.left) || 0, maxLeft) + 'px';
+                panel.style.top = Math.min(parseFloat(panel.style.top) || 0, maxTop) + 'px';
+            });
+        })();
+</script>
 </body>
 </html>
