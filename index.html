@@ -2063,7 +2063,7 @@ html.dark option { background:#0f172a; color:#f1f5f9; }
           const gap = Math.max(0, a.target - a.total);
           const status = a.total >= a.target ? '✅ Target tercapai' : `Sisa ${gap} SA`;
           const zonk = a.lastDate ? Math.max(0, reportDay - a.lastDate.day) : reportDay;
-          lines.push(`${idx + 1}. *${a.name}*: ${a.total}/${a.target} SA (${pct}%) • ${status} • Last SA ${formatDate(a.lastDate)} • ZONK ${zonk}h`);
+          lines.push(`${idx + 1}. *${a.name}* — ${a.total}/${a.target} SA (${pct}%)\n   ${status} • Last SA: ${formatDate(a.lastDate)}\n   ZONK: ${zonk} hari`);
         });
         reports.push(lines.join('\n'));
       });
