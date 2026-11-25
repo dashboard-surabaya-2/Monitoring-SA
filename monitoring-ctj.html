@@ -2143,7 +2143,7 @@ html.dark option { background:#0f172a; color:#f1f5f9; }
           lines.push(`_Tidak ada data RFS._`);
         } else {
           rfsSummary.forEach((r, idx) => {
-            lines.push(`${idx + 1}. *${r.rfsClass}* | Cls: *${r.totalCluster}* | ZONK: *${r.zonkSA}* | <${targetVisit} Visit: *${r.underTarget}* (Daily: *${r.wajibDaily}*) | HP: *${formatNumber(r.totalHP)}* | Subs: *${formatNumber(r.totalSubs)}* | Pen: *${r.avgPenRate.toFixed(1)}%* | Visit MTD: *${formatNumber(r.totalVisitMTD)}* (Avg ${r.avgVisitMTD.toFixed(1)})`);
+            lines.push(`${idx + 1}. *${r.rfsClass}*: ${r.totalCluster} Cls • ZONK ${r.zonkSA} • <${targetVisit}V ${r.underTarget} (Daily ${r.wajibDaily}) • HP ${formatNumber(r.totalHP)} • Subs ${formatNumber(r.totalSubs)} • Pen ${r.avgPenRate.toFixed(1)}% • Visit ${formatNumber(r.totalVisitMTD)}`);
           });
         }
       }
@@ -2156,7 +2156,7 @@ html.dark option { background:#0f172a; color:#f1f5f9; }
         } else {
           underVisitList.forEach((d, idx) => {
             const label = d.isCritical ? `KRITIS (${d.perDayNeeded.toFixed(1)}x/hr)` : `WAJIB TIAP HARI`;
-            lines.push(`${idx + 1}. *${d.clusterName}* | MTD: *${d.visitMTD}/${targetVisit}* (Kurang *${d.deficit}*) - [${label}] - AE: ${d.ae}`);
+            lines.push(`${idx + 1}. *${d.clusterName}*: ${d.visitMTD}/${targetVisit} (kurang ${d.deficit}) • ${label} • AE ${d.ae}`);
           });
         }
       }
@@ -2168,7 +2168,7 @@ html.dark option { background:#0f172a; color:#f1f5f9; }
           lines.push(`_Nihil cluster ZONK SA._`);
         } else {
           zonkList.forEach((d, idx) => {
-            lines.push(`${idx + 1}. *${d.clusterName}* (${d.clusterId}) | Kec: ${d.kecamatan} | HP Avail: ${d.hpAvailable} | Visit: ${d.visitMTD} | AE: ${d.ae}`);
+            lines.push(`${idx + 1}. *${d.clusterName}* (${d.clusterId}) • ${d.kecamatan} • HP ${d.hpAvailable} • Visit ${d.visitMTD} • AE ${d.ae}`);
           });
         }
       }
@@ -2176,7 +2176,12 @@ html.dark option { background:#0f172a; color:#f1f5f9; }
       lines.push(``);
       lines.push(`_Mohon perhatian rekan-rekan ASM & AE untuk memprioritaskan cluster wajib visit harian & pecah telur ZONK SA. Terima kasih._`);
 
-      const finalText = lines.join('\n');
+      let finalText = lines.join('\n');
+      const maxChars = 8000;
+      if (finalText.length > maxChars) {
+        const note = '\n\n…Laporan dipersingkat agar aman dikirim. Gunakan filter BM/ASM/AE atau pilih bagian report untuk rincian lainnya.';
+        finalText = finalText.slice(0, maxChars - note.length).replace(/\n+$/, '') + note;
+      }
       document.getElementById('wa-report-textarea').value = finalText;
       updateWACharCount();
     }
