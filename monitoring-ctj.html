@@ -1097,6 +1097,51 @@ html.dark option { background:#0f172a; color:#f1f5f9; }
       setTimeout(() => ctjLeafletMap.invalidateSize(), 120);
     }
 
+    // Hitung jarak dan estimasi waktu rute dari posisi perangkat ke cluster terpilih.
+    async function routeToCTJCluster(latitude, longitude, resultId, linkId) {
+      const resultEl = document.getElementById(resultId);
+      const linkEl = document.getElementById(linkId);
+      if (resultEl) resultEl.textContent = 'Mengambil lokasi perangkat...';
+      if (!navigator.geolocation) {
+        if (resultEl) resultEl.textContent = 'Browser tidak mendukung akses lokasi.';
+        return;
+      }
+      navigator.geolocation.getCurrentPosition(async position => {
+        const originLat = position.coords.latitude;
+        const originLon = position.coords.longitude;
+        const destLat = Number(latitude), destLon = Number(longitude);
+        if (linkEl) {
+          linkEl.href = 'https://www.google.com/maps/dir/?api=1&origin=' +
+            encodeURIComponent(originLat + ',' + originLon) + '&destination=' +
+            encodeURIComponent(destLat + ',' + destLon) + '&travelmode=driving';
+        }
+        if (resultEl) resultEl.textContent = 'Menghitung jarak dan waktu tempuh...';
+        try {
+          const url = 'https://router.project-osrm.org/route/v1/driving/' +
+            originLon + ',' + originLat + ';' + destLon + ',' + destLat +
+            '?overview=false&steps=false';
+          const response = await fetch(url);
+          if (!response.ok) throw new Error('Layanan rute tidak tersedia');
+          const data = await response.json();
+          if (!data.routes || !data.routes.length) throw new Error('Rute tidak ditemukan');
+          const route = data.routes[0];
+          const km = route.distance / 1000;
+          const minutes = Math.round(route.duration / 60);
+          const hours = Math.floor(minutes / 60);
+          const timeText = hours > 0 ? hours + ' jam ' + (minutes % 60) + ' menit' : minutes + ' menit';
+          if (resultEl) resultEl.innerHTML = '<b>Jarak:</b> ' + km.toFixed(1).replace('.', ',') +
+            ' km<br><b>Estimasi waktu:</b> ' + timeText +
+            '<br><small style="color:#64748b">Estimasi rute berkendara, dapat berubah sesuai kondisi jalan dan lalu lintas.</small>';
+        } catch (error) {
+          if (resultEl) resultEl.textContent = 'Jarak dan waktu rute belum berhasil dihitung. Gunakan tombol Buka Navigasi Google Maps.';
+        }
+      }, error => {
+        const message = error.code === 1 ? 'Izin lokasi ditolak. Aktifkan izin lokasi browser untuk menghitung rute.' :
+          'Lokasi perangkat tidak berhasil diperoleh. Pastikan GPS/lokasi aktif.';
+        if (resultEl) resultEl.textContent = message;
+      }, { enableHighAccuracy: true, timeout: 15000, maximumAge: 60000 });
+    }
+
     function toggleZonkMap() {
       mapShowZonkOnly = !mapShowZonkOnly;
       renderCTJClusterMap();
@@ -1145,14 +1190,19 @@ html.dark option { background:#0f172a; color:#f1f5f9; }
         const subs = formatNumber(d.totalSubs);
         const penetration = (typeof d.penRateNum === 'number' && Number.isFinite(d.penRateNum))
           ? d.penRateNum : (d.hpTotal > 0 ? (d.totalSubs / d.hpTotal) * 100 : 0);
+        const routeBoxId = 'ctj-route-' + String(d.clusterId || '').replace(/[^a-zA-Z0-9_-]/g, '');
+        const routeLinkId = 'ctj-route-link-' + String(d.clusterId || '').replace(/[^a-zA-Z0-9_-]/g, '');
         const popup = `
-          <div style="min-width:190px;font-family:Inter,Arial,sans-serif;color:#0f172a">
+          <div style="min-width:220px;font-family:Inter,Arial,sans-serif;color:#0f172a">
             <div style="font-weight:800;font-size:14px;margin-bottom:8px;color:#3730a3">${name}</div>
-            <div style="display:grid;grid-template-columns:1fr auto;gap:5px 12px;font-size:12px">
+            <div style="display:grid;grid-template-columns:1fr auto;gap:5px 12px;font-size:12px;margin-bottom:10px">
               <span>Total HP</span><b>${hp}</b>
               <span>Total Subs</span><b>${subs}</b>
               <span>Penetrasi</span><b>${penetration.toFixed(2)}%</b>
             </div>
+            <div id="${routeBoxId}" style="font-size:12px;line-height:1.5;padding:8px;background:#f1f5f9;border-radius:8px;margin-bottom:8px">Tekan tombol untuk menghitung jarak dan waktu dari lokasi Anda.</div>
+            <button type="button" onclick="routeToCTJCluster(${lat},${lon},'${routeBoxId}','${routeLinkId}')" style="width:100%;background:#4f46e5;color:white;border:0;border-radius:8px;padding:9px;font-size:12px;font-weight:800;cursor:pointer;margin-bottom:6px"> <i class="fa-solid fa-route"></i> Hitung Jarak & Waktu Tempuh</button>
+            <a id="${routeLinkId}" href="https://www.google.com/maps/dir/?api=1&destination=${lat},${lon}&travelmode=driving" target="_blank" rel="noopener noreferrer" style="display:block;text-align:center;background:#16a34a;color:white;border-radius:8px;padding:9px;font-size:12px;font-weight:800;text-decoration:none"><i class="fa-solid fa-location-arrow"></i> Buka Navigasi Google Maps</a>
           </div>`;
         const marker = L.marker([lat, lon], {
           title: d.clusterName || d.clusterId || 'Cluster',
