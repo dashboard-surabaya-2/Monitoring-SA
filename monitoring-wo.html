@@ -2153,19 +2153,34 @@ html.dark option { background:#0f172a; color:#f1f5f9; }
                 lines.push(`_Tidak ada data WO pada pilihan ini._`);
             } else {
                 const maxShow = 25;
-                records.slice(0, maxShow).forEach((wo, idx) => {
-                    const area = getEffectiveArea(wo);
-                    const slot = normalizeSlotTime(wo.slotTime);
-                    const cust = wo.endUserName || '-';
-                    const asm = wo.asmName || '-';
-                    const ae = wo.salesName || '-';
-                    const appointmentSt = wo.appointmentStatus || '-';
-                    const woSt = wo.statusWO || '-';
-                    lines.push(`${idx + 1}. *${wo.workOrderNumber}* — ${cust}\n   Area: ${area} | Slot: ${slot}\n   Appointment: ${appointmentSt} | Status: ${woSt}\n   ASM: ${asm} | AE: ${ae}`);
+                const slotGroups = new Map();
+                records.forEach(wo => {
+                    const slot = normalizeSlotTime(wo.slotTime) || 'Slot belum ditentukan';
+                    if (!slotGroups.has(slot)) slotGroups.set(slot, []);
+                    slotGroups.get(slot).push(wo);
                 });
 
+                let itemNumber = 0;
+                let shown = 0;
+                for (const [slot, slotRecords] of slotGroups) {
+                    if (shown >= maxShow) break;
+                    lines.push(`⏰ *SLOT TIME: ${slot}* (${slotRecords.length} WO)`);
+                    slotRecords.slice(0, maxShow - shown).forEach(wo => {
+                        itemNumber++;
+                        shown++;
+                        const area = getEffectiveArea(wo);
+                        const cust = wo.endUserName || '-';
+                        const customerId = wo.customerId || '-';
+                        const asm = wo.asmName || '-';
+                        const ae = wo.salesName || '-';
+                        const appointmentSt = wo.appointmentStatus || '-';
+                        const woSt = wo.statusWO || '-';
+                        lines.push(`${itemNumber}. *AE: ${ae}* | Customer ID: *${customerId}*\n   WO: ${wo.workOrderNumber || '-'} — ${cust}\n   Area: ${area}\n   Appointment: ${appointmentSt} | Status WO: ${woSt}\n   ASM: ${asm}`);
+                    });
+                    lines.push('');
+                }
+
                 if (records.length > maxShow) {
-                    lines.push(``);
                     lines.push(`_...dan ${records.length - maxShow} WO lainnya._`);
                 }
             }
