@@ -1014,12 +1014,6 @@ html.dark option { background:#0f172a; color:#f1f5f9; }
             const allBSMs = [...bsmByKey.values()].sort((a, b) => a.localeCompare(b, 'id'));
             if (bsmSelect) {
                 bsmSelect.innerHTML = `<option value="ALL">Semua BSM (${allBSMs.length})</option>` + allBSMs.map(v => `<option value="${escapeHTML(v)}">${escapeHTML(v)}</option>`).join('');
-                allBSMs.forEach(name => {
-                    const opt = document.createElement('option');
-                    opt.value = name;
-                    opt.textContent = name;
-                    bsmSelect.appendChild(opt);
-                });
 
                 if (preferredBSM !== null && preferredBSM !== undefined) {
                     if (preferredBSM === 'DEFAULT_BENNY') {
@@ -1044,12 +1038,6 @@ html.dark option { background:#0f172a; color:#f1f5f9; }
             const allASMs = [...asmByKey.values()].sort((a, b) => a.localeCompare(b, 'id'));
             if (asmSelect) {
                 asmSelect.innerHTML = `<option value="ALL">Semua ASM (${allASMs.length})</option>` + allASMs.map(v => `<option value="${escapeHTML(v)}">${escapeHTML(v)}</option>`).join('');
-                allASMs.forEach(name => {
-                    const opt = document.createElement('option');
-                    opt.value = name;
-                    opt.textContent = name;
-                    asmSelect.appendChild(opt);
-                });
                 asmSelect.value = [...asmSelect.options].some(o => o.value === preferredASM) ? preferredASM : 'ALL';
             }
 
@@ -1063,12 +1051,6 @@ html.dark option { background:#0f172a; color:#f1f5f9; }
             const allAEs = [...new Set(aeSource.map(d => cleanText(d.salesName)).filter(Boolean))].sort((a, b) => a.localeCompare(b, 'id'));
             if (aeSelect) {
                 aeSelect.innerHTML = `<option value="ALL">Semua AE (${allAEs.length})</option>` + allAEs.map(v => `<option value="${escapeHTML(v)}">${escapeHTML(v)}</option>`).join('');
-                allAEs.forEach(name => {
-                    const opt = document.createElement('option');
-                    opt.value = name;
-                    opt.textContent = name;
-                    aeSelect.appendChild(opt);
-                });
                 aeSelect.value = [...aeSelect.options].some(o => o.value === preferredAE) ? preferredAE : 'ALL';
             }
 
@@ -1077,12 +1059,6 @@ html.dark option { background:#0f172a; color:#f1f5f9; }
             const allAreas = [...new Set(rawWorkOrders.map(d => getEffectiveArea(d)).filter(Boolean))].sort((a, b) => a.localeCompare(b, 'id'));
             if (areaSelect) {
                 areaSelect.innerHTML = `<option value="ALL">Semua Area (${allAreas.length})</option>` + allAreas.map(v => `<option value="${escapeHTML(v)}">${escapeHTML(v)}</option>`).join('');
-                allAreas.forEach(area => {
-                    const opt = document.createElement('option');
-                    opt.value = area;
-                    opt.textContent = area;
-                    areaSelect.appendChild(opt);
-                });
                 areaSelect.value = [...areaSelect.options].some(o => o.value === prevArea) ? prevArea : 'ALL';
             }
 
@@ -1090,12 +1066,6 @@ html.dark option { background:#0f172a; color:#f1f5f9; }
             const allContractors = [...new Set(rawWorkOrders.map(d => cleanText(d.contractorName)).filter(Boolean))].sort((a, b) => a.localeCompare(b, 'id'));
             if (contractorSelect) {
                 contractorSelect.innerHTML = `<option value="ALL">Semua Kontraktor / IKR (${allContractors.length})</option>` + allContractors.map(v => `<option value="${escapeHTML(v)}">${escapeHTML(v)}</option>`).join('');
-                allContractors.forEach(c => {
-                    const opt = document.createElement('option');
-                    opt.value = c;
-                    opt.textContent = c;
-                    contractorSelect.appendChild(opt);
-                });
                 contractorSelect.value = [...contractorSelect.options].some(o => o.value === prevCont) ? prevCont : 'ALL';
             }
         }
