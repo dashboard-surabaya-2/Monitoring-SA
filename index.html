@@ -1641,45 +1641,62 @@ html.dark option { background:#0f172a; color:#f1f5f9; }
     }
 
     function generatePaidUnpaidWhatsAppReport() {
-      const rows = getNovemberSA().filter(r => getDelayBucket(r) !== 'PAID')
-        .sort((a, b) => (parseInt(b.unpaid_days) || 0) - (parseInt(a.unpaid_days) || 0));
+      // Samakan filter report dengan baris yang sedang tampil pada tabel Tab 2.
+      const q = (document.getElementById('searchTab2')?.value || '').trim().toLowerCase();
+      const rows = getNovemberSA().filter(r => {
+        const bucket = getDelayBucket(r);
+        if (delayFilter === 'ALL_UNPAID' && bucket === 'PAID') return false;
+        if (delayFilter !== 'ALL' && delayFilter !== 'ALL_UNPAID' && bucket !== delayFilter) return false;
+        if (q) {
+          const hay = `${r.subscription_id || ''} ${r.order_id || ''} ${r.name || ''} ${r.asm_name || ''} ${r.sales_agent_name || ''} ${r.clustername || ''}`.toLowerCase();
+          if (!hay.includes(q)) return false;
+        }
+        return true;
+      }).sort((a, b) => (parseInt(b.unpaid_days) || 0) - (parseInt(a.unpaid_days) || 0));
+
       const total = rows.reduce((sum, r) => sum + (Number(r.invoice_amount) || 0), 0);
-      const asmSelect = document.getElementById('filterASM');
-      const aeSelect = document.getElementById('filterAE');
-      const planSelect = document.getElementById('filterPlan');
+      const paidCount = rows.filter(r => getDelayBucket(r) === 'PAID').length;
+      const unpaidCount = rows.length - paidCount;
       const clean = value => {
         const text = String(value || '-').split('*').join('').trim();
         return text.endsWith('.') ? text.slice(0, -1).trim() : text;
       };
-      const asmText = clean(asmSelect.selectedOptions[0]?.text || 'Semua ASM');
-      const aeText = clean(aeSelect.selectedOptions[0]?.text || 'Semua AE');
-      const planText = clean(planSelect.selectedOptions[0]?.text || 'Semua Paket');
-      const allASM = asmSelect.value === 'ALL';
+      const asmSelect = document.getElementById('filterASM');
+      const aeSelect = document.getElementById('filterAE');
+      const planSelect = document.getElementById('filterPlan');
+      const asmText = clean(asmSelect?.selectedOptions[0]?.text || 'Semua ASM');
+      const aeText = clean(aeSelect?.selectedOptions[0]?.text || 'Semua AE');
+      const planText = clean(planSelect?.selectedOptions[0]?.text || 'Semua Paket');
+      const searchText = document.getElementById('searchTab2')?.value?.trim() || '';
       const detailLines = rows.length ? rows.flatMap((r, i) => {
+        const bucket = getDelayBucket(r);
         const days = parseInt(r.unpaid_days) || 0;
-        const lines = [(i + 1) + '. *' + clean(r.name) + '* — *' + days + ' hari*'];
-        if (allASM) lines.push('   ASM: ' + clean(r.asm_name));
-        lines.push(
-          '   AE: ' + clean(r.sales_agent_name) + ' | Sub ID: ' + (r.subscription_id || '-'),
-          '   Paket: ' + clean(r.plan) + ' | Tagihan: ' + formatIDR(Number(r.invoice_amount) || 0)
-        );
-        return lines;
-      }) : ['Tidak ada data UNPAID sesuai filter.'];
+        const status = bucket === 'PAID' ? '✅ PAID' : '⚠️ UNPAID • ' + days + ' hari';
+        return [
+          (i + 1) + '. *' + clean(r.name) + '*',
+          '   ASM: ' + clean(r.asm_name) + ' | AE: ' + clean(r.sales_agent_name),
+          '   Sub ID: ' + (r.subscription_id || '-') + ' | Paket: ' + clean(r.plan),
+          '   Status: ' + status + ' | Tagihan: ' + formatIDR(Number(r.invoice_amount) || 0)
+        ];
+      }) : ['Tidak ada data sesuai filter tabel.'];
       const report = [
-        '⚠️ *MONITORING SA UNPAID*',
+        '📋 *DETAIL MONITORING SA PAID & UNPAID*',
         'MORA REPUBLIC • SURABAYA 2',
         'Periode: November 2026',
         'ASM: ' + asmText + ' | AE: ' + aeText,
         'Paket: ' + planText,
+        searchText ? 'Pencarian: ' + searchText : null,
+        'Filter indikator: ' + (delayFilter === 'ALL' ? 'Semua' : delayFilter === 'ALL_UNPAID' ? 'Semua Unpaid' : delayFilter === 'PAID' ? 'PAID' : delayFilter + ' Hari'),
         '',
         '📊 *RINGKASAN*',
-        'Pelanggan: *' + rows.length + '* | Total tagihan: *' + formatIDR(total) + '*',
+        'Jumlah data: *' + rows.length + '* | PAID: *' + paidCount + '* | UNPAID: *' + unpaidCount + '*',
+        'Total nominal: *' + formatIDR(total) + '*',
         '',
-        '📋 *DAFTAR UNPAID — TERLAMA DI ATAS*',
+        '📋 *DAFTAR DATA SESUAI TABEL*',
         '',
         ...detailLines
-      ].join('\n');
-      openWAModal('Report WhatsApp – SA Unpaid', report);
+      ].filter(line => line !== null).join('\n');
+      openWAModal('Report WhatsApp – Monitoring SA', report);
     }
 
     function renderTab2Charts() {
