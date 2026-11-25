@@ -1937,11 +1937,11 @@ html.dark option { background:#0f172a; color:#f1f5f9; }
     function copyWAText(key) {
       const novData = getNovemberSA();
       const octData = getOctoberMTDSA();
-      const clean = value => String(value || '-').replace(/\\s*\\.\\s*$/, '').trim();
+      const clean = value => String(value || '-').replace(/\\*/g, '').replace(/\\s*\\.\\s*$/, '').trim();
       const growth = (nov, oct) => {
         const diff = nov - oct;
         const pct = oct > 0 ? Math.round(diff / oct * 100) : (nov > 0 ? 100 : 0);
-        return `${diff > 0 ? '+' : ''}${diff} (${pct > 0 ? '+' : ''}${pct}%)`;
+        return `${diff > 0 ? '+' : ''}${diff} SA (${pct > 0 ? '+' : ''}${pct}%)`;
       };
       let title = 'Report Monitoring SA';
       let lines = [];
@@ -1960,10 +1960,10 @@ html.dark option { background:#0f172a; color:#f1f5f9; }
           map[name].oct++;
         });
         const q = (document.getElementById('searchRankASM')?.value || '').toLowerCase();
-        const rows = Object.values(map).filter(r => r.name.toLowerCase().includes(q))
-          .sort((a,b) => b.nov-a.nov || b.oct-a.oct);
-        lines = [`🏆 *RANKING SA PER ASM — NOVEMBER 2026*`, `Perbandingan MTD s/d tanggal ${getCurrentCutoffDay()} vs Oktober`, ''];
-        rows.forEach((r,i) => lines.push(`${i+1}. *${clean(r.name)}* — Nov ${r.nov} | Okt ${r.oct} | Selisih ${growth(r.nov,r.oct)}`));
+        const rows = Object.values(map).filter(r => r.name.toLowerCase().includes(q)).sort((a,b) => b.nov-a.nov || b.oct-a.oct);
+        lines = ['🏆 *RANKING PENCAPAIAN SA PER ASM*', 'MORA REPUBLIC • SURABAYA 2', `Periode: November 2026 (MTD s/d ${getCurrentCutoffDay()})`, '', '*HASIL RANKING*'];
+        rows.forEach((r,i) => lines.push(`${i+1}. *${clean(r.name)}* — ${r.nov} SA\n   Okt: ${r.oct} SA | Selisih: ${growth(r.nov,r.oct)}\n   Branch: ${clean(r.branch)}`));
+        if (!rows.length) lines.push('_Tidak ada data untuk pencarian ini._');
       } else if (key === 'rankAE') {
         title = 'Ranking Pencapaian SA per AE';
         const map = {};
@@ -1977,17 +1977,17 @@ html.dark option { background:#0f172a; color:#f1f5f9; }
           if (map[k]) map[k].oct++;
         });
         const q = (document.getElementById('searchRankAE')?.value || '').toLowerCase();
-        const rows = Object.values(map).filter(r => `${r.ae} ${r.asm} ${r.code}`.toLowerCase().includes(q))
-          .sort((a,b) => b.nov-a.nov || b.oct-a.oct);
-        lines = [`🥇 *RANKING SA PER AE — NOVEMBER 2026*`, `Perbandingan MTD s/d tanggal ${getCurrentCutoffDay()} vs Oktober`, ''];
-        rows.forEach((r,i) => lines.push(`${i+1}. *${clean(r.ae)}* — Nov ${r.nov} | Okt ${r.oct} | Selisih ${growth(r.nov,r.oct)}\n   ASM: ${clean(r.asm)} | ID: ${r.code}`));
+        const rows = Object.values(map).filter(r => `${r.ae} ${r.asm} ${r.code}`.toLowerCase().includes(q)).sort((a,b) => b.nov-a.nov || b.oct-a.oct);
+        lines = ['🥇 *RANKING PENCAPAIAN SA PER AE*', 'MORA REPUBLIC • SURABAYA 2', `Periode: November 2026 (MTD s/d ${getCurrentCutoffDay()})`, '', '*HASIL RANKING*'];
+        rows.forEach((r,i) => lines.push(`${i+1}. *${clean(r.ae)}* — ${r.nov} SA\n   ASM: ${clean(r.asm)} | ID: ${r.code}\n   Okt: ${r.oct} SA | Selisih: ${growth(r.nov,r.oct)}`));
+        if (!rows.length) lines.push('_Tidak ada data untuk pencarian ini._');
       } else if (key === 'tab1Detail') {
         title = 'Rincian Performa SA Harian';
         const q = (document.getElementById('searchTab1')?.value || '').toLowerCase();
-        const rows = getAEPerformanceRows().filter(r => `${r.asm} ${r.ae} ${r.aeCode}`.toLowerCase().includes(q))
-          .sort((a,b) => b.total-a.total || b.prevMonth-a.prevMonth);
-        lines = [`📊 *RINCIAN PERFORMA SA — NOVEMBER 2026*`, `Total AE aktif: ${rows.length}`, ''];
-        rows.forEach((r,i) => lines.push(`${i+1}. *${clean(r.ae)}* — ${r.total} SA | Target ${r.target} | Paid ${r.paid} | Unpaid ${r.unpaid}\n   ASM: ${clean(r.asm)} | Okt EOM: ${r.prevMonth} | Selisih: ${growth(r.total,r.prevMonth)} | Revenue: ${formatIDR(r.revenue)}`));
+        const rows = getAEPerformanceRows().filter(r => `${r.asm} ${r.ae} ${r.aeCode}`.toLowerCase().includes(q)).sort((a,b) => b.total-a.total || b.prevMonth-a.prevMonth);
+        lines = ['📊 *RINCIAN PERFORMA SA*', 'MORA REPUBLIC • SURABAYA 2', 'Periode: November 2026', `Total AE aktif: ${rows.length}`, '', '*DETAIL PENCAPAIAN*'];
+        rows.forEach((r,i) => lines.push(`${i+1}. *${clean(r.ae)}* — ${r.total} SA / Target ${r.target}\n   ASM: ${clean(r.asm)} | Paid: ${r.paid} | Unpaid: ${r.unpaid}\n   Okt EOM: ${r.prevMonth} | Selisih: ${growth(r.total,r.prevMonth)}\n   Est. Revenue: ${formatIDR(r.revenue)}`));
+        if (!rows.length) lines.push('_Tidak ada data untuk pencarian ini._');
       } else if (key === 'tab2Detail') {
         title = 'Detail Monitoring SA Paid & Unpaid';
         const q = (document.getElementById('searchTab2')?.value || '').toLowerCase();
@@ -1997,13 +1997,14 @@ html.dark option { background:#0f172a; color:#f1f5f9; }
           if (delayFilter !== 'ALL' && delayFilter !== 'ALL_UNPAID' && bucket !== delayFilter) return false;
           return !q || `${r.subscription_id} ${r.order_id} ${r.name} ${r.asm_name} ${r.sales_agent_name} ${r.clustername}`.toLowerCase().includes(q);
         }).sort((a,b) => (parseInt(b.unpaid_days)||0) - (parseInt(a.unpaid_days)||0));
-        lines = [`📋 *DETAIL MONITORING SA — NOVEMBER 2026*`, `Total data: ${rows.length}`, ''];
-        rows.forEach((r,i) => lines.push(`${i+1}. *${clean(r.name)}* — ${getDelayBucket(r) === 'PAID' ? 'PAID' : 'UNPAID '+(r.unpaid_days||0)+' hari'}\n   ASM: ${clean(r.asm_name)} | AE: ${clean(r.sales_agent_name)}\n   Sub ID: ${r.subscription_id || '-'} | Paket: ${clean(r.plan)} | Tagihan: ${formatIDR(r.invoice_amount)}`));
+        const paid = rows.filter(r => getDelayBucket(r) === 'PAID').length;
+        lines = ['📋 *DETAIL MONITORING SA PAID & UNPAID*', 'MORA REPUBLIC • SURABAYA 2', 'Periode: November 2026', `Total data: ${rows.length} | Paid: ${paid} | Unpaid: ${rows.length-paid}`, '', '*DAFTAR PELANGGAN*'];
+        rows.forEach((r,i) => lines.push(`${i+1}. *${clean(r.name)}* — ${getDelayBucket(r) === 'PAID' ? 'PAID' : 'UNPAID • '+(r.unpaid_days||0)+' hari'}\n   ASM: ${clean(r.asm_name)} | AE: ${clean(r.sales_agent_name)}\n   Sub ID: ${r.subscription_id || '-'} | Paket: ${clean(r.plan)}\n   Tagihan: ${formatIDR(r.invoice_amount)}`));
+        if (!rows.length) lines.push('_Tidak ada data sesuai filter._');
       } else {
-        lines = ['*Report Monitoring SA — November 2026*'];
+        lines = ['📊 *REPORT MONITORING SA*', 'MORA REPUBLIC • SURABAYA 2', 'Periode: November 2026'];
       }
-      const report = lines.join('\\n');
-      openWAModal(title, report);
+      openWAModal(title, lines.join('\\n\\n'));
     }
 
     function generateASMWhatsAppReport() {
