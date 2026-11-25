@@ -2079,12 +2079,6 @@ html.dark option { background:#0f172a; color:#f1f5f9; }
       const previousBM = bmSelect.value || 'ALL';
       const uniqueBMs = [...new Set(rawClusterData.map(d => d.bm).filter(v => v && v !== '-'))].sort((a,b) => a.localeCompare(b,'id'));
       bmSelect.innerHTML = '<option value="ALL">ALL BM</option>';
-      uniqueBMs.forEach(bm => {
-        const option = document.createElement('option');
-        option.value = bm;
-        option.textContent = bm;
-        bmSelect.appendChild(option);
-      });
       bmSelect.value = uniqueBMs.includes(previousBM) ? previousBM : 'ALL';
       updateCTJMapASMFilter(false);
     }
@@ -2097,12 +2091,6 @@ html.dark option { background:#0f172a; color:#f1f5f9; }
       const byBM = bm === 'ALL' ? rawClusterData : rawClusterData.filter(d => d.bm === bm);
       const uniqueASMs = [...new Set(byBM.map(d => d.asm).filter(v => v && v !== '-'))].sort((a,b) => a.localeCompare(b,'id'));
       asmSelect.innerHTML = '<option value="ALL">Semua ASM</option>';
-      uniqueASMs.forEach(asm => {
-        const option = document.createElement('option');
-        option.value = asm;
-        option.textContent = asm;
-        asmSelect.appendChild(option);
-      });
       asmSelect.value = uniqueASMs.includes(previousASM) ? previousASM : 'ALL';
       if (shouldRender && ctjMapHasEnteredViewport) renderCTJClusterMap();
     }
@@ -2165,35 +2153,17 @@ html.dark option { background:#0f172a; color:#f1f5f9; }
       const byBMASM = currentASM === 'ALL' ? byBM : byBM.filter(d => d.asm === currentASM);
       const uniqueAEs = [...new Set(byBMASM.map(d => d.ae).filter(v => v && v !== '-'))].sort();
       aeSelect.innerHTML = `<option value="ALL">Semua AE (${uniqueAEs.length})</option>` + uniqueAEs.map(v => `<option value="${escapeHTML(v)}">${escapeHTML(v)}</option>`).join('');
-      uniqueAEs.forEach(ae => {
-        const opt = document.createElement('option');
-        opt.value = ae;
-        opt.textContent = ae;
-        aeSelect.appendChild(opt);
-      });
       if (uniqueAEs.includes(prevAE)) aeSelect.value = prevAE;
 
       // Kota options
       const uniqueCities = [...new Set(byBMASM.map(d => d.kotaAsli).filter(v => v && v !== '-'))].sort();
       citySelect.innerHTML = `<option value="ALL">Semua Kota / Area (${uniqueCities.length})</option>` + uniqueCities.map(v => `<option value="${escapeHTML(v)}">${escapeHTML(v)}</option>`).join('');
-      uniqueCities.forEach(city => {
-        const opt = document.createElement('option');
-        opt.value = city;
-        opt.textContent = city;
-        citySelect.appendChild(opt);
-      });
       if (uniqueCities.includes(prevCity)) citySelect.value = prevCity;
 
       // RFS Classification options
       const uniqueRFS = [...new Set(byBMASM.map(d => d.rfsClass).filter(v => v && v !== '-'))]
         .sort((a, b) => getRFSSortRank(a) - getRFSSortRank(b) || a.localeCompare(b));
       rfsSelect.innerHTML = `<option value="ALL">Semua RFS Class (${uniqueRFS.length})</option>` + uniqueRFS.map(v => `<option value="${escapeHTML(v)}">${escapeHTML(v)}</option>`).join('');
-      uniqueRFS.forEach(rfs => {
-        const opt = document.createElement('option');
-        opt.value = rfs;
-        opt.textContent = rfs;
-        rfsSelect.appendChild(opt);
-      });
       if (uniqueRFS.includes(prevRFS)) rfsSelect.value = prevRFS;
     }
 
