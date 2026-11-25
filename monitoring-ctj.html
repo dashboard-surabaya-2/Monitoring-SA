@@ -701,7 +701,7 @@ html.dark option { background:#0f172a; color:#f1f5f9; }
           </div>
           <div id="ctj-cluster-map" class="w-full" style="height:620px;z-index:1"></div>
           <div class="ctj-map-bottom-tools">
-            <button type="button" onclick="locateNearestCTJCluster()"><i class="fa-solid fa-crosshairs"></i> Lokasi Saya</button>
+            <button type="button" onclick="locateCTJUserLocation()"><i class="fa-solid fa-crosshairs"></i> Lokasi Saya</button>
             <button type="button" onclick="locateNearestCTJCluster()"><i class="fa-solid fa-location-dot"></i> Cluster Terdekat</button>
             <button type="button" onclick="openSelectedCTJRoute()"><i class="fa-solid fa-route"></i> Rute Pilihan (<b id="map-route-count-bottom">0</b>)</button>
           </div>
@@ -1309,6 +1309,8 @@ html.dark option { background:#0f172a; color:#f1f5f9; }
     let mapShowZonkOnly = false;
     let selectedCTJRouteStops = [];
     let ctjMapMarkerIndex = [];
+    let ctjUserLocationMarker = null;
+    let ctjUserLocationAccuracy = null;
     let ctjMapResizeObserver = null;
     let ctjMapResizeHandlerBound = false;
 
@@ -1568,24 +1570,51 @@ html.dark option { background:#0f172a; color:#f1f5f9; }
       const index=ctjMapMarkerIndex.indexOf(match);
       selectCTJClusterSuggestion(index);
     }
-    function locateNearestCTJCluster() {
+    function requestCTJDeviceLocation(onSuccess) {
       if (!navigator.geolocation) { showToast('Browser tidak mendukung GPS.', true); return; }
-      const candidates = ctjMapMarkerIndex;
-      if (!candidates.length) { showToast('Tidak ada cluster berkoordinat pada filter saat ini.', true); return; }
       showToast('Mengambil lokasi perangkat...');
       navigator.geolocation.getCurrentPosition(position => {
-        const lat=position.coords.latitude, lon=position.coords.longitude;
+        onSuccess(position.coords.latitude,position.coords.longitude,position.coords.accuracy);
+      },error=>showToast(error.code===1?'Izin GPS ditolak. Aktifkan lokasi browser.':'Lokasi GPS tidak berhasil diperoleh.',true),
+      {enableHighAccuracy:true,timeout:15000,maximumAge:60000});
+    }
+
+    function showCTJUserLocation(lat,lon,accuracy) {
+      if (!ctjLeafletMap) initCTJClusterMap();
+      if (!ctjLeafletMap) { showToast('Peta belum siap. Coba kembali.',true); return; }
+      if (ctjUserLocationMarker) ctjLeafletMap.removeLayer(ctjUserLocationMarker);
+      if (ctjUserLocationAccuracy) ctjLeafletMap.removeLayer(ctjUserLocationAccuracy);
+      ctjUserLocationAccuracy=L.circle([lat,lon],{
+        radius:Math.max(accuracy||0,10),color:'#2563eb',weight:1,opacity:.55,fillColor:'#3b82f6',fillOpacity:.10
+      }).addTo(ctjLeafletMap);
+      ctjUserLocationMarker=L.circleMarker([lat,lon],{
+        radius:8,color:'#ffffff',weight:3,fillColor:'#2563eb',fillOpacity:1
+      }).addTo(ctjLeafletMap).bindPopup('<b>Lokasi Saya</b><br>Posisi GPS perangkat');
+      ctjLeafletMap.setView([lat,lon],16);
+      ctjUserLocationMarker.openPopup();
+      showToast('Lokasi GPS Anda ditampilkan pada peta.');
+    }
+
+    function locateCTJUserLocation() {
+      requestCTJDeviceLocation((lat,lon,accuracy)=>showCTJUserLocation(lat,lon,accuracy));
+    }
+
+    function locateNearestCTJCluster() {
+      const candidates=ctjMapMarkerIndex;
+      if (!candidates.length) { showToast('Tidak ada cluster berkoordinat pada filter saat ini.',true); return; }
+      requestCTJDeviceLocation((lat,lon)=>{
         const nearest=candidates.reduce((best,x)=>{
-          const dLat=(x.lat-lat)*Math.PI/180, dLon=(x.lon-lon)*Math.PI/180;
-          const a=Math.sin(dLat/2)**2+Math.cos(lat*Math.PI/180)*Math.cos(x.lat*Math.PI/180)*Math.sin(dLon/2)**2;
+          const dLat=(Number(x.lat)-lat)*Math.PI/180, dLon=(Number(x.lon)-lon)*Math.PI/180;
+          const a=Math.sin(dLat/2)**2+Math.cos(lat*Math.PI/180)*Math.cos(Number(x.lat)*Math.PI/180)*Math.sin(dLon/2)**2;
           const km=6371*2*Math.atan2(Math.sqrt(a),Math.sqrt(1-a));
           return !best||km<best.km?{...x,km}:best;
         },null);
+        if(!nearest){showToast('Tidak ditemukan cluster dengan koordinat valid.',true);return;}
         ctjLeafletMap.setView([nearest.lat,nearest.lon],16);
         nearest.marker.openPopup();
+        showCTJMapDetail(nearest.data,nearest.lat,nearest.lon);
         showToast('Cluster terdekat: '+(nearest.data.clusterName||nearest.data.clusterId)+' • '+nearest.km.toFixed(1)+' km garis lurus.');
-      },error=>showToast(error.code===1?'Izin GPS ditolak. Aktifkan lokasi browser.':'Lokasi GPS tidak berhasil diperoleh.',true),
-      {enableHighAccuracy:true,timeout:15000,maximumAge:60000});
+      });
     }
     function clearCTJMapDetail() {
       const empty=document.getElementById('ctj-map-detail-empty');
