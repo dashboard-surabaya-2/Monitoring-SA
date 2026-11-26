@@ -1209,13 +1209,12 @@ html.dark option { background:#0f172a; color:#f1f5f9; }
                 const select = document.getElementById(item.id);
                 if (!select) return;
                 const selected = select.value || 'ALL';
-                // Dropdown Area mengikuti BSM dan rentang Appointment Date,
-                // tetapi tidak dikunci oleh ASM, AE, kontraktor, Area, slot, atau pencarian.
-                // Dengan begitu Area lain milik BSM tetap terlihat walau ASM/AE sedang dipilih.
-                const candidateCriteria = item.field === 'area'
-                    ? { ...criteria, asm: 'ALL', ae: 'ALL', area: 'ALL', contractor: 'ALL', slot: null, search: '' }
-                    : { ...criteria, [item.field]: 'ALL' };
-                const candidates = rawWorkOrders.filter(row => matchesCriteria(row, candidateCriteria, item.field === 'slot'));
+                // Dropdown Area menampilkan SEMUA Area yang pernah muncul pada data BSM terpilih,
+                // tanpa dibatasi tanggal, ASM, AE, kontraktor, slot, Area aktif, atau pencarian.
+                // Ini mencegah Area seperti Bojonegoro hilang hanya karena rentang tanggal/filter lain.
+                const candidates = item.field === 'area'
+                    ? rawWorkOrders.filter(row => criteria.bsm === 'ALL' || normalizePersonKey(row.bsmName) === normalizePersonKey(criteria.bsm))
+                    : rawWorkOrders.filter(row => matchesCriteria(row, { ...criteria, [item.field]: 'ALL' }, item.field === 'slot'));
                 const valuesByKey = new Map();
                 candidates.map(item.getter).filter(v => v && v !== '-' && v.toLowerCase() !== 'null').forEach(value => {
                     const key = item.key(value);
