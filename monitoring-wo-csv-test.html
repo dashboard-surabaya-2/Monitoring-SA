@@ -1034,15 +1034,23 @@ html.dark option { background:#0f172a; color:#f1f5f9; }
             } finally { if(input) input.value=''; }
         }
 
+        function normalizeAreaLabel(value) {
+            const label = cleanText(value);
+            return label ? label.toLocaleLowerCase('id-ID') : '';
+        }
         function applyCTJAreaMapToRows(rows,map) {
             let matched=0,changed=0;
             const corrected=rows.map(row=>{
                 const officialArea=map.get(normalizeClusterAreaKey(row.clusterName));
-                if(!officialArea) return row;
+                if(!officialArea) {
+                    const fallbackArea=normalizeAreaLabel(row.areaAsli || row.area);
+                    return {...row, areaAsli:fallbackArea, area:normalizeAreaLabel(row.area), areaReference:row.areaReference||'CSV ASLI'};
+                }
                 matched++;
                 const originalArea=cleanText(row.areaCsvOriginal)||cleanText(row.areaAsli)||cleanText(row.area);
-                if(normalizeClusterAreaKey(originalArea)!==normalizeClusterAreaKey(officialArea)) changed++;
-                return {...row,areaCsvOriginal:row.areaCsvOriginal||originalArea,areaAsli:officialArea,area:officialArea,areaReference:'CTJ KOTA ASLI'};
+                const canonicalArea=normalizeAreaLabel(officialArea);
+                if(normalizeClusterAreaKey(originalArea)!==normalizeClusterAreaKey(canonicalArea)) changed++;
+                return {...row,areaCsvOriginal:row.areaCsvOriginal||originalArea,areaAsli:canonicalArea,area:canonicalArea,areaReference:'CTJ KOTA ASLI'};
             });
             return {rows:corrected,matched,changed,unmatched:rows.length-matched};
         }
@@ -1052,13 +1060,11 @@ html.dark option { background:#0f172a; color:#f1f5f9; }
         }
 
         function getEffectiveArea(wo) {
-            if (!wo) return 'Tidak Diketahui';
-            const asli = cleanText(wo.areaAsli);
-            if (asli && asli !== '-' && asli.toLowerCase() !== 'null' && asli.toLowerCase() !== 'nan') {
-                return asli;
-            }
-            const fallback = cleanText(wo.area);
-            return fallback || 'Tidak Diketahui';
+            if (!wo) return 'tidak diketahui';
+            const asli = normalizeAreaLabel(wo.areaAsli);
+            if (asli && asli !== '-' && asli !== 'null' && asli !== 'nan') return asli;
+            const fallback = normalizeAreaLabel(wo.area);
+            return fallback || 'tidak diketahui';
         }
 
         function normalizeSlotTime(rawSlot) {
