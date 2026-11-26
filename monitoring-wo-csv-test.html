@@ -1261,7 +1261,13 @@ html.dark option { background:#0f172a; color:#f1f5f9; }
 
         function handleBSMChange() {
             const bsmVal = document.getElementById('filter-bsm')?.value || 'ALL';
-            // Perubahan BSM membatalkan ASM dan AE lama yang mungkin bukan bawahannya.
+            // Saat induk BSM berubah, lepaskan seluruh pilihan turunannya agar tidak
+            // membawa ASM/AE/Area/kontraktor/slot dari BSM sebelumnya.
+            ['filter-asm','filter-ae','filter-area','filter-contractor','filter-slottime'].forEach(id=>{
+                const el=document.getElementById(id); if(el) el.value='ALL';
+            });
+            selectedSlotFromTable=null;
+            syncSlotPill();
             populateFilterOptions(bsmVal, 'ALL', 'ALL');
             synchronizeFilterOptions();
             applyFilters();
@@ -1270,7 +1276,12 @@ html.dark option { background:#0f172a; color:#f1f5f9; }
         function handleASMChange() {
             const bsmVal = document.getElementById('filter-bsm')?.value || 'ALL';
             const asmVal = document.getElementById('filter-asm')?.value || 'ALL';
-            // Perubahan ASM membatalkan AE lama agar daftar AE mengikuti ASM terpilih.
+            // Saat ASM berubah, lepaskan AE dan filter turunannya yang mungkin tidak relevan.
+            ['filter-ae','filter-area','filter-contractor','filter-slottime'].forEach(id=>{
+                const el=document.getElementById(id); if(el) el.value='ALL';
+            });
+            selectedSlotFromTable=null;
+            syncSlotPill();
             populateFilterOptions(bsmVal, asmVal, 'ALL');
             synchronizeFilterOptions();
             applyFilters();
