@@ -342,7 +342,7 @@ html.dark option { background:#0f172a; color:#f1f5f9; }
         <section class="rounded-2xl border border-amber-300 bg-amber-50 p-4 sm:p-5 shadow-sm">
           <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
             <div><div class="font-extrabold text-amber-950">MODE UJI COBA — SUMBER CSV</div><p class="text-xs text-amber-900 mt-1">Halaman ini terpisah dari dashboard utama. Upload CSV lengkap terbaru (full snapshot).</p><p id="csvTrialStatus" class="text-xs text-amber-900 mt-1">Belum ada data CSV tersimpan di browser ini.</p></div>
-            <div class="flex gap-2 flex-wrap"><label for="csvTrialInput" class="cursor-pointer inline-flex items-center gap-2 rounded-xl bg-amber-700 hover:bg-amber-800 text-white px-4 py-3 text-sm font-bold"><i data-lucide="upload" class="w-4 h-4"></i> Upload CSV Terbaru</label><input id="csvTrialInput" type="file" accept=".csv,.xlsx,.xls" class="hidden" onchange="handleFileUpload(event)"><button type="button" onclick="showCsvTrialArchives()" class="rounded-xl border border-amber-400 bg-white px-4 py-3 text-sm font-bold text-amber-950">Arsip 3 Hari</button><button type="button" onclick="exportActiveCsvSnapshot()" class="rounded-xl border border-emerald-500 bg-emerald-700 hover:bg-emerald-800 text-white px-4 py-3 text-sm font-bold">Ekspor Data Aktif</button></div>
+            <div class="flex gap-2 flex-wrap"><label for="csvTrialInput" class="cursor-pointer inline-flex items-center gap-2 rounded-xl bg-amber-700 hover:bg-amber-800 text-white px-4 py-3 text-sm font-bold"><i data-lucide="upload" class="w-4 h-4"></i> Upload CSV Terbaru</label><input id="csvTrialInput" type="file" accept=".csv,.xlsx,.xls" class="hidden" onchange="handleFileUpload(event)"><button type="button" onclick="showCsvTrialArchives()" class="rounded-xl border border-amber-400 bg-white px-4 py-3 text-sm font-bold text-amber-950">Arsip 3 Hari</button><label for="ctjReferenceInput" class="cursor-pointer rounded-xl border border-indigo-400 bg-indigo-700 hover:bg-indigo-800 text-white px-4 py-3 text-sm font-bold">Upload Referensi CTJ</label><input id="ctjReferenceInput" type="file" accept=".csv,.xlsx,.xls" class="hidden" onchange="importCTJAreaReferenceFile(event)"><button type="button" onclick="exportActiveCsvSnapshot()" class="rounded-xl border border-emerald-500 bg-emerald-700 hover:bg-emerald-800 text-white px-4 py-3 text-sm font-bold">Ekspor Data Aktif</button></div>
           </div>
           <p class="text-[11px] text-amber-900 mt-3">Catatan uji coba: arsip disimpan lokal pada browser/perangkat ini dan dibersihkan otomatis setelah 72 jam. Belum tersinkron antarperangkat; penyimpanan cloud akan menjadi tahap berikutnya.</p>
           <div id="csvTrialArchives" class="hidden mt-3 rounded-xl bg-white border border-amber-200 p-3 text-xs text-slate-700"></div>
@@ -945,6 +945,17 @@ html.dark option { background:#0f172a; color:#f1f5f9; }
             return cleanText(value).normalize('NFKD').replace(/[\\u0300-\\u036f]/g, '').toUpperCase().replace(/[\\u200B-\\u200D\\uFEFF]/g, '').replace(/[^A-Z0-9]+/g, ' ').trim().replace(/\\s+/g, ' ');
         }
         async function loadCTJAreaMap() {
+            // Referensi CTJ yang diunggah pengguna menjadi sumber utama dan disimpan lokal.
+            try {
+                const db = await openCsvTrialDB();
+                const saved = await new Promise((resolve,reject)=>{
+                    const q=db.transaction('active').objectStore('active').get('ctj-reference');
+                    q.onsuccess=()=>resolve(q.result||null); q.onerror=()=>reject(q.error);
+                });
+                db.close();
+                if (saved && saved.map && Object.keys(saved.map).length) return new Map(Object.entries(saved.map));
+            } catch (error) { console.warn('Gagal membaca referensi CTJ lokal:',error); }
+            // Fallback jika pengguna belum mengunggah file referensi CTJ.
             let lastError = null;
             for (const url of CTJ_AREA_CSV_URLS) {
                 try {
@@ -960,36 +971,84 @@ html.dark option { background:#0f172a; color:#f1f5f9; }
                         const kota = cleanText(row['KOTA ASLI']);
                         const key = normalizeClusterAreaKey(cluster);
                         const kotaKey = normalizeClusterAreaKey(kota);
-                        // Abaikan nilai placeholder seperti 0, strip, atau kosong.
                         if (!key || !kotaKey || ['0','-','NULL','NAN','TIDAK DIKETAHUI'].includes(kotaKey)) return;
                         if (!grouped.has(key)) grouped.set(key, new Set());
                         grouped.get(key).add(kota);
                     });
                     const map = new Map();
-                    grouped.forEach((values, key) => {
-                        // Gunakan hanya Cluster dengan satu nilai KOTA ASLI yang konsisten.
-                        if (values.size === 1) map.set(key, [...values][0]);
-                        else console.warn('Cluster CTJ memiliki KOTA ASLI berbeda, dilewati:', key, [...values]);
-                    });
-                    if (map.size) return map;
-                    throw new Error('Kolom Clustername / KOTA ASLI tidak ditemukan atau tidak memiliki nilai valid.');
-                } catch (error) { lastError = error; }
+                    grouped.forEach((values,key)=>{ if(values.size===1) map.set(key,[...values][0]); });
+                    if(map.size) return map;
+                    throw new Error('Kolom Clustername / KOTA ASLI tidak ditemukan.');
+                } catch(error) { lastError=error; }
             }
-            throw lastError || new Error('Sumber CSV CTJ tidak dapat diakses.');
+            throw lastError || new Error('Referensi CTJ tidak tersedia. Silakan unggah file CTJ.');
+        }
+
+        async function importCTJAreaReferenceFile(event) {
+            const input=event?.target, file=input?.files?.[0];
+            if(!file) return;
+            try {
+                const bytes=new Uint8Array(await file.arrayBuffer());
+                const workbook=XLSX.read(bytes,{type:'array'});
+                const sheet=workbook.Sheets[workbook.SheetNames[0]];
+                const rows=XLSX.utils.sheet_to_json(sheet,{defval:''});
+                if(!rows.length) throw new Error('File CTJ kosong.');
+                const grouped=new Map();
+                rows.forEach(row=>{
+                    const cluster=row['Clustername']||row['Cluster Name']||'';
+                    const kota=cleanText(row['KOTA ASLI']);
+                    const key=normalizeClusterAreaKey(cluster);
+                    const kotaKey=normalizeClusterAreaKey(kota);
+                    if(!key||!kotaKey||['0','-','NULL','NAN','TIDAK DIKETAHUI'].includes(kotaKey)) return;
+                    if(!grouped.has(key)) grouped.set(key,new Set());
+                    grouped.get(key).add(kota);
+                });
+                const map={}; let conflicts=0;
+                grouped.forEach((values,key)=>{
+                    if(values.size===1) map[key]=[...values][0]; else conflicts++;
+                });
+                if(!Object.keys(map).length) throw new Error('Kolom Clustername dan KOTA ASLI tidak ditemukan.');
+                const db=await openCsvTrialDB();
+                const tx=db.transaction('active','readwrite');
+                tx.objectStore('active').put({key:'ctj-reference',fileName:file.name,uploadedAt:Date.now(),rowCount:rows.length,map});
+                await new Promise((resolve,reject)=>{tx.oncomplete=resolve;tx.onerror=()=>reject(tx.error);});
+                db.close();
+                const active=await getCsvTrialActive();
+                let correctedCount=0,changedCount=0;
+                if(active&&Array.isArray(active.rows)){
+                    const corrected=applyCTJAreaMapToRows(active.rows,new Map(Object.entries(map)));
+                    correctedCount=corrected.matched; changedCount=corrected.changed;
+                    const db2=await openCsvTrialDB();
+                    const tx2=db2.transaction('active','readwrite');
+                    tx2.objectStore('active').put({...active,rows:corrected.rows,rowCount:corrected.rows.length});
+                    await new Promise((resolve,reject)=>{tx2.oncomplete=resolve;tx2.onerror=()=>reject(tx2.error);});
+                    db2.close();
+                    rawWorkOrders=corrected.rows;
+                    resetAllFilters(false);
+                }
+                showToast('Referensi CTJ tersimpan: '+Object.keys(map).length+' Cluster. Data aktif cocok '+correctedCount+' WO; '+changedCount+' Area dikoreksi.'+(conflicts?' Konflik KOTA ASLI: '+conflicts+' Cluster dilewati.':''),'success');
+                await updateCsvTrialStatus();
+            } catch(error) {
+                console.error('Gagal impor referensi CTJ:',error);
+                showToast('Gagal membaca referensi CTJ: '+error.message,'error');
+            } finally { if(input) input.value=''; }
+        }
+
+        function applyCTJAreaMapToRows(rows,map) {
+            let matched=0,changed=0;
+            const corrected=rows.map(row=>{
+                const officialArea=map.get(normalizeClusterAreaKey(row.clusterName));
+                if(!officialArea) return row;
+                matched++;
+                const originalArea=cleanText(row.areaCsvOriginal)||cleanText(row.areaAsli)||cleanText(row.area);
+                if(normalizeClusterAreaKey(originalArea)!==normalizeClusterAreaKey(officialArea)) changed++;
+                return {...row,areaCsvOriginal:row.areaCsvOriginal||originalArea,areaAsli:officialArea,area:officialArea,areaReference:'CTJ KOTA ASLI'};
+            });
+            return {rows:corrected,matched,changed,unmatched:rows.length-matched};
         }
         async function applyCTJAreaReference(rows) {
-            const map = await loadCTJAreaMap();
-            let matched = 0, changed = 0;
-            const corrected = rows.map(row => {
-                const key = normalizeClusterAreaKey(row.clusterName);
-                const officialArea = map.get(key);
-                if (!officialArea) return row;
-                matched++;
-                const originalArea = cleanText(row.areaAsli) || cleanText(row.area);
-                if (normalizeClusterAreaKey(originalArea) !== normalizeClusterAreaKey(officialArea)) changed++;
-                return {...row, areaCsvOriginal: row.areaCsvOriginal || originalArea, areaAsli: officialArea, area: officialArea, areaReference: 'CTJ KOTA ASLI'};
-            });
-            return {rows:corrected, matched, changed, unmatched:rows.length-matched, referenceCount:map.size};
+            const map=await loadCTJAreaMap();
+            return {...applyCTJAreaMapToRows(rows,map),referenceCount:map.size};
         }
 
         function getEffectiveArea(wo) {
