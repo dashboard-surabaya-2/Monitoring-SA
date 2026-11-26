@@ -2534,9 +2534,33 @@ html.dark option { background:#0f172a; color:#f1f5f9; }
                         return;
                     }
                     const headers = matrixRows[0].map(h => cleanText(h).replace(/^\uFEFF/, '').normalize('NFKC'));
-                    const jsonRows = matrixRows.slice(1).map(cells =>
+                    // Kolom commentsByContractor (indeks 50) dapat berisi koma yang
+                    // tidak diapit tanda kutip pada ekspor sumber. Gabungkan kolom
+                    // berlebih ke kolom komentar agar field setelahnya tidak bergeser.
+                    let repairedRows = 0;
+                    const expectedColumns = headers.length;
+                    const normalizedRows = [headers];
+                    matrixRows.slice(1).forEach((sourceRow, rowIndex) => {
+                        let cells = sourceRow.slice();
+                        if (cells.length > expectedColumns) {
+                            const overflow = cells.length - expectedColumns;
+                            const commentIndex = headers.findIndex(h => h.toLowerCase() === 'commentsbycontractor');
+                            if (commentIndex >= 0 && cells.length - overflow > commentIndex) {
+                                cells = cells.slice(0, commentIndex)
+                                    .concat([cells.slice(commentIndex, commentIndex + overflow + 1).join(',')])
+                                    .concat(cells.slice(commentIndex + overflow + 1));
+                                repairedRows++;
+                            }
+                        }
+                        if (cells.length !== expectedColumns) {
+                            throw new Error(`Baris CSV ke-${rowIndex + 2} memiliki ${cells.length} kolom; seharusnya ${expectedColumns}. Impor dibatalkan agar data tidak bergeser.`);
+                        }
+                        normalizedRows.push(cells);
+                    });
+                    const jsonRows = normalizedRows.slice(1).map(cells =>
                         Object.fromEntries(headers.map((header, index) => [header, cells[index] ?? '']))
                     );
+                    if (repairedRows) console.info(`CSV: ${repairedRows} baris komentar diperbaiki tanpa menggeser kolom lain.`);
 
                     let mapped = jsonRows.map((row, idx) => {
                         const rowArray = matrixRows[idx + 1] || [];
