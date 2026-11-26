@@ -193,6 +193,9 @@ html.dark option { background:#0f172a; color:#f1f5f9; }
   .ctj-map-legend b,.ctj-map-legend small{display:block;font-size:10px}.ctj-map-legend b{color:#334155}.ctj-map-legend small{color:#94a3b8}
   .ctj-legend-dot{width:12px;height:12px;border-radius:50%;border:2px solid #fff;box-shadow:0 0 0 1px #cbd5e1;flex:none}
   .ctj-legend-dot.red{background:#e11d48}.ctj-legend-dot.orange{background:#f97316}.ctj-legend-dot.yellow{background:#fbbf24}.ctj-legend-dot.green{background:#059669}
+  .ctj-legend-dot.bm-blue{background:#2563eb}.ctj-legend-dot.bm-red{background:#dc2626}.ctj-legend-dot.bm-green{background:#059669}.ctj-legend-dot.bm-gray{background:#64748b}
+  #ctj-cluster-map .ctj-map-pin.bm-blue span{background:#2563eb}#ctj-cluster-map .ctj-map-pin.bm-red span{background:#dc2626}#ctj-cluster-map .ctj-map-pin.bm-green span{background:#059669}#ctj-cluster-map .ctj-map-pin.bm-gray span{background:#64748b}
+  #ctj-cluster-map .marker-cluster.ctj-bm-blue div{background:#2563eb}#ctj-cluster-map .marker-cluster.ctj-bm-red div{background:#dc2626}#ctj-cluster-map .marker-cluster.ctj-bm-green div{background:#059669}#ctj-cluster-map .marker-cluster.ctj-bm-gray div{background:#64748b}#ctj-cluster-map .marker-cluster.ctj-bm-mixed div{background:#475569}
   .ctj-map-traffic{display:flex;align-items:center;justify-content:center;gap:7px;background:#e0f2fe;color:#0369a1;border:1px solid #bae6fd;border-radius:10px;padding:10px;font-size:10px;font-weight:900}
   .ctj-map-main{min-width:0;background:#e2e8f0;position:relative}
   #ctj-cluster-map{display:block;width:100%;min-width:0;position:relative;overflow:hidden;background:#e2e8f0}
@@ -680,9 +683,15 @@ html.dark option { background:#0f172a; color:#f1f5f9; }
           </select>
           <label class="ctj-map-label" for="map-color-mode">Warna Marker</label>
           <select id="map-color-mode" onchange="renderCTJClusterMap()" class="ctj-map-select mb-3">
-            <option value="PRIORITY">Prioritas Gabungan</option><option value="PEN">Penetrasi</option><option value="VISIT">Visit MTD</option><option value="ZONK">Status SA</option>
+            <option value="BM">Berdasarkan BM</option><option value="PRIORITY">Prioritas Gabungan</option><option value="PEN">Penetrasi</option><option value="VISIT">Visit MTD</option><option value="ZONK">Status SA</option>
           </select>
           <button type="button" onclick="renderCTJClusterMap()" class="ctj-map-apply"><i class="fa-solid fa-check"></i> Terapkan Tampilan</button>
+          <div class="ctj-map-divider"></div>
+          <div class="ctj-map-panel-title"><i class="fa-solid fa-users"></i> Legenda BM</div>
+          <div class="ctj-map-legend"><span class="ctj-legend-dot bm-blue"></span><span><b>BENNY HADIAWAN</b><small>Cluster tanggung jawab BM</small></span></div>
+          <div class="ctj-map-legend"><span class="ctj-legend-dot bm-red"></span><span><b>DHARMAWAN EFENDI</b><small>Cluster tanggung jawab BM</small></span></div>
+          <div class="ctj-map-legend"><span class="ctj-legend-dot bm-green"></span><span><b>KALEB FINNEY SITINJAK</b><small>Cluster tanggung jawab BM</small></span></div>
+          <div class="ctj-map-legend"><span class="ctj-legend-dot bm-gray"></span><span><b>BM 0 / Belum terisi</b><small>Cluster belum memiliki BM</small></span></div>
           <div class="ctj-map-divider"></div>
           <div class="ctj-map-panel-title"><i class="fa-solid fa-palette"></i> Cluster Prioritas</div>
           <div class="ctj-map-legend"><span class="ctj-legend-dot red"></span><span><b>Sangat tinggi</b><small>Skor ≥70</small></span></div>
@@ -1370,7 +1379,15 @@ html.dark option { background:#0f172a; color:#f1f5f9; }
         ctjClusterMarkers = L.markerClusterGroup({
           showCoverageOnHover: false, spiderfyOnMaxZoom: true, zoomToBoundsOnClick: true,
           maxClusterRadius: 48, disableClusteringAtZoom: 16,
-          chunkedLoading: true, chunkInterval: 200, chunkDelay: 50
+          chunkedLoading: true, chunkInterval: 200, chunkDelay: 50,
+          iconCreateFunction: function(cluster) {
+            const children = cluster.getAllChildMarkers();
+            const counts = {};
+            children.forEach(marker => { const key = marker.options.ctjBMClass || 'bm-gray'; counts[key] = (counts[key] || 0) + 1; });
+            const ranked = Object.entries(counts).sort((a,b) => b[1]-a[1]);
+            const dominant = ranked.length && ranked[0][1] > children.length / 2 ? ranked[0][0] : (ranked.length === 1 ? ranked[0][0] : 'bm-mixed');
+            return L.divIcon({html:'<div><span>' + cluster.getChildCount() + '</span></div>',className:'marker-cluster ctj-bm-' + dominant,iconSize:L.point(40,40)});
+          }
         }).addTo(ctjLeafletMap);
       }
       observeCTJMapSize();
@@ -1491,9 +1508,18 @@ html.dark option { background:#0f172a; color:#f1f5f9; }
         </tr>`).join('');
     }
 
+    function getCTJBMColorClass(bm) {
+      const name = String(bm || '').trim().toUpperCase();
+      if (name === 'BENNY HADIAWAN') return 'bm-blue';
+      if (name === 'DHARMAWAN EFENDI') return 'bm-red';
+      if (name === 'KALEB FINNEY SITINJAK') return 'bm-green';
+      return 'bm-gray';
+    }
+    
     function getCTJMapMarkerClass(d) {
       const mode = document.getElementById('map-color-mode')?.value || 'PRIORITY';
       const p = getCTJMapPenetration(d);
+      if (mode === 'BM') return getCTJBMColorClass(d.bm);
       if (mode === 'ZONK') return d.isZonkSA ? 'ctj-map-pin-zonk' : 'pen-high';
       if (mode === 'VISIT') return d.visitMTD > 0 ? 'visit-good' : 'visit-low';
       if (mode === 'PRIORITY') {
@@ -1875,6 +1901,7 @@ html.dark option { background:#0f172a; color:#f1f5f9; }
           </div>`;
         const marker=L.marker([lat,lon],{
           title:d.clusterName||d.clusterId||'Cluster',
+          ctjBMClass:getCTJBMColorClass(d.bm),
           icon:L.divIcon({className:'ctj-map-pin '+getCTJMapMarkerClass(d),html:'<span></span>',iconSize:[18,18],iconAnchor:[9,9]})
         }).bindPopup(popup,{
           maxWidth:285,
