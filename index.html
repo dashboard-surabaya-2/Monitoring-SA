@@ -1641,7 +1641,7 @@ html.dark option { background:#0f172a; color:#f1f5f9; }
     }
 
     function generatePaidUnpaidWhatsAppReport() {
-      // Samakan filter report dengan baris yang sedang tampil pada tabel Tab 2.
+      // Report mengikuti persis filter indikator dan pencarian pada tabel Tab 2.
       const q = (document.getElementById('searchTab2')?.value || '').trim().toLowerCase();
       const rows = getNovemberSA().filter(r => {
         const bucket = getDelayBucket(r);
@@ -1668,17 +1668,37 @@ html.dark option { background:#0f172a; color:#f1f5f9; }
       const aeText = clean(aeSelect?.selectedOptions[0]?.text || 'Semua AE');
       const planText = clean(planSelect?.selectedOptions[0]?.text || 'Semua Paket');
       const searchText = document.getElementById('searchTab2')?.value?.trim() || '';
-      const detailLines = rows.length ? rows.flatMap((r, i) => {
-        const bucket = getDelayBucket(r);
-        const days = parseInt(r.unpaid_days) || 0;
-        const status = bucket === 'PAID' ? '✅ PAID' : '⚠️ UNPAID • ' + days + ' hari';
-        return [
-          (i + 1) + '. *' + clean(r.name) + '*',
-          '   ASM: ' + clean(r.asm_name) + ' | AE: ' + clean(r.sales_agent_name),
-          '   Sub ID: ' + (r.subscription_id || '-') + ' | Paket: ' + clean(r.plan),
-          '   Status: ' + status + ' | Tagihan: ' + formatIDR(Number(r.invoice_amount) || 0)
+
+      const asmNames = [...new Set(rows.map(r => clean(r.asm_name || 'ASM Tidak Terdata')))]
+        .sort((a, b) => a.localeCompare(b, 'id'));
+      const groupedLines = asmNames.flatMap(asmName => {
+        const asmRows = rows.filter(r => clean(r.asm_name || 'ASM Tidak Terdata') === asmName);
+        const asmTotal = asmRows.reduce((sum, r) => sum + (Number(r.invoice_amount) || 0), 0);
+        const aeNames = [...new Set(asmRows.map(r => clean(r.sales_agent_name || 'AE Tidak Terdata')))]
+          .sort((a, b) => a.localeCompare(b, 'id'));
+        const asmLines = [
+          '',
+          '━━━━━━━━━━━━━━━━━━',
+          '*ASM: ' + asmName + '*',
+          'Jumlah: *' + asmRows.length + ' data* | Total: *' + formatIDR(asmTotal) + '*'
         ];
-      }) : ['Tidak ada data sesuai filter tabel.'];
+        aeNames.forEach(aeName => {
+          const aeRows = asmRows.filter(r => clean(r.sales_agent_name || 'AE Tidak Terdata') === aeName);
+          asmLines.push('', '👤 *AE: ' + aeName + '*');
+          aeRows.forEach((r, idx) => {
+            const bucket = getDelayBucket(r);
+            const days = parseInt(r.unpaid_days) || 0;
+            const status = bucket === 'PAID' ? '✅ PAID' : '⚠️ UNPAID • ' + days + ' hari';
+            asmLines.push(
+              (idx + 1) + '. Customer: *' + clean(r.name) + '*',
+              '   Sub ID: ' + (r.subscription_id || '-') + ' | Paket: ' + clean(r.plan),
+              '   Status: ' + status + ' | Tagihan: ' + formatIDR(Number(r.invoice_amount) || 0)
+            );
+          });
+        });
+        return asmLines;
+      });
+
       const report = [
         '📋 *DETAIL MONITORING SA PAID & UNPAID*',
         'MORA REPUBLIC • SURABAYA 2',
@@ -1692,9 +1712,8 @@ html.dark option { background:#0f172a; color:#f1f5f9; }
         'Jumlah data: *' + rows.length + '* | PAID: *' + paidCount + '* | UNPAID: *' + unpaidCount + '*',
         'Total nominal: *' + formatIDR(total) + '*',
         '',
-        '📋 *DAFTAR DATA SESUAI TABEL*',
-        '',
-        ...detailLines
+        '📋 *DAFTAR DATA BERDASARKAN ASM & AE*',
+        ...groupedLines
       ].filter(line => line !== null).join('\n');
       openWAModal('Report WhatsApp – Monitoring SA', report);
     }
