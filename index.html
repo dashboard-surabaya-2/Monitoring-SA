@@ -1424,7 +1424,6 @@ html.dark option { background:#0f172a; color:#f1f5f9; }
         head.innerHTML = `
           <tr>
             <th class="py-2.5 px-3 sticky left-0 bg-slate-100 dark:bg-slate-950 z-10">Nama AE & ASM</th>
-            <th class="py-2.5 px-2">Branch</th>
             <th class="py-2.5 px-2.5 text-center bg-cyan-500/10 text-cyan-600 dark:text-cyan-400 whitespace-nowrap">SA Bln Ini</th>
             <th class="py-2.5 px-2.5 text-center whitespace-nowrap">SA Bln Lalu (EOM)</th>
             <th class="py-2.5 px-2.5 text-center whitespace-nowrap">Selisih</th>
@@ -1448,7 +1447,6 @@ html.dark option { background:#0f172a; color:#f1f5f9; }
                 <div class="font-bold">${r.ae}</div>
                 <div class="text-[10px] text-slate-400">ASM: ${r.asm} • ID: ${r.aeCode}</div>
               </td>
-              <td class="py-2.5 px-2 whitespace-nowrap"><span class="px-2 py-0.5 rounded-full text-[10px] font-semibold bg-slate-200/70 dark:bg-slate-800">${r.branch}</span></td>
               <td class="py-2.5 px-2.5 text-center font-extrabold font-mono text-cyan-500 bg-cyan-500/5 text-sm">${r.total}</td>
               <td class="py-2.5 px-2.5 text-center font-mono text-slate-500 dark:text-slate-400">${r.prevMonth}</td>
               <td class="py-2.5 px-2.5 text-center">${formatDiffBadge(r.diffPrev)}</td>
@@ -1459,7 +1457,7 @@ html.dark option { background:#0f172a; color:#f1f5f9; }
               ${cells}
             </tr>
           `;
-        }).join('') || `<tr><td colspan="39" class="py-8 text-center text-slate-400">Tidak ada AE aktif di bulan ini.</td></tr>`;
+        }).join('') || `<tr><td colspan="38" class="py-8 text-center text-slate-400">Tidak ada AE aktif di bulan ini.</td></tr>`;
       } else {
         head.innerHTML = `
           <tr>
