@@ -992,11 +992,8 @@ html.dark option { background:#0f172a; color:#f1f5f9; }
         }
 
         function normalizeAreaLabel(value) {
-            let label = cleanText(value).replace(/[\u200B-\u200D\uFEFF]/g, '').replace(/\s+/g, ' ').trim();
+            const label = cleanText(value).replace(/[\u200B-\u200D\uFEFF]/g, '').replace(/\s+/g, ' ').trim();
             if (!label) return '';
-            // Nilai area dari CSV vendor dapat berbentuk "Bojonegoro_Installation";
-            // suffix teknis ini bukan nama Area dan harus ditampilkan sebagai "Bojonegoro".
-            label = label.replace(/_Installation$/i, '').replace(/\s+Installation$/i, '').trim();
             return label.toLocaleLowerCase('id-ID').replace(/(^|[\s-])([\p{L}])/gu, (_, sep, letter) => sep + letter.toLocaleUpperCase('id-ID'));
         }
         function applyCTJAreaMapToRows(rows,map) {
@@ -2522,7 +2519,9 @@ html.dark option { background:#0f172a; color:#f1f5f9; }
                         // Kolom CD = indeks 81 (0-based) untuk 'area asli'
                         // Utamakan header. Indeks 81 tidak stabil antar-format CSV dan dapat berisi kolom lain.
                         const areaAsliVal = getFieldFlexible(row, rowArray, -1, ['area asli', 'area_asli', 'areaAsli', 'Area Asli']);
-                        const areaVal = getFieldFlexible(row, rowArray, -1, ['area', 'Area', 'Kota', 'City']);
+                        // Kolom R (indeks 17 / kolom ke-18) adalah kolom Area pada CSV WO.
+                        // Gunakan header "area" sebagai validasi utama dan posisi R sebagai fallback format sumber.
+                        const areaVal = getFieldFlexible(row, rowArray, 17, ['area', 'Area']);
                         // Kolom AM (indeks 38, 0-based) adalah sumber resmi appointmentStatus.
                         // KPI, grafik, dan ringkasan status menggunakan nilai dari kolom ini.
                         const appointmentStatusAM = cleanText(rowArray[38]);
