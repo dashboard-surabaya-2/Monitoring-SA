@@ -940,7 +940,7 @@ html.dark option { background:#0f172a; color:#f1f5f9; }
         // Satu-satunya sumber referensi Area: CSV publik Monitoring CTJ yang diberikan pengguna.
         const CTJ_AREA_CSV_URL = './ctj-area-reference.csv';
         function normalizeClusterAreaKey(value) {
-            return cleanText(value).normalize('NFKD').replace(/[\\u0300-\\u036f]/g, '').toUpperCase().replace(/[\\u200B-\\u200D\\uFEFF]/g, '').replace(/[^A-Z0-9]+/g, ' ').trim().replace(/\\s+/g, ' ');
+            return cleanText(value).normalize('NFKD').replace(/[\u0300-\u036f]/g, '').toUpperCase().replace(/[\u200B-\u200D\uFEFF]/g, '').replace(/[^A-Z0-9]+/g, ' ').trim().replace(/\s+/g, ' ');
         }
         async function loadCTJAreaMap() {
             const buildMap = rows => {
@@ -966,7 +966,7 @@ html.dark option { background:#0f172a; color:#f1f5f9; }
                 if (/<!doctype html|<html/i.test(csvText.slice(0, 300))) throw new Error('File referensi CTJ lokal bukan CSV yang valid.');
                 const matrix = parseCSVText(csvText);
                 if (!matrix.length) throw new Error('File referensi CTJ lokal kosong.');
-                const headers = matrix[0].map(h => cleanText(h).replace(/^\\uFEFF/, ''));
+                const headers = matrix[0].map(h => cleanText(h).replace(/^\uFEFF/, ''));
                 const rows = matrix.slice(1).map(cells => Object.fromEntries(headers.map((header,index) => [header, cells[index] ?? ''])));
                 const map = buildMap(rows);
                 if (!map.size) throw new Error('Kolom Clustername / KOTA ASLI tidak ditemukan pada sumber CTJ utama.');
