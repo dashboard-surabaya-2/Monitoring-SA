@@ -1035,7 +1035,7 @@ html.dark option { background:#0f172a; color:#f1f5f9; }
         }
 
         function normalizeAreaLabel(value) {
-            const label = cleanText(value);
+            const label = cleanText(value).replace(/[\\u200B-\\u200D\\uFEFF]/g, '').replace(/\\s+/g, ' ').trim();
             return label ? label.toLocaleLowerCase('id-ID') : '';
         }
         function applyCTJAreaMapToRows(rows,map) {
@@ -1200,8 +1200,18 @@ html.dark option { background:#0f172a; color:#f1f5f9; }
 
             // 4. Populasi Area (area asli / area) & Kontraktor
             const prevArea = areaSelect ? areaSelect.value : 'ALL';
-            const allAreas = [...new Set(rawWorkOrders.map(d => getEffectiveArea(d)).filter(Boolean))].sort((a, b) => a.localeCompare(b, 'id'));
+            // Satukan nama Area berdasarkan ejaan yang sama tanpa membedakan kapitalisasi.
+            // Semua label filter ditampilkan huruf kecil: sidoarjo, surabaya, dst.
+            const areaByKey = new Map();
+            rawWorkOrders.forEach(d => {
+                const area = normalizeAreaLabel(getEffectiveArea(d));
+                if (!area) return;
+                const key = normalizeClusterAreaKey(area);
+                if (key && !areaByKey.has(key)) areaByKey.set(key, area);
+            });
+            const allAreas = [...areaByKey.values()].sort((a, b) => a.localeCompare(b, 'id'));
             if (areaSelect) {
+                const previousAreaKey = prevArea === 'ALL' ? 'ALL' : normalizeClusterAreaKey(prevArea);
                 areaSelect.innerHTML = `<option value="ALL">Semua Area (${allAreas.length})</option>`;
                 allAreas.forEach(area => {
                     const opt = document.createElement('option');
@@ -1209,7 +1219,7 @@ html.dark option { background:#0f172a; color:#f1f5f9; }
                     opt.textContent = area;
                     areaSelect.appendChild(opt);
                 });
-                areaSelect.value = [...areaSelect.options].some(o => o.value === prevArea) ? prevArea : 'ALL';
+                areaSelect.value = [...areaSelect.options].some(o => o.value !== 'ALL' && normalizeClusterAreaKey(o.value) === previousAreaKey) ? areaByKey.get(previousAreaKey) : 'ALL';
             }
 
             const prevCont = contractorSelect ? contractorSelect.value : 'ALL';
@@ -1363,7 +1373,7 @@ html.dark option { background:#0f172a; color:#f1f5f9; }
             if (crit.ae !== 'ALL' && normalizePersonKey(item.salesName) !== normalizePersonKey(crit.ae)) {
                 return false;
             }
-            if (crit.area !== 'ALL' && getEffectiveArea(item) !== crit.area) {
+            if (crit.area !== 'ALL' && normalizeClusterAreaKey(getEffectiveArea(item)) !== normalizeClusterAreaKey(crit.area)) {
                 return false;
             }
             if (crit.contractor !== 'ALL' && cleanText(item.contractorName) !== crit.contractor) {
