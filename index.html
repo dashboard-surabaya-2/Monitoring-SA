@@ -1435,10 +1435,10 @@ html.dark option { background:#0f172a; color:#f1f5f9; }
           </tr>
         `;
         body.innerHTML = rows.map(r => {
-          const cells = r.days.map(val => {
+          const cells = r.days.map((val, dayIndex) => {
             if (val === 0) return `<td class="py-2 px-2 text-center text-slate-300 dark:text-slate-700 font-mono">·</td>`;
             const bg = val >= 2 ? 'bg-cyan-500 text-white font-bold' : 'bg-cyan-500/20 text-cyan-600 dark:text-cyan-300 font-bold';
-            return `<td class="py-2 px-1.5 text-center"><span class="inline-block w-6 h-6 leading-6 rounded-md font-mono text-[11px] ${bg}">${val}</span></td>`;
+            return `<td class="py-2 px-1.5 text-center"><button type="button" onclick="openSAAgentDetail('SA', '${encodeURIComponent(r.ae)}', '${encodeURIComponent(r.asm)}', ${dayIndex + 1})" class="inline-block w-6 h-6 leading-6 rounded-md font-mono text-[11px] ${bg} cursor-pointer hover:ring-2 hover:ring-cyan-300 focus:outline-none focus:ring-2 focus:ring-cyan-300" title="Lihat detail SA tanggal ${dayIndex + 1}">${val}</button></td>`;
           }).join('');
 
           return `
@@ -1493,14 +1493,15 @@ html.dark option { background:#0f172a; color:#f1f5f9; }
       }
     }
 
-    function openSAAgentDetail(type, encodedAE, encodedASM) {
+    function openSAAgentDetail(type, encodedAE, encodedASM, selectedDay = null) {
       const ae = decodeURIComponent(encodedAE);
       const asm = decodeURIComponent(encodedASM);
       let rows = getNovemberSA().filter(r => r.sales_agent_name === ae && r.asm_name === asm);
+      if (selectedDay !== null) rows = rows.filter(r => extractDay(r.service_activation_date) === Number(selectedDay));
       if (type === 'PAID') rows = rows.filter(r => getDelayBucket(r) === 'PAID');
       else if (type === 'UNPAID') rows = rows.filter(r => getDelayBucket(r) !== 'PAID');
       const labels = { SA: 'SA Bulan Ini', PAID: 'SA Paid', UNPAID: 'SA Unpaid' };
-      const title = labels[type] || 'Detail SA';
+      const title = selectedDay !== null ? 'SA Tanggal ' + String(selectedDay).padStart(2, '0') + ' November' : (labels[type] || 'Detail SA');
       const totalRevenue = rows.reduce((sum, r) => sum + (Number(r.revenue_before_tax) || Number(r.invoice_amount) || 0), 0);
       const safe = value => String(value ?? '-').replace(/[&<>"']/g, ch => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[ch]));
       const detailRows = rows.map((r, i) => `${i+1}. ${r.name || '-'} | Sub: ${r.subscription_id || '-'} | Tgl: ${r.service_activation_date || '-'} | Plan: ${r.plan || '-'} | Cluster: ${r.clustername || '-'} | ${getDelayBucket(r) === 'PAID' ? 'PAID' : 'UNPAID ('+(r.unpaid_days||0)+' hari)'} | ${formatIDR(r.revenue_before_tax || r.invoice_amount)}`);
