@@ -937,10 +937,8 @@ html.dark option { background:#0f172a; color:#f1f5f9; }
         }
 
         // Referensi resmi Area dari Dashboard Monitoring CTJ (kolom KOTA ASLI).
-        const CTJ_AREA_CSV_URLS = [
-            'https://docs.google.com/spreadsheets/d/e/2PACX-1vSdAPCOYfaWupyTNz0493ceC_prfN-pHCnuGebXEUrW_rNn1TA5hcGapd_k2H898cxpe9kW1FmZXaXF/pub?gid=0&single=true&output=csv',
-            'https://docs.google.com/spreadsheets/d/1p7IheHnt4xPdBMRMgF1DPiu4_NluZLKS4MY3Ktb0OGE/gviz/tq?tqx=out:csv&sheet=data%20update'
-        ];
+        // Satu-satunya sumber referensi Area: CSV publik Monitoring CTJ yang diberikan pengguna.
+        const CTJ_AREA_CSV_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vSdAPCOYfaWupyTNz0493ceC_prfN-pHCnuGebXEUrW_rNn1TA5hcGapd_k2H898cxpe9kW1FmZXaXF/pub?gid=0&single=true&output=csv';
         function normalizeClusterAreaKey(value) {
             return cleanText(value).normalize('NFKD').replace(/[\\u0300-\\u036f]/g, '').toUpperCase().replace(/[\\u200B-\\u200D\\uFEFF]/g, '').replace(/[^A-Z0-9]+/g, ' ').trim().replace(/\\s+/g, ' ');
         }
@@ -961,22 +959,20 @@ html.dark option { background:#0f172a; color:#f1f5f9; }
                 return map;
             };
             let lastError = null;
-            for (const url of CTJ_AREA_CSV_URLS) {
-                try {
-                    const response = await fetch(url, {cache:'no-store'});
-                    if (!response.ok) throw new Error('HTTP ' + response.status);
-                    const workbook = XLSX.read(await response.text(), {type:'string'});
-                    const rows = XLSX.utils.sheet_to_json(workbook.Sheets[workbook.SheetNames[0]], {defval:''});
-                    const map = buildMap(rows);
-                    if (!map.size) throw new Error('Kolom Clustername / KOTA ASLI tidak ditemukan.');
-                    const db = await openCsvTrialDB();
-                    const tx = db.transaction('active','readwrite');
-                    tx.objectStore('active').put({key:'ctj-reference',fileName:'Sumber live Dashboard CTJ',uploadedAt:Date.now(),rowCount:rows.length,map:Object.fromEntries(map)});
-                    await new Promise((resolve,reject)=>{tx.oncomplete=resolve;tx.onerror=()=>reject(tx.error);});
-                    db.close();
-                    return map;
-                } catch(error) { lastError = error; }
-            }
+            try {
+                const response = await fetch(CTJ_AREA_CSV_URL, {cache:'no-store'});
+                if (!response.ok) throw new Error('HTTP ' + response.status);
+                const workbook = XLSX.read(await response.text(), {type:'string'});
+                const rows = XLSX.utils.sheet_to_json(workbook.Sheets[workbook.SheetNames[0]], {defval:''});
+                const map = buildMap(rows);
+                if (!map.size) throw new Error('Kolom Clustername / KOTA ASLI tidak ditemukan pada sumber CTJ utama.');
+                const db = await openCsvTrialDB();
+                const tx = db.transaction('active','readwrite');
+                tx.objectStore('active').put({key:'ctj-reference',fileName:'Sumber live Dashboard CTJ',sourceUrl:CTJ_AREA_CSV_URL,uploadedAt:Date.now(),rowCount:rows.length,map:Object.fromEntries(map)});
+                await new Promise((resolve,reject)=>{tx.oncomplete=resolve;tx.onerror=()=>reject(tx.error);});
+                db.close();
+                return map;
+            } catch(error) { lastError = error; }
             try {
                 const db = await openCsvTrialDB();
                 const saved = await new Promise((resolve,reject)=>{
@@ -1209,7 +1205,12 @@ html.dark option { background:#0f172a; color:#f1f5f9; }
                 const select = document.getElementById(item.id);
                 if (!select) return;
                 const selected = select.value || 'ALL';
-                const candidateCriteria = { ...criteria, [item.field]: 'ALL' };
+                // Dropdown Area mengikuti BSM dan rentang Appointment Date,
+                // tetapi tidak dikunci oleh ASM, AE, kontraktor, Area, slot, atau pencarian.
+                // Dengan begitu Area lain milik BSM tetap terlihat walau ASM/AE sedang dipilih.
+                const candidateCriteria = item.field === 'area'
+                    ? { ...criteria, asm: 'ALL', ae: 'ALL', area: 'ALL', contractor: 'ALL', slot: null, search: '' }
+                    : { ...criteria, [item.field]: 'ALL' };
                 const candidates = rawWorkOrders.filter(row => matchesCriteria(row, candidateCriteria, item.field === 'slot'));
                 const valuesByKey = new Map();
                 candidates.map(item.getter).filter(v => v && v !== '-' && v.toLowerCase() !== 'null').forEach(value => {
