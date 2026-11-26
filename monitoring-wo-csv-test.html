@@ -443,11 +443,11 @@ html.dark option { background:#0f172a; color:#f1f5f9; }
                 <!-- Filter Rentang Appointment Date -->
                 <div>
                     <label for="filter-appointment-from" class="block text-xs font-semibold text-slate-600 mb-1.5">Appointment Date — Dari</label>
-                    <input type="date" id="filter-appointment-from" onchange="applyFilters()" class="w-full bg-slate-50 border border-slate-300 text-slate-800 text-sm rounded-xl px-3.5 py-2.5 focus:outline-none focus:ring-2 focus:ring-blue-500 transition">
+                    <input type="date" id="filter-appointment-from" onchange="handleDateFilterChange()" class="w-full bg-slate-50 border border-slate-300 text-slate-800 text-sm rounded-xl px-3.5 py-2.5 focus:outline-none focus:ring-2 focus:ring-blue-500 transition">
                 </div>
                 <div>
                     <label for="filter-appointment-to" class="block text-xs font-semibold text-slate-600 mb-1.5">Appointment Date — Sampai</label>
-                    <input type="date" id="filter-appointment-to" onchange="applyFilters()" class="w-full bg-slate-50 border border-slate-300 text-slate-800 text-sm rounded-xl px-3.5 py-2.5 focus:outline-none focus:ring-2 focus:ring-blue-500 transition">
+                    <input type="date" id="filter-appointment-to" onchange="handleDateFilterChange()" class="w-full bg-slate-50 border border-slate-300 text-slate-800 text-sm rounded-xl px-3.5 py-2.5 focus:outline-none focus:ring-2 focus:ring-blue-500 transition">
                 </div>
 
                 <!-- Pencarian Cepat -->
@@ -1195,47 +1195,69 @@ html.dark option { background:#0f172a; color:#f1f5f9; }
         // Perbarui pilihan setiap dropdown berdasarkan kombinasi filter aktif lainnya.
         // Jika pilihan lama tidak tersedia dalam kombinasi baru, kembalikan ke "Semua".
         function synchronizeFilterOptions() {
-            const ids = ['filter-bsm', 'filter-asm', 'filter-ae', 'filter-area', 'filter-contractor'];
-            const fields = ['bsm', 'asm', 'ae', 'area', 'contractor'];
+            // Setiap dropdown menampilkan nilai yang tersedia berdasarkan SEMUA filter aktif
+            // lainnya, termasuk rentang Appointment Date. Filter yang sedang dibangun sendiri
+            // dikecualikan agar pengguna tetap dapat mengganti pilihannya.
             const criteria = getFilterCriteria();
             const config = [
-                { id: 'filter-bsm', field: 'bsm', label: 'BSM', getter: d => cleanText(d.bsmName), key: normalizePersonKey },
-                { id: 'filter-asm', field: 'asm', label: 'ASM', getter: d => cleanText(d.asmName), key: normalizePersonKey },
-                { id: 'filter-ae', field: 'ae', label: 'AE', getter: d => cleanText(d.salesName), key: normalizePersonKey },
-                { id: 'filter-area', field: 'area', label: 'Area', getter: d => normalizeAreaLabel(getEffectiveArea(d)), key: normalizeClusterAreaKey },
-                { id: 'filter-contractor', field: 'contractor', label: 'Kontraktor / IKR', getter: d => cleanText(d.contractorName), key: v => cleanText(v).toLowerCase() }
+                { id:'filter-bsm', field:'bsm', label:'BSM', getter:d=>cleanText(d.bsmName), key:normalizePersonKey },
+                { id:'filter-asm', field:'asm', label:'ASM', getter:d=>cleanText(d.asmName), key:normalizePersonKey },
+                { id:'filter-ae', field:'ae', label:'AE', getter:d=>cleanText(d.salesName), key:normalizePersonKey },
+                { id:'filter-area', field:'area', label:'Area', getter:d=>normalizeAreaLabel(getEffectiveArea(d)), key:normalizeClusterAreaKey },
+                { id:'filter-contractor', field:'contractor', label:'Kontraktor / IKR', getter:d=>cleanText(d.contractorName), key:v=>cleanText(v).toLowerCase() }
             ];
+
             config.forEach(item => {
-                const select = document.getElementById(item.id);
-                if (!select) return;
-                const selected = select.value || 'ALL';
-                // Dropdown Area mengikuti BSM dan rentang Appointment Date yang aktif.
-                // Filter ASM, AE, kontraktor, slot, Area terpilih, dan pencarian tidak boleh
-                // menyembunyikan Area lain milik BSM pada rentang tanggal yang sama.
-                const candidates = item.field === 'area'
-                    ? rawWorkOrders.filter(row => {
-                        const appointmentDate = normalizeAppointmentDate(row.appointmentDate);
-                        if (criteria.appointmentFrom && (!appointmentDate || appointmentDate < criteria.appointmentFrom)) return false;
-                        if (criteria.appointmentTo && (!appointmentDate || appointmentDate > criteria.appointmentTo)) return false;
-                        return criteria.bsm === 'ALL' || normalizePersonKey(row.bsmName) === normalizePersonKey(criteria.bsm);
-                    })
-                    : rawWorkOrders.filter(row => matchesCriteria(row, { ...criteria, [item.field]: 'ALL' }, item.field === 'slot'));
-                const valuesByKey = new Map();
-                candidates.map(item.getter).filter(v => v && v !== '-' && v.toLowerCase() !== 'null').forEach(value => {
-                    const key = item.key(value);
-                    if (key && !valuesByKey.has(key)) valuesByKey.set(key, value);
+                const select=document.getElementById(item.id);
+                if(!select)return;
+                const selected=select.value||'ALL';
+                const candidateCriteria={...criteria,[item.field]:'ALL'};
+                const candidates=rawWorkOrders.filter(row=>matchesCriteria(row,candidateCriteria,true));
+                const valuesByKey=new Map();
+                candidates.map(item.getter).filter(v=>v&&v!=='-'&&v.toLowerCase()!=='null').forEach(value=>{
+                    const key=item.key(value);
+                    if(key&&!valuesByKey.has(key))valuesByKey.set(key,value);
                 });
-                const values = [...valuesByKey.values()].sort((a, b) => a.localeCompare(b, 'id'));
-                select.innerHTML = `<option value="ALL">Semua ${item.label} (${values.length})</option>`;
-                values.forEach(value => {
-                    const option = document.createElement('option');
-                    option.value = value;
-                    option.textContent = value;
-                    select.appendChild(option);
+                const values=[...valuesByKey.values()].sort((a,b)=>a.localeCompare(b,'id'));
+                select.innerHTML=`<option value="ALL">Semua ${item.label} (${values.length})</option>`;
+                values.forEach(value=>{
+                    const option=document.createElement('option');
+                    option.value=value; option.textContent=value; select.appendChild(option);
                 });
-                const retained = values.find(value => item.key(value) === item.key(selected));
-                select.value = selected === 'ALL' ? 'ALL' : (retained || 'ALL');
+                const retained=values.find(value=>item.key(value)===item.key(selected));
+                select.value=selected==='ALL'?'ALL':(retained||'ALL');
             });
+
+            // Slot Time juga mengikuti BSM, ASM, AE, Area, kontraktor, pencarian,
+            // dan tanggal aktif. Slot yang sedang dipilih dikecualikan saat menyusun opsi.
+            const slotSelect=document.getElementById('filter-slottime');
+            if(slotSelect){
+                const selected=slotSelect.value||'ALL';
+                const slotCriteria={...getFilterCriteria(),slot:null};
+                const slots=[...new Set(rawWorkOrders.filter(row=>matchesCriteria(row,slotCriteria,true))
+                    .map(row=>normalizeSlotTime(row.slotTime)).filter(Boolean))].sort((a,b)=>{
+                        const order=STANDARD_SLOTS.map(x=>x.key);
+                        return order.indexOf(a)-order.indexOf(b);
+                    });
+                const labels={
+                    '09:00 - 11:00':'09:00 - 11:00 (Pagi)',
+                    '11:01 - 13:00':'11:01 - 13:00 (Siang 1)',
+                    '13:01 - 15:00':'13:01 - 15:00 (Siang 2)',
+                    '15:01 - 17:00':'15:01 - 17:00 (Sore)',
+                    '17:01 - 19:00':'17:01 - 19:00 (Petang)',
+                    '19:01 - 21:00':'19:01 - 21:00 (Malam)',
+                    '21:01 - 23:00':'21:01 - 23:00 (Malam 2)',
+                    'Unassigned / Lainnya':'Unassigned / Lainnya'
+                };
+                slotSelect.innerHTML='<option value="ALL">Semua Slot Time ('+slots.length+')</option>';
+                slots.forEach(value=>{
+                    const option=document.createElement('option');
+                    option.value=value; option.textContent=labels[value]||value; slotSelect.appendChild(option);
+                });
+                slotSelect.value=slots.includes(selected)?selected:'ALL';
+                selectedSlotFromTable=slotSelect.value==='ALL'?null:slotSelect.value;
+                syncSlotPill();
+            }
         }
 
         function handleBSMChange() {
@@ -1256,6 +1278,12 @@ html.dark option { background:#0f172a; color:#f1f5f9; }
         }
 
         function handleOtherFilterChange() {
+            synchronizeFilterOptions();
+            applyFilters();
+        }
+
+        function handleDateFilterChange() {
+            // Tanggal berubah: perbarui semua pilihan dropdown berdasarkan rentang baru.
             synchronizeFilterOptions();
             applyFilters();
         }
