@@ -2633,7 +2633,11 @@ html.dark option { background:#0f172a; color:#f1f5f9; }
             const tx=db.transaction(['snapshots','active'],'readwrite');
             const snapshots=tx.objectStore('snapshots'), active=tx.objectStore('active');
             const done=new Promise((res,rej)=>{tx.oncomplete=res;tx.onerror=()=>rej(tx.error);tx.onabort=()=>rej(tx.error||new Error('Transaksi pembersihan dibatalkan'));});
-            const cutoff=Date.now()-72*60*60*1000;
+            const now=new Date();
+            // Simpan hanya tiga tanggal kalender: hari ini dan dua hari sebelumnya.
+            // Saat masuk hari ke-4, semua file dari hari pertama langsung kedaluwarsa,
+            // meskipun usianya belum mencapai 72 jam.
+            const cutoff=new Date(now.getFullYear(),now.getMonth(),now.getDate()-2).getTime();
             const all=await new Promise((res,rej)=>{const q=snapshots.getAll();q.onsuccess=()=>res(q.result||[]);q.onerror=()=>rej(q.error);});
             all.filter(x=>!x.uploadedAt || x.uploadedAt<cutoff).forEach(x=>snapshots.delete(x.id));
             const current=await new Promise((res,rej)=>{const q=active.get('current');q.onsuccess=()=>res(q.result||null);q.onerror=()=>rej(q.error);});
@@ -2645,7 +2649,8 @@ html.dark option { background:#0f172a; color:#f1f5f9; }
             const validSnapshots=all.filter(x=>x.uploadedAt&&x.uploadedAt>=cutoff);
             const byDay=new Map();
             [...validSnapshots.map(x=>({...x,_kind:'snapshot'})),...(currentValid?[{...currentValid,_kind:'active'}]:[])].forEach(item=>{
-                const day=new Date(item.uploadedAt).toLocaleDateString('en-CA');
+                const date=new Date(item.uploadedAt);
+                const day=[date.getFullYear(),String(date.getMonth()+1).padStart(2,'0'),String(date.getDate()).padStart(2,'0')].join('-');
                 if(!byDay.has(day))byDay.set(day,[]);
                 byDay.get(day).push(item);
             });
@@ -2659,7 +2664,11 @@ html.dark option { background:#0f172a; color:#f1f5f9; }
             const db=await openCsvTrialDB();
             const value=await new Promise((res,rej)=>{const q=db.transaction('active').objectStore('active').get('current');q.onsuccess=()=>res(q.result||null);q.onerror=()=>rej(q.error);});
             db.close();
-            if(value&&(!value.uploadedAt||Date.now()-value.uploadedAt>=72*60*60*1000)) return null;
+            if(value){
+                const now=new Date(),uploaded=new Date(value.uploadedAt);
+                const cutoff=new Date(now.getFullYear(),now.getMonth(),now.getDate()-2).getTime();
+                if(!value.uploadedAt||value.uploadedAt<cutoff)return null;
+            }
             return value;
         }
         async function saveCsvTrialSnapshot(rows,fileName){
@@ -2715,9 +2724,11 @@ html.dark option { background:#0f172a; color:#f1f5f9; }
                 const all=await new Promise((res,rej)=>{const q=db.transaction('snapshots').objectStore('snapshots').getAll();q.onsuccess=()=>res(q.result||[]);q.onerror=()=>rej(q.error);});
                 db.close();
                 const el=document.getElementById('csvTrialStatus');
-                const today=new Date().toLocaleDateString('en-CA');
-                const todayCount=all.filter(x=>x.uploadedAt&&new Date(x.uploadedAt).toLocaleDateString('en-CA')===today).length+(active&&new Date(active.uploadedAt).toLocaleDateString('en-CA')===today?1:0);
-                if(el)el.textContent=(active?'Data aktif: '+active.fileName+' • '+active.rowCount+' WO':'Belum ada data aktif')+' | Arsip: '+all.length+' file • Upload hari ini: '+todayCount+'/5 • Retensi maks. 72 jam';
+                const today=new Date();
+                const key=d=>[d.getFullYear(),String(d.getMonth()+1).padStart(2,'0'),String(d.getDate()).padStart(2,'0')].join('-');
+                const todayKey=key(today);
+                const todayCount=all.filter(x=>x.uploadedAt&&key(new Date(x.uploadedAt))===todayKey).length+(active&&key(new Date(active.uploadedAt))===todayKey?1:0);
+                if(el)el.textContent=(active?'Data aktif: '+active.fileName+' • '+active.rowCount+' WO':'Belum ada data aktif')+' | Arsip: '+all.length+' file • Upload hari ini: '+todayCount+'/5 • Simpan 3 hari kalender';
             }catch(e){console.warn(e);}
         }
         async function showCsvTrialArchives(){await initCsvTrialStorage();const db=await openCsvTrialDB();const all=await new Promise((res,rej)=>{const q=db.transaction('snapshots').objectStore('snapshots').getAll();q.onsuccess=()=>res(q.result||[]);q.onerror=()=>rej(q.error);});db.close();const box=document.getElementById('csvTrialArchives');if(!box)return;box.classList.remove('hidden');box.innerHTML=all.length?'<b>Arsip upload sebelumnya</b><ul class="list-disc pl-5 mt-2">'+all.sort((a,b)=>b.uploadedAt-a.uploadedAt).map(x=>'<li>'+String(x.fileName||'CSV').replace(/[&<>\"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','\"':'&quot;'}[c]))+' — '+x.rowCount+' WO — '+new Date(x.uploadedAt).toLocaleString('id-ID')+'</li>').join('')+'</ul>':'Belum ada arsip upload sebelumnya.';}
