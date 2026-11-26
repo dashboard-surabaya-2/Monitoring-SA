@@ -2640,6 +2640,19 @@ html.dark option { background:#0f172a; color:#f1f5f9; }
             if(current&&(!current.uploadedAt||current.uploadedAt<cutoff)) active.delete('current');
             const ctj=await new Promise((res,rej)=>{const q=active.get('ctj-reference');q.onsuccess=()=>res(q.result||null);q.onerror=()=>rej(q.error);});
             if(ctj&&(!ctj.uploadedAt||ctj.uploadedAt<cutoff)) active.delete('ctj-reference');
+            // Maksimal 5 file per tanggal upload lokal, termasuk file aktif terbaru.
+            const currentValid=current&&current.uploadedAt>=cutoff?current:null;
+            const validSnapshots=all.filter(x=>x.uploadedAt&&x.uploadedAt>=cutoff);
+            const byDay=new Map();
+            [...validSnapshots.map(x=>({...x,_kind:'snapshot'})),...(currentValid?[{...currentValid,_kind:'active'}]:[])].forEach(item=>{
+                const day=new Date(item.uploadedAt).toLocaleDateString('en-CA');
+                if(!byDay.has(day))byDay.set(day,[]);
+                byDay.get(day).push(item);
+            });
+            byDay.forEach(items=>{
+                items.sort((a,b)=>b.uploadedAt-a.uploadedAt);
+                items.slice(5).forEach(item=>{if(item._kind==='snapshot')snapshots.delete(item.id);});
+            });
             await done; db.close();
         }
         async function getCsvTrialActive(){
@@ -2649,7 +2662,20 @@ html.dark option { background:#0f172a; color:#f1f5f9; }
             if(value&&(!value.uploadedAt||Date.now()-value.uploadedAt>=72*60*60*1000)) return null;
             return value;
         }
-        async function saveCsvTrialSnapshot(rows,fileName){const db=await openCsvTrialDB();const activeStore=db.transaction('active').objectStore('active');const previous=await new Promise((res,rej)=>{const q=activeStore.get('current');q.onsuccess=()=>res(q.result||null);q.onerror=()=>rej(q.error);});const tx=db.transaction(['snapshots','active'],'readwrite');const now=Date.now();if(previous&&Array.isArray(previous.rows)&&previous.rows.length)tx.objectStore('snapshots').add({fileName:previous.fileName||'CSV sebelumnya',uploadedAt:previous.uploadedAt||now,rowCount:previous.rows.length,rows:previous.rows});tx.objectStore('active').put({key:'current',fileName,uploadedAt:now,rowCount:rows.length,rows});await new Promise((res,rej)=>{tx.oncomplete=res;tx.onerror=()=>rej(tx.error);});db.close();await initCsvTrialStorage();updateCsvTrialStatus();}
+        async function saveCsvTrialSnapshot(rows,fileName){
+            const db=await openCsvTrialDB();
+            const activeStore=db.transaction('active').objectStore('active');
+            const previous=await new Promise((res,rej)=>{const q=activeStore.get('current');q.onsuccess=()=>res(q.result||null);q.onerror=()=>rej(q.error);});
+            const tx=db.transaction(['snapshots','active'],'readwrite');
+            const now=Date.now();
+            if(previous&&Array.isArray(previous.rows)&&previous.rows.length)tx.objectStore('snapshots').add({fileName:previous.fileName||'CSV sebelumnya',uploadedAt:previous.uploadedAt||now,rowCount:previous.rows.length,rows:previous.rows});
+            tx.objectStore('active').put({key:'current',fileName,uploadedAt:now,rowCount:rows.length,rows});
+            await new Promise((res,rej)=>{tx.oncomplete=res;tx.onerror=()=>rej(tx.error);});
+            db.close();
+            // Bersihkan arsip >72 jam dan batasi maksimal 5 file per hari.
+            await initCsvTrialStorage();
+            await updateCsvTrialStatus();
+        }
         async function exportActiveCsvSnapshot(){
             try {
                 const active = await getCsvTrialActive();
@@ -2682,7 +2708,18 @@ html.dark option { background:#0f172a; color:#f1f5f9; }
             }
         }
 
-        async function updateCsvTrialStatus(){try{const active=await getCsvTrialActive();const db=await openCsvTrialDB();const all=await new Promise((res,rej)=>{const q=db.transaction('snapshots').objectStore('snapshots').getAll();q.onsuccess=()=>res(q.result||[]);q.onerror=()=>rej(q.error);});db.close();const el=document.getElementById('csvTrialStatus');if(el)el.textContent=(active?'Data aktif: '+active.fileName+' • '+active.rowCount+' WO':'Belum ada data aktif')+' | Arsip tersimpan: '+all.length+' file (maksimal 72 jam)';}catch(e){console.warn(e);}}
+        async function updateCsvTrialStatus(){
+            try{
+                const active=await getCsvTrialActive();
+                const db=await openCsvTrialDB();
+                const all=await new Promise((res,rej)=>{const q=db.transaction('snapshots').objectStore('snapshots').getAll();q.onsuccess=()=>res(q.result||[]);q.onerror=()=>rej(q.error);});
+                db.close();
+                const el=document.getElementById('csvTrialStatus');
+                const today=new Date().toLocaleDateString('en-CA');
+                const todayCount=all.filter(x=>x.uploadedAt&&new Date(x.uploadedAt).toLocaleDateString('en-CA')===today).length+(active&&new Date(active.uploadedAt).toLocaleDateString('en-CA')===today?1:0);
+                if(el)el.textContent=(active?'Data aktif: '+active.fileName+' • '+active.rowCount+' WO':'Belum ada data aktif')+' | Arsip: '+all.length+' file • Upload hari ini: '+todayCount+'/5 • Retensi maks. 72 jam';
+            }catch(e){console.warn(e);}
+        }
         async function showCsvTrialArchives(){await initCsvTrialStorage();const db=await openCsvTrialDB();const all=await new Promise((res,rej)=>{const q=db.transaction('snapshots').objectStore('snapshots').getAll();q.onsuccess=()=>res(q.result||[]);q.onerror=()=>rej(q.error);});db.close();const box=document.getElementById('csvTrialArchives');if(!box)return;box.classList.remove('hidden');box.innerHTML=all.length?'<b>Arsip upload sebelumnya</b><ul class="list-disc pl-5 mt-2">'+all.sort((a,b)=>b.uploadedAt-a.uploadedAt).map(x=>'<li>'+String(x.fileName||'CSV').replace(/[&<>\"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','\"':'&quot;'}[c]))+' — '+x.rowCount+' WO — '+new Date(x.uploadedAt).toLocaleString('id-ID')+'</li>').join('')+'</ul>':'Belum ada arsip upload sebelumnya.';}
 
         // ============================================================================
