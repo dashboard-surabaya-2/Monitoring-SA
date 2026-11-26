@@ -342,7 +342,7 @@ html.dark option { background:#0f172a; color:#f1f5f9; }
         <section class="rounded-2xl border border-amber-300 bg-amber-50 p-4 sm:p-5 shadow-sm">
           <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
             <div><div class="font-extrabold text-amber-950">MODE UJI COBA — SUMBER CSV</div><p class="text-xs text-amber-900 mt-1">Halaman ini terpisah dari dashboard utama. Upload CSV lengkap terbaru (full snapshot).</p><p id="csvTrialStatus" class="text-xs text-amber-900 mt-1">Belum ada data CSV tersimpan di browser ini.</p></div>
-            <div class="flex gap-2 flex-wrap"><label for="csvTrialInput" class="cursor-pointer inline-flex items-center gap-2 rounded-xl bg-amber-700 hover:bg-amber-800 text-white px-4 py-3 text-sm font-bold"><i data-lucide="upload" class="w-4 h-4"></i> Upload CSV Terbaru</label><input id="csvTrialInput" type="file" accept=".csv,.xlsx,.xls" class="hidden" onchange="handleFileUpload(event)"><button type="button" onclick="showCsvTrialArchives()" class="rounded-xl border border-amber-400 bg-white px-4 py-3 text-sm font-bold text-amber-950">Arsip 3 Hari</button></div>
+            <div class="flex gap-2 flex-wrap"><label for="csvTrialInput" class="cursor-pointer inline-flex items-center gap-2 rounded-xl bg-amber-700 hover:bg-amber-800 text-white px-4 py-3 text-sm font-bold"><i data-lucide="upload" class="w-4 h-4"></i> Upload CSV Terbaru</label><input id="csvTrialInput" type="file" accept=".csv,.xlsx,.xls" class="hidden" onchange="handleFileUpload(event)"><button type="button" onclick="showCsvTrialArchives()" class="rounded-xl border border-amber-400 bg-white px-4 py-3 text-sm font-bold text-amber-950">Arsip 3 Hari</button><button type="button" onclick="exportActiveCsvSnapshot()" class="rounded-xl border border-emerald-500 bg-emerald-700 hover:bg-emerald-800 text-white px-4 py-3 text-sm font-bold">Ekspor Data Aktif</button></div>
           </div>
           <p class="text-[11px] text-amber-900 mt-3">Catatan uji coba: arsip disimpan lokal pada browser/perangkat ini dan dibersihkan otomatis setelah 72 jam. Belum tersinkron antarperangkat; penyimpanan cloud akan menjadi tahap berikutnya.</p>
           <div id="csvTrialArchives" class="hidden mt-3 rounded-xl bg-white border border-amber-200 p-3 text-xs text-slate-700"></div>
@@ -2479,6 +2479,38 @@ html.dark option { background:#0f172a; color:#f1f5f9; }
         async function initCsvTrialStorage(){const db=await openCsvTrialDB();const tx=db.transaction('snapshots','readwrite');const st=tx.objectStore('snapshots');const done=new Promise((res,rej)=>{tx.oncomplete=()=>res();tx.onerror=()=>rej(tx.error);tx.onabort=()=>rej(tx.error||new Error('Transaksi arsip dibatalkan'));});const all=await new Promise((res,rej)=>{const q=st.getAll();q.onsuccess=()=>res(q.result||[]);q.onerror=()=>rej(q.error);});const cutoff=Date.now()-72*60*60*1000;all.filter(x=>x.uploadedAt<cutoff).forEach(x=>st.delete(x.id));await done;db.close();}
         async function getCsvTrialActive(){const db=await openCsvTrialDB();const value=await new Promise((res,rej)=>{const q=db.transaction('active').objectStore('active').get('current');q.onsuccess=()=>res(q.result||null);q.onerror=()=>rej(q.error);});db.close();return value;}
         async function saveCsvTrialSnapshot(rows,fileName){const db=await openCsvTrialDB();const activeStore=db.transaction('active').objectStore('active');const previous=await new Promise((res,rej)=>{const q=activeStore.get('current');q.onsuccess=()=>res(q.result||null);q.onerror=()=>rej(q.error);});const tx=db.transaction(['snapshots','active'],'readwrite');const now=Date.now();if(previous&&Array.isArray(previous.rows)&&previous.rows.length)tx.objectStore('snapshots').add({fileName:previous.fileName||'CSV sebelumnya',uploadedAt:previous.uploadedAt||now,rowCount:previous.rows.length,rows:previous.rows});tx.objectStore('active').put({key:'current',fileName,uploadedAt:now,rowCount:rows.length,rows});await new Promise((res,rej)=>{tx.oncomplete=res;tx.onerror=()=>rej(tx.error);});db.close();await initCsvTrialStorage();updateCsvTrialStatus();}
+        async function exportActiveCsvSnapshot(){
+            try {
+                const active = await getCsvTrialActive();
+                if (!active || !Array.isArray(active.rows) || !active.rows.length) {
+                    showToast('Belum ada data CSV aktif untuk diekspor.', 'error');
+                    return;
+                }
+                const rows = active.rows;
+                const columns = [...new Set(rows.flatMap(row => Object.keys(row || {})))];
+                const csvCell = value => {
+                    if (value === null || value === undefined) return '""';
+                    const text = value instanceof Date ? value.toISOString() : String(value);
+                    return '"' + text.replace(/"/g, '""') + '"';
+                };
+                const csv = '\\uFEFF' + [columns.map(csvCell).join(','), ...rows.map(row => columns.map(key => csvCell(row[key])).join(','))].join('\\r\\n');
+                const blob = new Blob([csv], {type:'text/csv;charset=utf-8;'});
+                const url = URL.createObjectURL(blob);
+                const link = document.createElement('a');
+                const baseName = String(active.fileName || 'data-wo').replace(/\\.[^.]+$/, '').replace(/[^a-z0-9_-]+/gi, '_');
+                link.href = url;
+                link.download = baseName + '-data-aktif.csv';
+                document.body.appendChild(link);
+                link.click();
+                link.remove();
+                setTimeout(() => URL.revokeObjectURL(url), 1500);
+                showToast('Data aktif berhasil diekspor (' + rows.length.toLocaleString('id-ID') + ' WO).', 'success');
+            } catch (error) {
+                console.error('Gagal ekspor data aktif:', error);
+                showToast('Gagal mengekspor data aktif dari penyimpanan browser.', 'error');
+            }
+        }
+
         async function updateCsvTrialStatus(){try{const active=await getCsvTrialActive();const db=await openCsvTrialDB();const all=await new Promise((res,rej)=>{const q=db.transaction('snapshots').objectStore('snapshots').getAll();q.onsuccess=()=>res(q.result||[]);q.onerror=()=>rej(q.error);});db.close();const el=document.getElementById('csvTrialStatus');if(el)el.textContent=(active?'Data aktif: '+active.fileName+' • '+active.rowCount+' WO':'Belum ada data aktif')+' | Arsip tersimpan: '+all.length+' file (maksimal 72 jam)';}catch(e){console.warn(e);}}
         async function showCsvTrialArchives(){await initCsvTrialStorage();const db=await openCsvTrialDB();const all=await new Promise((res,rej)=>{const q=db.transaction('snapshots').objectStore('snapshots').getAll();q.onsuccess=()=>res(q.result||[]);q.onerror=()=>rej(q.error);});db.close();const box=document.getElementById('csvTrialArchives');if(!box)return;box.classList.remove('hidden');box.innerHTML=all.length?'<b>Arsip upload sebelumnya</b><ul class="list-disc pl-5 mt-2">'+all.sort((a,b)=>b.uploadedAt-a.uploadedAt).map(x=>'<li>'+String(x.fileName||'CSV').replace(/[&<>\"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','\"':'&quot;'}[c]))+' — '+x.rowCount+' WO — '+new Date(x.uploadedAt).toLocaleString('id-ID')+'</li>').join('')+'</ul>':'Belum ada arsip upload sebelumnya.';}
 
