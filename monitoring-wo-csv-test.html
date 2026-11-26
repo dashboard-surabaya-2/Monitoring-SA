@@ -954,15 +954,25 @@ html.dark option { background:#0f172a; color:#f1f5f9; }
                     const workbook = XLSX.read(csvText, {type:'string'});
                     const sheet = workbook.Sheets[workbook.SheetNames[0]];
                     const rows = XLSX.utils.sheet_to_json(sheet, {defval:''});
-                    const map = new Map();
+                    const grouped = new Map();
                     rows.forEach(row => {
                         const cluster = row['Clustername'] || row['Cluster Name'] || '';
                         const kota = cleanText(row['KOTA ASLI']);
                         const key = normalizeClusterAreaKey(cluster);
-                        if (key && kota && !map.has(key)) map.set(key, kota);
+                        const kotaKey = normalizeClusterAreaKey(kota);
+                        // Abaikan nilai placeholder seperti 0, strip, atau kosong.
+                        if (!key || !kotaKey || ['0','-','NULL','NAN','TIDAK DIKETAHUI'].includes(kotaKey)) return;
+                        if (!grouped.has(key)) grouped.set(key, new Set());
+                        grouped.get(key).add(kota);
+                    });
+                    const map = new Map();
+                    grouped.forEach((values, key) => {
+                        // Gunakan hanya Cluster dengan satu nilai KOTA ASLI yang konsisten.
+                        if (values.size === 1) map.set(key, [...values][0]);
+                        else console.warn('Cluster CTJ memiliki KOTA ASLI berbeda, dilewati:', key, [...values]);
                     });
                     if (map.size) return map;
-                    throw new Error('Kolom Clustername / KOTA ASLI tidak ditemukan atau kosong.');
+                    throw new Error('Kolom Clustername / KOTA ASLI tidak ditemukan atau tidak memiliki nilai valid.');
                 } catch (error) { lastError = error; }
             }
             throw lastError || new Error('Sumber CSV CTJ tidak dapat diakses.');
