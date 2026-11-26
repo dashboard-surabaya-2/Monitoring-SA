@@ -984,7 +984,7 @@ html.dark option { background:#0f172a; color:#f1f5f9; }
             throw lastError || new Error('Referensi CTJ tidak tersedia. Silakan unggah file CTJ.');
         }
 
-        async function importCTJAreaReferenceFile(event) {
+        async async function importCTJAreaReferenceFile(event) {
             const input=event?.target, file=input?.files?.[0];
             if(!file) return;
             try {
