@@ -1211,12 +1211,7 @@ html.dark option { background:#0f172a; color:#f1f5f9; }
                 if(!select)return;
                 const selected=select.value||'ALL';
                 const candidateCriteria={...getFilterCriteria(),[item.field]:'ALL'};
-                // Area adalah daftar wilayah global dari seluruh snapshot WO, bukan hanya
-                // area yang kebetulan muncul pada kombinasi filter/tanggal saat ini.
-                // Ini mencegah dropdown Area kehilangan wilayah saat BSM/ASM/AE/slot berubah.
-                const candidates=item.field==='area'
-                    ? rawWorkOrders
-                    : rawWorkOrders.filter(row=>matchesCriteria(row,candidateCriteria,false));
+                const candidates=rawWorkOrders.filter(row=>matchesCriteria(row,candidateCriteria,false));
                 const valuesByKey=new Map();
                 candidates.map(item.getter).filter(v=>v&&v!=='-'&&v.toLowerCase()!=='null').forEach(value=>{
                     const key=item.key(value);
