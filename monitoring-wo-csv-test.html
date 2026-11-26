@@ -992,8 +992,11 @@ html.dark option { background:#0f172a; color:#f1f5f9; }
         }
 
         function normalizeAreaLabel(value) {
-            const label = cleanText(value).replace(/[\u200B-\u200D\uFEFF]/g, '').replace(/\s+/g, ' ').trim();
+            let label = cleanText(value).replace(/[\u200B-\u200D\uFEFF]/g, '').replace(/\s+/g, ' ').trim();
             if (!label) return '';
+            // Nilai area dari CSV vendor dapat berbentuk "Bojonegoro_Installation";
+            // suffix teknis ini bukan nama Area dan harus ditampilkan sebagai "Bojonegoro".
+            label = label.replace(/_Installation$/i, '').replace(/\s+Installation$/i, '').trim();
             return label.toLocaleLowerCase('id-ID').replace(/(^|[\s-])([\p{L}])/gu, (_, sep, letter) => sep + letter.toLocaleUpperCase('id-ID'));
         }
         function applyCTJAreaMapToRows(rows,map) {
@@ -1209,11 +1212,16 @@ html.dark option { background:#0f172a; color:#f1f5f9; }
                 const select = document.getElementById(item.id);
                 if (!select) return;
                 const selected = select.value || 'ALL';
-                // Dropdown Area menampilkan SEMUA Area yang pernah muncul pada data BSM terpilih,
-                // tanpa dibatasi tanggal, ASM, AE, kontraktor, slot, Area aktif, atau pencarian.
-                // Ini mencegah Area seperti Bojonegoro hilang hanya karena rentang tanggal/filter lain.
+                // Dropdown Area mengikuti BSM dan rentang Appointment Date yang aktif.
+                // Filter ASM, AE, kontraktor, slot, Area terpilih, dan pencarian tidak boleh
+                // menyembunyikan Area lain milik BSM pada rentang tanggal yang sama.
                 const candidates = item.field === 'area'
-                    ? rawWorkOrders.filter(row => criteria.bsm === 'ALL' || normalizePersonKey(row.bsmName) === normalizePersonKey(criteria.bsm))
+                    ? rawWorkOrders.filter(row => {
+                        const appointmentDate = normalizeAppointmentDate(row.appointmentDate);
+                        if (criteria.appointmentFrom && (!appointmentDate || appointmentDate < criteria.appointmentFrom)) return false;
+                        if (criteria.appointmentTo && (!appointmentDate || appointmentDate > criteria.appointmentTo)) return false;
+                        return criteria.bsm === 'ALL' || normalizePersonKey(row.bsmName) === normalizePersonKey(criteria.bsm);
+                    })
                     : rawWorkOrders.filter(row => matchesCriteria(row, { ...criteria, [item.field]: 'ALL' }, item.field === 'slot'));
                 const valuesByKey = new Map();
                 candidates.map(item.getter).filter(v => v && v !== '-' && v.toLowerCase() !== 'null').forEach(value => {
