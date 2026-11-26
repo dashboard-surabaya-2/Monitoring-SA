@@ -992,8 +992,9 @@ html.dark option { background:#0f172a; color:#f1f5f9; }
         }
 
         function normalizeAreaLabel(value) {
-            const label = cleanText(value).replace(/[\\u200B-\\u200D\\uFEFF]/g, '').replace(/\\s+/g, ' ').trim();
-            return label ? label.toLocaleLowerCase('id-ID') : '';
+            const label = cleanText(value).replace(/[\u200B-\u200D\uFEFF]/g, '').replace(/\s+/g, ' ').trim();
+            if (!label) return '';
+            return label.toLocaleLowerCase('id-ID').replace(/(^|[\s-])([\p{L}])/gu, (_, sep, letter) => sep + letter.toLocaleUpperCase('id-ID'));
         }
         function applyCTJAreaMapToRows(rows,map) {
             let matched=0,changed=0;
@@ -1017,11 +1018,11 @@ html.dark option { background:#0f172a; color:#f1f5f9; }
         }
 
         function getEffectiveArea(wo) {
-            if (!wo) return 'tidak diketahui';
+            if (!wo) return 'Tidak Diketahui';
             const asli = normalizeAreaLabel(wo.areaAsli);
-            if (asli && asli !== '-' && asli !== 'null' && asli !== 'nan') return asli;
+            if (asli && asli !== '-' && !['null','nan','false','0'].includes(asli.toLowerCase())) return asli;
             const fallback = normalizeAreaLabel(wo.area);
-            return fallback || 'tidak diketahui';
+            return fallback || 'Tidak Diketahui';
         }
 
         function normalizeSlotTime(rawSlot) {
@@ -2507,7 +2508,8 @@ html.dark option { background:#0f172a; color:#f1f5f9; }
                         rawDate = normalizeAppointmentDate(rawDate) || cleanText(rawDate);
 
                         // Kolom CD = indeks 81 (0-based) untuk 'area asli'
-                        const areaAsliVal = getFieldFlexible(row, rowArray, 81, ['area asli', 'area_asli', 'areaAsli', 'Area Asli']);
+                        // Utamakan header. Indeks 81 tidak stabil antar-format CSV dan dapat berisi kolom lain.
+                        const areaAsliVal = getFieldFlexible(row, rowArray, -1, ['area asli', 'area_asli', 'areaAsli', 'Area Asli']);
                         const areaVal = getFieldFlexible(row, rowArray, -1, ['area', 'Area', 'Kota', 'City']);
                         // Kolom AM (indeks 38, 0-based) adalah sumber resmi appointmentStatus.
                         // KPI, grafik, dan ringkasan status menggunakan nilai dari kolom ini.
