@@ -2521,31 +2521,22 @@ html.dark option { background:#0f172a; color:#f1f5f9; }
                 return;
             }
 
-            if (typeof XLSX === 'undefined') {
-                showToast('Library SheetJS (XLSX) belum termuat.', 'error');
-                return;
-            }
-
             const reader = new FileReader();
             reader.onload = async function(e) {
                 try {
-                    const bytes = new Uint8Array(e.target.result);
-                    const workbook = XLSX.read(new TextDecoder('utf-8').decode(bytes), { type: 'string' });
-
-                    const sheetName = workbook.SheetNames.find(n => cleanText(n).toLowerCase() === 'data wo') || workbook.SheetNames[0];
-                    const worksheet = workbook.Sheets[sheetName];
-                    if (!worksheet) {
-                        showToast('Sheet tidak ditemukan di dalam file.', 'error');
+                    // Baca CSV langsung dengan parser yang sama seperti sumber Google Sheets.
+                    // SheetJS sebelumnya dapat menghilangkan baris tertentu pada CSV besar,
+                    // sehingga jumlah WO dan opsi filter tidak selalu sama dengan file sumber.
+                    const csvText = new TextDecoder('utf-8').decode(new Uint8Array(e.target.result));
+                    const matrixRows = parseCSVText(csvText);
+                    if (matrixRows.length < 2) {
+                        showToast('CSV kosong atau tidak memiliki baris data WO.', 'error');
                         return;
                     }
-
-                    const jsonRows = XLSX.utils.sheet_to_json(worksheet, { defval: '' });
-                    const matrixRows = XLSX.utils.sheet_to_json(worksheet, { header: 1, defval: '' });
-
-                    if (!jsonRows.length) {
-                        showToast('Sheet kosong atau tidak memiliki data WO.', 'error');
-                        return;
-                    }
+                    const headers = matrixRows[0].map(h => cleanText(h).replace(/^\uFEFF/, '').normalize('NFKC'));
+                    const jsonRows = matrixRows.slice(1).map(cells =>
+                        Object.fromEntries(headers.map((header, index) => [header, cells[index] ?? '']))
+                    );
 
                     let mapped = jsonRows.map((row, idx) => {
                         const rowArray = matrixRows[idx + 1] || [];
