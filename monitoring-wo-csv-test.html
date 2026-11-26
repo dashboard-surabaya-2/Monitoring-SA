@@ -2398,7 +2398,8 @@ html.dark option { background:#0f172a; color:#f1f5f9; }
                         };
                     });
 
-                    await saveCsvTrialSnapshot(mapped, file.name);\n                    rawWorkOrders = mapped;
+                    await saveCsvTrialSnapshot(mapped, file.name);
+                    rawWorkOrders = mapped;
 
                     const badge = document.getElementById('data-source-badge');
                     if (badge) {
