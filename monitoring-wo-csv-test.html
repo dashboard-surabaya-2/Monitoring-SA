@@ -2564,7 +2564,7 @@ html.dark option { background:#0f172a; color:#f1f5f9; }
                         ctjSummary ? 'success' : 'info');
                 } catch (err) {
                     console.error('Error impor file:', err);
-                    showToast('Gagal memproses file Excel/CSV. Pastikan format file valid.', 'error');
+                    showToast('Gagal memproses file CSV. Pastikan format dan header kolom sesuai.', 'error');
                 }
             };
             reader.readAsArrayBuffer(file);
