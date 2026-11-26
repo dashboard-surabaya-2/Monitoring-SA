@@ -1134,118 +1134,162 @@ html.dark option { background:#0f172a; color:#f1f5f9; }
             const areaSelect = document.getElementById('filter-area');
             const contractorSelect = document.getElementById('filter-contractor');
 
-            // 1. Populasi BSM dari seluruh data
-            const bsmByKey = new Map();
-            rawWorkOrders.map(d => cleanText(d.bsmName)).filter(v => v && v !== '-' && v.toLowerCase() !== 'null').forEach(name => { const key = normalizePersonKey(name); if (key && !bsmByKey.has(key)) bsmByKey.set(key, name); });
-            const allBSMs = [...bsmByKey.values()].sort((a, b) => a.localeCompare(b, 'id'));
+            const uniqueNames = (rows, getter, normalizer = normalizePersonKey) => {
+                const values = new Map();
+                rows.map(d => cleanText(getter(d))).filter(v => v && v !== '-' && v.toLowerCase() !== 'null').forEach(v => {
+                    const key = normalizer(v);
+                    if (key && !values.has(key)) values.set(key, v);
+                });
+                return [...values.values()].sort((a, b) => a.localeCompare(b, 'id'));
+            };
+            const setOptions = (select, values, label, preferred, normalizer = normalizePersonKey) => {
+                if (!select) return 'ALL';
+                select.innerHTML = `<option value="ALL">Semua ${label} (${values.length})</option>`;
+                values.forEach(value => {
+                    const option = document.createElement('option');
+                    option.value = value;
+                    option.textContent = value;
+                    select.appendChild(option);
+                });
+                const found = values.find(value => normalizer(value) === normalizer(preferred || ''));
+                select.value = found || 'ALL';
+                return select.value;
+            };
+
+            const allBSMs = uniqueNames(rawWorkOrders, d => d.bsmName);
             if (bsmSelect) {
                 bsmSelect.innerHTML = `<option value="ALL">Semua BSM (${allBSMs.length})</option>`;
                 allBSMs.forEach(name => {
-                    const opt = document.createElement('option');
-                    opt.value = name;
-                    opt.textContent = name;
-                    bsmSelect.appendChild(opt);
+                    const option = document.createElement('option');
+                    option.value = name;
+                    option.textContent = name;
+                    bsmSelect.appendChild(option);
                 });
-
                 if (preferredBSM !== null && preferredBSM !== undefined) {
-                    if (preferredBSM === 'DEFAULT_BENNY') {
-                        bsmSelect.value = resolveDefaultBSMValue();
-                    } else if ([...bsmSelect.options].some(o => o.value === preferredBSM)) {
-                        bsmSelect.value = preferredBSM;
-                    } else {
-                        bsmSelect.value = 'ALL';
-                    }
+                    bsmSelect.value = preferredBSM === 'DEFAULT_BENNY'
+                        ? resolveDefaultBSMValue()
+                        : (allBSMs.find(v => normalizePersonKey(v) === normalizePersonKey(preferredBSM)) || 'ALL');
                 }
             }
 
-            const activeBSM = bsmSelect ? bsmSelect.value : 'ALL';
-
-            // 2. Populasi ASM berdasarkan BSM terpilih (cascading)
-            const asmSource = rawWorkOrders.filter(d => {
-                if (activeBSM === 'ALL') return true;
-                return normalizePersonKey(d.bsmName) === normalizePersonKey(activeBSM);
-            });
-            const asmByKey = new Map();
-            asmSource.map(d => cleanText(d.asmName)).filter(v => v && v !== '-').forEach(name => { const key = normalizePersonKey(name); if (key && !asmByKey.has(key)) asmByKey.set(key, name); });
-            const allASMs = [...asmByKey.values()].sort((a, b) => a.localeCompare(b, 'id'));
+            const activeBSM = bsmSelect?.value || 'ALL';
+            const asmSource = rawWorkOrders.filter(d => activeBSM === 'ALL' || normalizePersonKey(d.bsmName) === normalizePersonKey(activeBSM));
+            const allASMs = uniqueNames(asmSource, d => d.asmName);
             if (asmSelect) {
                 asmSelect.innerHTML = `<option value="ALL">Semua ASM (${allASMs.length})</option>`;
                 allASMs.forEach(name => {
-                    const opt = document.createElement('option');
-                    opt.value = name;
-                    opt.textContent = name;
-                    asmSelect.appendChild(opt);
+                    const option = document.createElement('option');
+                    option.value = name;
+                    option.textContent = name;
+                    asmSelect.appendChild(option);
                 });
-                asmSelect.value = [...asmSelect.options].some(o => o.value === preferredASM) ? preferredASM : 'ALL';
+                asmSelect.value = allASMs.find(v => normalizePersonKey(v) === normalizePersonKey(preferredASM)) || 'ALL';
             }
 
-            const activeASM = asmSelect ? asmSelect.value : 'ALL';
-
-            // 3. Populasi AE berdasarkan BSM & ASM terpilih (cascading)
-            const aeSource = asmSource.filter(d => {
-                if (activeASM === 'ALL') return true;
-                return normalizePersonKey(d.asmName) === normalizePersonKey(activeASM);
-            });
-            const allAEs = [...new Set(aeSource.map(d => cleanText(d.salesName)).filter(Boolean))].sort((a, b) => a.localeCompare(b, 'id'));
+            const activeASM = asmSelect?.value || 'ALL';
+            const aeSource = asmSource.filter(d => activeASM === 'ALL' || normalizePersonKey(d.asmName) === normalizePersonKey(activeASM));
+            const allAEs = uniqueNames(aeSource, d => d.salesName);
             if (aeSelect) {
                 aeSelect.innerHTML = `<option value="ALL">Semua AE (${allAEs.length})</option>`;
                 allAEs.forEach(name => {
-                    const opt = document.createElement('option');
-                    opt.value = name;
-                    opt.textContent = name;
-                    aeSelect.appendChild(opt);
+                    const option = document.createElement('option');
+                    option.value = name;
+                    option.textContent = name;
+                    aeSelect.appendChild(option);
                 });
-                aeSelect.value = [...aeSelect.options].some(o => o.value === preferredAE) ? preferredAE : 'ALL';
+                aeSelect.value = allAEs.find(v => normalizePersonKey(v) === normalizePersonKey(preferredAE)) || 'ALL';
             }
 
-            // 4. Populasi Area (area asli / area) & Kontraktor
-            const prevArea = areaSelect ? areaSelect.value : 'ALL';
-            // Satukan nama Area berdasarkan ejaan yang sama tanpa membedakan kapitalisasi.
-            // Semua label filter ditampilkan huruf kecil: sidoarjo, surabaya, dst.
             const areaByKey = new Map();
             rawWorkOrders.forEach(d => {
                 const area = normalizeAreaLabel(getEffectiveArea(d));
-                if (!area) return;
                 const key = normalizeClusterAreaKey(area);
                 if (key && !areaByKey.has(key)) areaByKey.set(key, area);
             });
             const allAreas = [...areaByKey.values()].sort((a, b) => a.localeCompare(b, 'id'));
             if (areaSelect) {
-                const previousAreaKey = prevArea === 'ALL' ? 'ALL' : normalizeClusterAreaKey(prevArea);
+                const previousArea = areaSelect.value;
                 areaSelect.innerHTML = `<option value="ALL">Semua Area (${allAreas.length})</option>`;
                 allAreas.forEach(area => {
-                    const opt = document.createElement('option');
-                    opt.value = area;
-                    opt.textContent = area;
-                    areaSelect.appendChild(opt);
+                    const option = document.createElement('option');
+                    option.value = area;
+                    option.textContent = area;
+                    areaSelect.appendChild(option);
                 });
-                areaSelect.value = [...areaSelect.options].some(o => o.value !== 'ALL' && normalizeClusterAreaKey(o.value) === previousAreaKey) ? areaByKey.get(previousAreaKey) : 'ALL';
+                const selectedArea = allAreas.find(v => normalizeClusterAreaKey(v) === normalizeClusterAreaKey(previousArea));
+                areaSelect.value = selectedArea || 'ALL';
             }
 
-            const prevCont = contractorSelect ? contractorSelect.value : 'ALL';
-            const allContractors = [...new Set(rawWorkOrders.map(d => cleanText(d.contractorName)).filter(Boolean))].sort((a, b) => a.localeCompare(b, 'id'));
+            const allContractors = uniqueNames(rawWorkOrders, d => d.contractorName, value => cleanText(value).toLowerCase());
             if (contractorSelect) {
+                const previousContractor = contractorSelect.value;
                 contractorSelect.innerHTML = `<option value="ALL">Semua Kontraktor / IKR (${allContractors.length})</option>`;
-                allContractors.forEach(c => {
-                    const opt = document.createElement('option');
-                    opt.value = c;
-                    opt.textContent = c;
-                    contractorSelect.appendChild(opt);
+                allContractors.forEach(name => {
+                    const option = document.createElement('option');
+                    option.value = name;
+                    option.textContent = name;
+                    contractorSelect.appendChild(option);
                 });
-                contractorSelect.value = [...contractorSelect.options].some(o => o.value === prevCont) ? prevCont : 'ALL';
+                contractorSelect.value = allContractors.find(v => v.toLowerCase() === (previousContractor || '').toLowerCase()) || 'ALL';
             }
+        }
+
+        // Perbarui pilihan setiap dropdown berdasarkan kombinasi filter aktif lainnya.
+        // Jika pilihan lama tidak tersedia dalam kombinasi baru, kembalikan ke "Semua".
+        function synchronizeFilterOptions() {
+            const ids = ['filter-bsm', 'filter-asm', 'filter-ae', 'filter-area', 'filter-contractor'];
+            const fields = ['bsm', 'asm', 'ae', 'area', 'contractor'];
+            const criteria = getFilterCriteria();
+            const config = [
+                { id: 'filter-bsm', field: 'bsm', label: 'BSM', getter: d => cleanText(d.bsmName), key: normalizePersonKey },
+                { id: 'filter-asm', field: 'asm', label: 'ASM', getter: d => cleanText(d.asmName), key: normalizePersonKey },
+                { id: 'filter-ae', field: 'ae', label: 'AE', getter: d => cleanText(d.salesName), key: normalizePersonKey },
+                { id: 'filter-area', field: 'area', label: 'Area', getter: d => normalizeAreaLabel(getEffectiveArea(d)), key: normalizeClusterAreaKey },
+                { id: 'filter-contractor', field: 'contractor', label: 'Kontraktor / IKR', getter: d => cleanText(d.contractorName), key: v => cleanText(v).toLowerCase() }
+            ];
+            config.forEach(item => {
+                const select = document.getElementById(item.id);
+                if (!select) return;
+                const selected = select.value || 'ALL';
+                const candidateCriteria = { ...criteria, [item.field]: 'ALL' };
+                const candidates = rawWorkOrders.filter(row => matchesCriteria(row, candidateCriteria, item.field === 'slot'));
+                const valuesByKey = new Map();
+                candidates.map(item.getter).filter(v => v && v !== '-' && v.toLowerCase() !== 'null').forEach(value => {
+                    const key = item.key(value);
+                    if (key && !valuesByKey.has(key)) valuesByKey.set(key, value);
+                });
+                const values = [...valuesByKey.values()].sort((a, b) => a.localeCompare(b, 'id'));
+                select.innerHTML = `<option value="ALL">Semua ${item.label} (${values.length})</option>`;
+                values.forEach(value => {
+                    const option = document.createElement('option');
+                    option.value = value;
+                    option.textContent = value;
+                    select.appendChild(option);
+                });
+                const retained = values.find(value => item.key(value) === item.key(selected));
+                select.value = selected === 'ALL' ? 'ALL' : (retained || 'ALL');
+            });
         }
 
         function handleBSMChange() {
             const bsmVal = document.getElementById('filter-bsm')?.value || 'ALL';
+            // Perubahan BSM membatalkan ASM dan AE lama yang mungkin bukan bawahannya.
             populateFilterOptions(bsmVal, 'ALL', 'ALL');
+            synchronizeFilterOptions();
             applyFilters();
         }
 
         function handleASMChange() {
             const bsmVal = document.getElementById('filter-bsm')?.value || 'ALL';
             const asmVal = document.getElementById('filter-asm')?.value || 'ALL';
+            // Perubahan ASM membatalkan AE lama agar daftar AE mengikuti ASM terpilih.
             populateFilterOptions(bsmVal, asmVal, 'ALL');
+            synchronizeFilterOptions();
+            applyFilters();
+        }
+
+        function handleOtherFilterChange() {
+            synchronizeFilterOptions();
             applyFilters();
         }
 
@@ -1254,10 +1298,11 @@ html.dark option { background:#0f172a; color:#f1f5f9; }
             const val = slotDropdown ? slotDropdown.value : 'ALL';
             selectedSlotFromTable = val !== 'ALL' ? val : null;
             syncSlotPill();
+            synchronizeFilterOptions();
             applyFilters();
         }
 
-        function syncSlotPill() {
+                function syncSlotPill() {
             const pill = document.getElementById('active-slot-pill');
             const label = document.getElementById('active-slot-label');
             if (!pill || !label) return;
