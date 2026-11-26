@@ -1461,7 +1461,11 @@ html.dark option { background:#0f172a; color:#f1f5f9; }
                 const ch = text[i], next = text[i + 1];
                 if (ch === '"') {
                     if (quoted && next === '"') { field += '"'; i++; }
-                    else quoted = !quoted;
+                    // Tanda kutip di tengah teks tanpa pembuka field adalah karakter biasa.
+                    // Ekspor komentar vendor kadang memuat kutip internal yang tidak di-escape.
+                    else if (quoted) quoted = false;
+                    else if (field.length === 0) quoted = true;
+                    else field += ch;
                 } else if (ch === ',' && !quoted) { row.push(field); field = ''; }
                 else if ((ch === '\n' || ch === '\r') && !quoted) {
                     if (ch === '\r' && next === '\n') i++;
