@@ -1198,7 +1198,6 @@ html.dark option { background:#0f172a; color:#f1f5f9; }
             // Setiap dropdown menampilkan nilai yang tersedia berdasarkan SEMUA filter aktif
             // lainnya, termasuk rentang Appointment Date. Filter yang sedang dibangun sendiri
             // dikecualikan agar pengguna tetap dapat mengganti pilihannya.
-            const criteria = getFilterCriteria();
             const config = [
                 { id:'filter-bsm', field:'bsm', label:'BSM', getter:d=>cleanText(d.bsmName), key:normalizePersonKey },
                 { id:'filter-asm', field:'asm', label:'ASM', getter:d=>cleanText(d.asmName), key:normalizePersonKey },
@@ -1211,7 +1210,7 @@ html.dark option { background:#0f172a; color:#f1f5f9; }
                 const select=document.getElementById(item.id);
                 if(!select)return;
                 const selected=select.value||'ALL';
-                const candidateCriteria={...criteria,[item.field]:'ALL'};
+                const candidateCriteria={...getFilterCriteria(),[item.field]:'ALL'};
                 const candidates=rawWorkOrders.filter(row=>matchesCriteria(row,candidateCriteria,true));
                 const valuesByKey=new Map();
                 candidates.map(item.getter).filter(v=>v&&v!=='-'&&v.toLowerCase()!=='null').forEach(value=>{
