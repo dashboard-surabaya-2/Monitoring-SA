@@ -1192,6 +1192,9 @@ html.dark option { background:#0f172a; color:#f1f5f9; }
     // Konfigurasi Google Sheet ID & Endpoints
     const SHEET_ID = '1p7IheHnt4xPdBMRMgF1DPiu4_NluZLKS4MY3Ktb0OGE';
     const SHEET_URLS = [
+      // Sumber utama: CSV publik yang telah diberikan dan diverifikasi berisi 1.827 Cluster ID unik.
+      'https://docs.google.com/spreadsheets/d/e/2PACX-1vSdAPCOYfaWupyTNz0493ceC_prfN-pHCnuGebXEUrW_rNn1TA5hcGapd_k2H898cxpe9kW1FmZXaXF/pub?gid=0&single=true&output=csv',
+      // Cadangan jika endpoint publik tidak tersedia.
       `https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?tqx=out:csv&sheet=${encodeURIComponent('data update')}`,
       `https://docs.google.com/spreadsheets/d/${SHEET_ID}/export?format=csv&gid=0`
     ];
