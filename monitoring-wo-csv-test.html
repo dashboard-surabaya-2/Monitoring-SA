@@ -305,7 +305,7 @@ html.dark option { background:#0f172a; color:#f1f5f9; }
                             </h1>
                             <span id="data-source-badge" class="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200">
                                 <span class="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span>
-                                Sampel "Monitoring Surabaya 2"
+                                Menunggu upload CSV
                             </span>
                         </div>
                         
@@ -359,7 +359,7 @@ html.dark option { background:#0f172a; color:#f1f5f9; }
                     <h2 class="text-sm font-bold text-slate-800 uppercase tracking-wider">Filter Global & Pencarian Cepat</h2>
                 </div>
                 <div class="flex flex-wrap items-center gap-3">
-                    <span id="filter-status-text" class="text-xs text-slate-500 font-medium">Memuat data...</span>
+                    <span id="filter-status-text" class="text-xs text-slate-500 font-medium">Silakan upload CSV lengkap terbaru untuk menampilkan data WO.</span>
                     <button type="button" onclick="resetAllFilters()" class="text-xs font-semibold text-blue-600 hover:text-blue-800 hover:underline inline-flex items-center gap-1">
                         <i data-lucide="rotate-ccw" class="w-3.5 h-3.5"></i> Reset Filter (Default BSM: BENNY HADIAWAN)
                     </button>
@@ -2633,6 +2633,10 @@ html.dark option { background:#0f172a; color:#f1f5f9; }
  // Dashboard WO dan CTJ selalu dibuka dalam Light Mode; pengguna tetap bisa mengaktifkan Dark Mode secara manual.
  apply('light');
 })();;
+</script>
+
+<script>
+(function(){function setTrialEmptyState(){var badge=document.getElementById('data-source-badge');if(badge&&/Sampel|Memuat|Google Sheets/i.test(badge.textContent||'')){badge.textContent='Menunggu upload CSV';badge.className='inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-amber-50 text-amber-800 border border-amber-200';}var status=document.getElementById('filter-status-text');if(status&&/Memuat data/i.test(status.textContent||''))status.textContent='Silakan upload CSV lengkap terbaru untuk menampilkan data WO.';}if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',setTrialEmptyState,{once:true});else setTrialEmptyState();})();
 </script>
 </body>
 </html>
