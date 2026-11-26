@@ -1382,11 +1382,16 @@ html.dark option { background:#0f172a; color:#f1f5f9; }
           chunkedLoading: true, chunkInterval: 200, chunkDelay: 50,
           iconCreateFunction: function(cluster) {
             const children = cluster.getAllChildMarkers();
+            const count = cluster.getChildCount();
+            if ((document.getElementById('map-color-mode')?.value || 'PRIORITY') !== 'BM') {
+              const sizeClass = count < 10 ? 'marker-cluster-small' : count < 100 ? 'marker-cluster-medium' : 'marker-cluster-large';
+              return L.divIcon({html:'<div><span>' + count + '</span></div>',className:'marker-cluster ' + sizeClass,iconSize:L.point(40,40)});
+            }
             const counts = {};
             children.forEach(marker => { const key = marker.options.ctjBMClass || 'bm-gray'; counts[key] = (counts[key] || 0) + 1; });
             const ranked = Object.entries(counts).sort((a,b) => b[1]-a[1]);
-            const dominant = ranked.length && ranked[0][1] > children.length / 2 ? ranked[0][0] : (ranked.length === 1 ? ranked[0][0] : 'bm-mixed');
-            return L.divIcon({html:'<div><span>' + cluster.getChildCount() + '</span></div>',className:'marker-cluster ctj-bm-' + dominant,iconSize:L.point(40,40)});
+            const dominant = ranked.length && ranked[0][1] > count / 2 ? ranked[0][0] : (ranked.length === 1 ? ranked[0][0] : 'bm-mixed');
+            return L.divIcon({html:'<div><span>' + count + '</span></div>',className:'marker-cluster ctj-bm-' + dominant,iconSize:L.point(40,40)});
           }
         }).addTo(ctjLeafletMap);
       }
