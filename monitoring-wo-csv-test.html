@@ -1211,7 +1211,7 @@ html.dark option { background:#0f172a; color:#f1f5f9; }
                 if(!select)return;
                 const selected=select.value||'ALL';
                 const candidateCriteria={...getFilterCriteria(),[item.field]:'ALL'};
-                const candidates=rawWorkOrders.filter(row=>matchesCriteria(row,candidateCriteria,true));
+                const candidates=rawWorkOrders.filter(row=>matchesCriteria(row,candidateCriteria,false));
                 const valuesByKey=new Map();
                 candidates.map(item.getter).filter(v=>v&&v!=='-'&&v.toLowerCase()!=='null').forEach(value=>{
                     const key=item.key(value);
@@ -1233,7 +1233,7 @@ html.dark option { background:#0f172a; color:#f1f5f9; }
             if(slotSelect){
                 const selected=slotSelect.value||'ALL';
                 const slotCriteria={...getFilterCriteria(),slot:null};
-                const slots=[...new Set(rawWorkOrders.filter(row=>matchesCriteria(row,slotCriteria,true))
+                const slots=[...new Set(rawWorkOrders.filter(row=>matchesCriteria(row,slotCriteria,false))
                     .map(row=>normalizeSlotTime(row.slotTime)).filter(Boolean))].sort((a,b)=>{
                         const order=STANDARD_SLOTS.map(x=>x.key);
                         return order.indexOf(a)-order.indexOf(b);
