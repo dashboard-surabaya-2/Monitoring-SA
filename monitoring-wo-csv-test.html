@@ -1459,7 +1459,10 @@ html.dark option { background:#0f172a; color:#f1f5f9; }
             const rows = []; let row = []; let field = ''; let quoted = false;
             for (let i = 0; i < text.length; i++) {
                 const ch = text[i], next = text[i + 1];
-                if (ch === '"') {
+                if (ch === '"' && i > 0 && text[i - 1] === '\\') {
+                    // Backslash-escaped quote (\\") dari komentar vendor adalah isi field.
+                    field += '"';
+                } else if (ch === '"') {
                     if (quoted && next === '"') { field += '"'; i++; }
                     // Tanda kutip di tengah teks tanpa pembuka field adalah karakter biasa.
                     // Ekspor komentar vendor kadang memuat kutip internal yang tidak di-escape.
