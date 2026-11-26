@@ -2567,7 +2567,7 @@ html.dark option { background:#0f172a; color:#f1f5f9; }
                     if (repairedRows) console.info(`CSV: ${repairedRows} baris komentar diperbaiki tanpa menggeser kolom lain.`);
 
                     let mapped = jsonRows.map((row, idx) => {
-                        const rowArray = matrixRows[idx + 1] || [];
+                        const rowArray = normalizedRows[idx + 1] || [];
 
                         let rawDate = getFieldFlexible(row, rowArray, -1, [
                             'appointmentDate', 'Appointment Date', 'Appointment_Date',
@@ -2636,7 +2636,7 @@ html.dark option { background:#0f172a; color:#f1f5f9; }
                         ctjSummary ? 'success' : 'info');
                 } catch (err) {
                     console.error('Error impor file:', err);
-                    showToast('Gagal memproses file CSV. Pastikan format dan header kolom sesuai.', 'error');
+                    showToast(`Gagal memproses CSV: ${err?.message || 'Format atau header kolom tidak sesuai.'}`, 'error');
                 }
             };
             reader.readAsArrayBuffer(file);
