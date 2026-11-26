@@ -936,6 +936,52 @@ html.dark option { background:#0f172a; color:#f1f5f9; }
             return cleanText(name).normalize('NFKC').toLowerCase().replace(/[\u200B-\u200D\uFEFF]/g, '').replace(/[.\s,;:]+$/g, '').replace(/\s+/g, ' ');
         }
 
+        // Referensi resmi Area dari Dashboard Monitoring CTJ (kolom KOTA ASLI).
+        const CTJ_AREA_CSV_URLS = [
+            'https://docs.google.com/spreadsheets/d/e/2PACX-1vSdAPCOYfaWupyTNz0493ceC_prfN-pHCnuGebXEUrW_rNn1TA5hcGapd_k2H898cxpe9kW1FmZXaXF/pub?gid=0&single=true&output=csv',
+            'https://docs.google.com/spreadsheets/d/1p7IheHnt4xPdBMRMgF1DPiu4_NluZLKS4MY3Ktb0OGE/gviz/tq?tqx=out:csv&sheet=data%20update'
+        ];
+        function normalizeClusterAreaKey(value) {
+            return cleanText(value).normalize('NFKD').replace(/[\\u0300-\\u036f]/g, '').toUpperCase().replace(/[\\u200B-\\u200D\\uFEFF]/g, '').replace(/[^A-Z0-9]+/g, ' ').trim().replace(/\\s+/g, ' ');
+        }
+        async function loadCTJAreaMap() {
+            let lastError = null;
+            for (const url of CTJ_AREA_CSV_URLS) {
+                try {
+                    const response = await fetch(url, {cache:'no-store'});
+                    if (!response.ok) throw new Error('HTTP ' + response.status);
+                    const csvText = await response.text();
+                    const workbook = XLSX.read(csvText, {type:'string'});
+                    const sheet = workbook.Sheets[workbook.SheetNames[0]];
+                    const rows = XLSX.utils.sheet_to_json(sheet, {defval:''});
+                    const map = new Map();
+                    rows.forEach(row => {
+                        const cluster = row['Clustername'] || row['Cluster Name'] || '';
+                        const kota = cleanText(row['KOTA ASLI']);
+                        const key = normalizeClusterAreaKey(cluster);
+                        if (key && kota && !map.has(key)) map.set(key, kota);
+                    });
+                    if (map.size) return map;
+                    throw new Error('Kolom Clustername / KOTA ASLI tidak ditemukan atau kosong.');
+                } catch (error) { lastError = error; }
+            }
+            throw lastError || new Error('Sumber CSV CTJ tidak dapat diakses.');
+        }
+        async function applyCTJAreaReference(rows) {
+            const map = await loadCTJAreaMap();
+            let matched = 0, changed = 0;
+            const corrected = rows.map(row => {
+                const key = normalizeClusterAreaKey(row.clusterName);
+                const officialArea = map.get(key);
+                if (!officialArea) return row;
+                matched++;
+                const originalArea = cleanText(row.areaAsli) || cleanText(row.area);
+                if (normalizeClusterAreaKey(originalArea) !== normalizeClusterAreaKey(officialArea)) changed++;
+                return {...row, areaCsvOriginal: row.areaCsvOriginal || originalArea, areaAsli: officialArea, area: officialArea, areaReference: 'CTJ KOTA ASLI'};
+            });
+            return {rows:corrected, matched, changed, unmatched:rows.length-matched, referenceCount:map.size};
+        }
+
         function getEffectiveArea(wo) {
             if (!wo) return 'Tidak Diketahui';
             const asli = cleanText(wo.areaAsli);
@@ -2358,7 +2404,7 @@ html.dark option { background:#0f172a; color:#f1f5f9; }
                         return;
                     }
 
-                    const mapped = jsonRows.map((row, idx) => {
+                    let mapped = jsonRows.map((row, idx) => {
                         const rowArray = matrixRows[idx + 1] || [];
 
                         let rawDate = getFieldFlexible(row, rowArray, -1, [
@@ -2398,6 +2444,14 @@ html.dark option { background:#0f172a; color:#f1f5f9; }
                         };
                     });
 
+                    let ctjSummary = null;
+                    try {
+                        const corrected = await applyCTJAreaReference(mapped);
+                        mapped = corrected.rows;
+                        ctjSummary = corrected;
+                    } catch (referenceError) {
+                        console.warn('Referensi CTJ tidak dapat dimuat; Area CSV dipertahankan:', referenceError);
+                    }
                     await saveCsvTrialSnapshot(mapped, file.name);
                     rawWorkOrders = mapped;
 
@@ -2411,7 +2465,10 @@ html.dark option { background:#0f172a; color:#f1f5f9; }
                     if (resetSampleBtn) resetSampleBtn.classList.remove('hidden');
 
                     resetAllFilters(false);
-                    showToast(`Berhasil mengimpor ${mapped.length} baris dari sheet "${sheetName}".`, 'success');
+                    showToast(ctjSummary
+                        ? `Impor ${mapped.length} WO selesai. ${ctjSummary.matched} cocok CTJ, ${ctjSummary.changed} Area dikoreksi.`
+                        : `Impor ${mapped.length} WO selesai. Referensi CTJ tidak dapat diakses; Area CSV dipertahankan.`,
+                        ctjSummary ? 'success' : 'info');
                 } catch (err) {
                     console.error('Error impor file:', err);
                     showToast('Gagal memproses file Excel/CSV. Pastikan format file valid.', 'error');
@@ -2559,6 +2616,17 @@ html.dark option { background:#0f172a; color:#f1f5f9; }
                 const saved = await getCsvTrialActive();
                 rawWorkOrders = saved && Array.isArray(saved.rows) ? saved.rows : [];
                 if (saved && rawWorkOrders.length) {
+                    try {
+                        const corrected = await applyCTJAreaReference(rawWorkOrders);
+                        rawWorkOrders = corrected.rows;
+                        const db = await openCsvTrialDB();
+                        const tx = db.transaction('active','readwrite');
+                        tx.objectStore('active').put({...saved, rows:rawWorkOrders, rowCount:rawWorkOrders.length});
+                        await new Promise((resolve,reject)=>{tx.oncomplete=resolve;tx.onerror=()=>reject(tx.error);});
+                        db.close();
+                    } catch (referenceError) {
+                        console.warn('Referensi CTJ belum tersedia saat membuka data tersimpan:', referenceError);
+                    }
                     if (badge) { badge.textContent = 'CSV Uji Coba: ' + saved.fileName; badge.className = 'inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-blue-50 text-blue-700 border border-blue-200'; }
                 } else if (badge) badge.textContent = 'Menunggu upload CSV';
                 resetAllFilters(false);
