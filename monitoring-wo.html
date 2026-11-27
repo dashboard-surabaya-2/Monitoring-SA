@@ -2458,8 +2458,7 @@ html.dark option { background:#0f172a; color:#f1f5f9; }
             const total = rows.length;
             const status = { 'Completed':0, 'New':0, 'In Progress':0, 'Unsuccessful':0, 'Cancelled':0, 'Other':0, 'Unknown':0 };
             const areas = {};
-            const asmTotals = {};
-            const asmSuccessful = {};
+            const asmKpis = {};
             rows.forEach(wo => {
                 const st = normalizeStatus(wo.appointmentStatus || wo.statusWO || '');
                 status[st] = (status[st] || 0) + 1;
@@ -2467,8 +2466,14 @@ html.dark option { background:#0f172a; color:#f1f5f9; }
                 areas[ar] = (areas[ar] || 0) + 1;
                 const asm = String(wo.asmName || '').trim();
                 if (asm && asm !== '-') {
-                    asmTotals[asm] = (asmTotals[asm] || 0) + 1;
-                    if (st === 'Completed') asmSuccessful[asm] = (asmSuccessful[asm] || 0) + 1;
+                    if (!asmKpis[asm]) asmKpis[asm] = { total:0, completed:0, newCount:0, progress:0, unsuccessful:0, cancelled:0, other:0 };
+                    const a = asmKpis[asm]; a.total++;
+                    if (st === 'Completed') a.completed++;
+                    else if (st === 'New') a.newCount++;
+                    else if (st === 'In Progress') a.progress++;
+                    else if (st === 'Unsuccessful') a.unsuccessful++;
+                    else if (st === 'Cancelled') a.cancelled++;
+                    else a.other++;
                 }
             });
             const completed = status.Completed || 0;
@@ -2489,7 +2494,7 @@ html.dark option { background:#0f172a; color:#f1f5f9; }
             if (dateTo) filters.push(['Appointment sampai',dateTo]);
             if (quickSearch) filters.push(['Pencarian',quickSearch]);
 
-            const W=1200, H=2350, c=document.createElement('canvas');
+            const W=1200, H=2500, c=document.createElement('canvas');
             c.width=W; c.height=H;
             const x=c.getContext('2d');
             const bg=x.createLinearGradient(0,0,W,H);
@@ -2499,7 +2504,7 @@ html.dark option { background:#0f172a; color:#f1f5f9; }
             const txt=(v,xx,yy,size=22,color='#e2e8f0',weight='600')=>{x.fillStyle=color;x.font=weight+' '+size+'px Arial,sans-serif';x.fillText(String(v),xx,yy);};
             const fit=(v,xx,yy,max,size=20,color='#e2e8f0')=>{let z=String(v);x.font='600 '+size+'px Arial,sans-serif';while(z.length>3&&x.measureText(z).width>max)z=z.slice(0,-2)+'…';txt(z,xx,yy,size,color);};
             const pctText=n=>pct(n).toFixed(1)+'%';
-            round(34,34,1132,2282,30,'#0d2038');
+            round(34,34,1132,2432,30,'#0d2038');
             round(72,72,10,105,5,'#38bdf8');
             txt('MONITORING WO',108,122,48,'#ffffff','800');
             txt('WORK ORDER PERFORMANCE REPORT',110,164,21,'#7dd3fc','700');
@@ -2551,45 +2556,50 @@ html.dark option { background:#0f172a; color:#f1f5f9; }
                 txt(pctText(m[1]),1030,yy+20,18,'#bfdbfe','700');
             });
 
-            // ASM rankings: all WO and successful/completed WO
-            txt('PERINGKAT ASM',82,1430,25,'#ffffff','800');
-            const topAsmTotal=Object.entries(asmTotals).sort((a,b)=>b[1]-a[1]).slice(0,5);
-            const topAsmSuccess=Object.entries(asmSuccessful).sort((a,b)=>b[1]-a[1]).slice(0,5);
-            const drawAsmRank=(title,data,xx,accent)=>{
-                txt(title,xx,1475,18,'#93c5fd','700');
-                if(!data.length){txt('Belum ada data ASM',xx,1525,17,'#cbd5e1','400');return;}
-                const max=Math.max(1,data[0][1]);
-                data.forEach(([name,n],i)=>{
-                    const yy=1500+i*54;
-                    txt(String(i+1).padStart(2,'0'),xx,yy+22,17,accent,'800');
-                    fit(name,xx+42,yy+22,270,17,'#e2e8f0');
-                    round(xx+320,yy+7,145,12,6,'#29425f');
-                    round(xx+320,yy+7,Math.max(4,145*n/max),12,6,accent);
-                    txt(fmt(n)+' WO',xx+475,yy+20,16,'#ffffff','700');
-                });
-            };
-            drawAsmRank('ASM DENGAN TOTAL WO TERBANYAK',topAsmTotal,88,'#38bdf8');
-            drawAsmRank('ASM DENGAN WO SUCCESSFUL TERBANYAK',topAsmSuccess,650,'#10b981');
-
-            // Top areas
-            txt('AREA DENGAN JUMLAH WO TERBANYAK',82,1810,23,'#ffffff','800');
-            const topAreas=Object.entries(areas).sort((a,b)=>b[1]-a[1]).slice(0,5);
-            if(!topAreas.length) txt('Tidak ada data area pada filter ini',92,1860,18,'#cbd5e1','400');
-            topAreas.forEach(([name,n],i)=>{
-                const yy=1845+i*48;
-                fit((i+1)+'. '+name,95,yy+20,600,18,'#e2e8f0');
-                round(700,yy,300,12,6,'#29425f');
-                round(700,yy,Math.max(4,300*n/Math.max(1,topAreas[0][1])),12,6,'#38bdf8');
-                txt(fmt(n)+' WO',1020,yy+16,16,'#bae6fd','700');
+            // Full ASM KPI table ranked by completed/successful WO
+            txt('RANKING SELURUH ASM',82,1430,25,'#ffffff','800');
+            txt('Urutan berdasarkan jumlah WO Completed / Successful terbanyak',84,1464,16,'#93c5fd','500');
+            const asmRows=Object.entries(asmKpis).map(([name,k])=>({name,...k,clean:k.completed+k.newCount+k.progress,successRate:k.total?(k.completed/k.total*100):0}))
+                .sort((a,b)=>b.completed-a.completed || b.total-a.total || a.name.localeCompare(b.name,'id'));
+            const cols=[
+                {label:'RANK / ASM',x:88,w:260},{label:'TOTAL WO',x:355,w:100},{label:'WO BERSIH',x:465,w:105},
+                {label:'COMPLETED',x:580,w:105},{label:'NEW',x:695,w:65},{label:'IN PROG.',x:770,w:85},
+                {label:'UNSUCCESS.',x:865,w:95},{label:'CANCELLED',x:970,w:90},{label:'SUCCESS %',x:1070,w:75}
+            ];
+            round(78,1490,1044,42,10,'#244665');
+            cols.forEach(col=>txt(col.label,col.x+(col.x>300?col.w-4:0),1517,13,'#bae6fd','700'));
+            const rowTop=1540,rowH=48;
+            if(!asmRows.length)txt('Tidak ada data ASM pada filter aktif',92,rowTop+30,18,'#cbd5e1','400');
+            asmRows.forEach((a,i)=>{
+                const yy=rowTop+i*rowH;
+                round(78,yy,1044,rowH-4,8,i%2===0?'#142d4a':'#10253e');
+                txt(String(i+1).padStart(2,'0'),91,yy+27,16,i===0?'#fbbf24':'#7dd3fc','800');
+                fit(a.name,130,yy+27,210,16,'#ffffff');
+                [a.total,a.clean,a.completed,a.newCount,a.progress,a.unsuccessful,a.cancelled].forEach((v,j)=>txt(fmt(v),cols[j+1].x+cols[j+1].w-4,yy+27,16,j===2?'#6ee7b7':'#e2e8f0','700'));
+                txt(a.successRate.toFixed(1)+'%',1140,yy+27,14,'#6ee7b7','700');
             });
+            const tableBottom=rowTop+Math.max(1,asmRows.length)*rowH+20;
 
-            // Active filters
-            const filterY=2130;
+            const areaTitleY=tableBottom+10;
+            txt('AREA DENGAN JUMLAH WO TERBANYAK',82,areaTitleY,23,'#ffffff','800');
+            const topAreas=Object.entries(areas).sort((a,b)=>b[1]-a[1]).slice(0,5);
+            if(!topAreas.length)txt('Tidak ada data area pada filter ini',92,areaTitleY+48,18,'#cbd5e1','400');
+            topAreas.forEach(([name,n],i)=>{
+                const yy=areaTitleY+35+i*43;
+                fit((i+1)+'. '+name,95,yy+20,600,17,'#e2e8f0');
+                round(700,yy,300,11,6,'#29425f');
+                round(700,yy,Math.max(4,300*n/Math.max(1,topAreas[0][1])),11,6,'#38bdf8');
+                txt(fmt(n)+' WO',1020,yy+15,15,'#bae6fd','700');
+            });
+            const filterY=areaTitleY+275;
             txt('FILTER LAPORAN',82,filterY,20,'#7dd3fc','700');
             const fl=filters.length?filters:['Semua filter default'];
             fl.slice(0,3).forEach((v,i)=>fit(Array.isArray(v)?v[0]+': '+v[1]:v,88,filterY+36+i*25,1000,16,'#cbd5e1'));
             if(fl.length>3)txt('+'+(fl.length-3)+' filter lainnya',88,filterY+112,15,'#93c5fd','600');
-            txt('Sumber: data Monitoring WO • Ranking dan angka mengikuti filter aktif',82,2290,15,'#94a3b8','400');
+            const footerY=filterY+155;
+            txt('Sumber: data Monitoring WO • Ranking dan KPI mengikuti filter aktif',82,footerY,15,'#94a3b8','400');
+            c.height=Math.max(footerY+65,1900);
+            round(34,34,1132,c.height-68,30,'#0d2038');
             return new Promise((resolve,reject)=>c.toBlob(blob=>blob?resolve(blob):reject(new Error('Gagal membuat PNG')),'image/png'));
         }
 
