@@ -3,6 +3,9 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate" />
+  <meta http-equiv="Pragma" content="no-cache" />
+  <meta http-equiv="Expires" content="0" />
   <title>MoraRepublic — Monitoring Surabaya 2</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
@@ -2188,7 +2191,13 @@ html.dark option { background:#0f172a; color:#f1f5f9; }
     populateFilterDropdowns();
     applyFilters();
     window.addEventListener('DOMContentLoaded', () => {
-      // Pulihkan dashboard utama terakhir yang dibuka, termasuk setelah Ctrl+F5.
+      // Cache-busting: minta file iframe terbaru setiap kali dashboard utama dibuka.
+      const buildStamp = Date.now();
+      const woFrame = document.getElementById('woDashboardFrame');
+      const ctjFrame = document.getElementById('ctjDashboardFrame');
+      if (woFrame) woFrame.src = './monitoring-wo.html?v=' + buildStamp;
+      if (ctjFrame) ctjFrame.src = './monitoring-ctj.html?v=' + buildStamp;
+      // Pulihkan dashboard utama terakhir yang dibuka.
       switchMainDashboard(getSavedMainDashboard());
       syncFromGoogleSheet(true);
     });
