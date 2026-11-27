@@ -2466,6 +2466,12 @@ html.dark option { background:#0f172a; color:#f1f5f9; }
             const filters = [['BSM','filter-bsm'],['ASM','filter-asm'],['AE','filter-ae'],['Area','filter-area'],['Contractor','filter-contractor'],['Slot','filter-slottime']]
                 .map(([label,id])=>[label,captureFilterValue(id)])
                 .filter(x=>x[1] && !/^all$|^semua/i.test(x[1]));
+            const dateFrom = captureFilterValue('filter-appointment-from');
+            const dateTo = captureFilterValue('filter-appointment-to');
+            const quickSearch = captureFilterValue('filter-search');
+            if (dateFrom) filters.push(['Tanggal dari', dateFrom]);
+            if (dateTo) filters.push(['Tanggal sampai', dateTo]);
+            if (quickSearch) filters.push(['Pencarian', quickSearch]);
             const c = document.createElement('canvas'); c.width=1200; c.height=1500;
             const x=c.getContext('2d');
             const bg=x.createLinearGradient(0,0,1200,1500); bg.addColorStop(0,'#0b1730'); bg.addColorStop(1,'#1e3a5f');
