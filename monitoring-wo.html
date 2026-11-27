@@ -11,7 +11,7 @@
     <!-- Google Fonts: Inter -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 
     <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
@@ -2539,6 +2539,7 @@ html.dark option { background:#0f172a; color:#f1f5f9; }
             if (!ctx) throw new Error('Canvas 2D tidak tersedia');
             ctx.setTransform(SCALE,0,0,SCALE,0,0);
 
+            if (document.fonts && document.fonts.ready) await document.fonts.ready;
             const bgUrl = await loadWOReportBackground();
             const bgImage = new Image();
             bgImage.crossOrigin = 'anonymous';
@@ -2568,7 +2569,7 @@ html.dark option { background:#0f172a; color:#f1f5f9; }
                 if (stroke) { ctx.lineWidth = sw; ctx.strokeStyle = stroke; ctx.stroke(); }
             };
             const text = (value,x,y,size=22,color='#fff',weight=600,align='left') => {
-                ctx.font = weight + ' ' + size + 'px Arial,sans-serif';
+                ctx.font = weight + ' ' + size + 'px "Plus Jakarta Sans",Inter,sans-serif';
                 ctx.textAlign = align; ctx.textBaseline = 'alphabetic';
                 ctx.fillStyle = color; ctx.fillText(String(value),x,y);
             };
@@ -2593,14 +2594,29 @@ html.dark option { background:#0f172a; color:#f1f5f9; }
             const areaFilter = captureFilterValue('filter-area');
             const areaLabel = areaFilter && !/^all$|^semua/i.test(areaFilter) ? areaFilter : 'All Area';
 
-            // Header dan identitas.
+            // Header premium: tipografi lebih luwes, hierarki jelas, dan metadata tidak kaku.
             text('M',55,69,56,'#d946ef',800);
-            text('morarepublic',55,94,17,'#ffffff',700);
-            line(230,26,230,105,'rgba(255,255,255,.45)',2);
-            text('Monitoring WO',265,64,43,'#ffffff',800);
-            text('Laporan Harian Work Order',268,96,22,'#e2e8f0',600);
-            text(today,1005,54,22,'#ffffff',700);
-            text('Area: ' + areaLabel,1007,87,18,'#dbeafe',600);
+            text('morarepublic',55,94,16,'#ffffff',700);
+            line(230,24,230,105,'rgba(255,255,255,.34)',1.5);
+
+            ctx.textAlign='left';
+            ctx.font='800 45px "Plus Jakarta Sans",Inter,sans-serif';
+            ctx.textBaseline='alphabetic';
+            ctx.fillStyle='#ffffff';
+            ctx.fillText('Monitoring',265,63);
+            const titleWidth=ctx.measureText('Monitoring').width;
+            const titleGrad=ctx.createLinearGradient(265+titleWidth,0,265+titleWidth+105,0);
+            titleGrad.addColorStop(0,'#67e8f9');
+            titleGrad.addColorStop(1,'#c4b5fd');
+            ctx.font='800 45px "Plus Jakarta Sans",Inter,sans-serif';
+            ctx.fillStyle=titleGrad;
+            ctx.fillText(' WO',265+titleWidth,63);
+
+            text('Laporan harian work order',268,96,20,'#dbeafe',500);
+            rounded(965,22,292,43,14,'rgba(8,18,43,.56)','rgba(255,255,255,.20)',1);
+            text(today,1111,50,18,'#ffffff',700,'center');
+            rounded(967,75,11,11,6,'#38bdf8',null);
+            text('Area  /  ' + areaLabel,989,88,17,'#e0e7ff',600);
 
             // Slogan teamwork di pita gelap.
             rounded(255,120,800,75,18,'rgba(30,13,65,.78)','rgba(192,132,252,.45)',1);
