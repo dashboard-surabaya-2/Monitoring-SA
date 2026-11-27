@@ -2457,12 +2457,19 @@ html.dark option { background:#0f172a; color:#f1f5f9; }
             const rows = Array.isArray(filteredWorkOrders) ? filteredWorkOrders : [];
             const total = rows.length;
             const status = { 'Completed':0, 'New':0, 'In Progress':0, 'Unsuccessful':0, 'Cancelled':0, 'Other':0, 'Unknown':0 };
-            const areas = {};\n            const asmTotals = {};\n            const asmSuccessful = {};
+            const areas = {};
+            const asmTotals = {};
+            const asmSuccessful = {};
             rows.forEach(wo => {
                 const st = normalizeStatus(wo.appointmentStatus || wo.statusWO || '');
                 status[st] = (status[st] || 0) + 1;
                 const ar = getEffectiveArea(wo) || 'Tidak diketahui';
                 areas[ar] = (areas[ar] || 0) + 1;
+                const asm = String(wo.asmName || '').trim();
+                if (asm && asm !== '-') {
+                    asmTotals[asm] = (asmTotals[asm] || 0) + 1;
+                    if (st === 'Completed') asmSuccessful[asm] = (asmSuccessful[asm] || 0) + 1;
+                }
             });
             const completed = status.Completed || 0;
             const newCount = status.New || 0;
