@@ -2496,9 +2496,12 @@ html.dark option { background:#0f172a; color:#f1f5f9; }
             if (dateTo) filters.push(['Appointment sampai',dateTo]);
             if (quickSearch) filters.push(['Pencarian',quickSearch]);
 
-            const W=1200, H=Math.max(2500,1900+Object.keys(rankingKpis).length*48), c=document.createElement('canvas');
-            c.width=W; c.height=H;
+            const W=1200, H=Math.max(2500,1900+Object.keys(rankingKpis).length*48), SCALE=2, c=document.createElement('canvas');
+            // Render at 2x pixel density while keeping all layout coordinates in logical 1200px units.
+            c.width=W*SCALE; c.height=H*SCALE;
             const x=c.getContext('2d');
+            if(!x) throw new Error('Canvas 2D tidak tersedia');
+            x.setTransform(SCALE,0,0,SCALE,0,0);
             const bg=x.createLinearGradient(0,0,W,H);
             bg.addColorStop(0,'#071426'); bg.addColorStop(.55,'#102b4c'); bg.addColorStop(1,'#071426');
             x.fillStyle=bg; x.fillRect(0,0,W,H);
