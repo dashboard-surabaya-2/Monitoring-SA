@@ -2548,11 +2548,11 @@ html.dark option { background:#0f172a; color:#f1f5f9; }
             titleShade.addColorStop(0,'rgba(3,17,39,.88)'); titleShade.addColorStop(.72,'rgba(3,17,39,.38)'); titleShade.addColorStop(1,'rgba(3,17,39,0)');
             x.fillStyle=titleShade; x.fillRect(0,0,800,300);
             // Panel data dimulai di bawah visual utama agar gambar teamwork benar-benar terlihat.
-            round(34,220,1132,H-254,30,'rgba(7,24,45,.94)');
             const round=(xx,yy,w,h,r=22,color='#142d4c')=>{x.fillStyle=color;x.beginPath();x.roundRect(xx,yy,w,h,r);x.fill();};
             const txt=(v,xx,yy,size=22,color='#e2e8f0',weight='600')=>{x.fillStyle=color;x.font=weight+' '+size+'px Arial,sans-serif';x.fillText(String(v),xx,yy);};
             const fit=(v,xx,yy,max,size=20,color='#e2e8f0')=>{let z=String(v);x.font='600 '+size+'px Arial,sans-serif';while(z.length>3&&x.measureText(z).width>max)z=z.slice(0,-2)+'…';txt(z,xx,yy,size,color);};
             const pctText=n=>pct(n).toFixed(1)+'%';
+            round(34,220,1132,H-254,30,'rgba(7,24,45,.94)');
             round(72,72,10,105,5,'#38bdf8');
             txt('MONITORING WO',108,122,50,'#ffffff','800');
             txt('WORK ORDER PERFORMANCE REPORT • ONE TEAM, ONE GOAL',110,164,21,'#7dd3fc','700');
