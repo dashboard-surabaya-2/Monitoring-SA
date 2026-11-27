@@ -31,6 +31,7 @@
     <!-- SheetJS (XLSX) untuk membaca file Excel / CSV -->
     <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
 
+    <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
     <!-- Lucide Icons -->
     <script src="https://unpkg.com/lucide@latest"></script>
 
@@ -325,6 +326,10 @@ html.dark option { background:#0f172a; color:#f1f5f9; }
                         <span>Refresh Dashboard</span>
                     </button>
 
+                    <button type="button" id="btn-capture-dashboard" onclick="captureDashboardImage()" class="inline-flex items-center gap-1.5 px-3.5 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white text-xs sm:text-sm font-semibold rounded-xl shadow-sm transition active:scale-[0.99]">
+                        <i data-lucide="camera" class="w-4 h-4"></i>
+                        <span>Capture Dashboard</span>
+                    </button>
                     <button type="button" onclick="exportFilteredCSV()" class="inline-flex items-center gap-1.5 px-3.5 py-2.5 bg-white hover:bg-slate-50 text-slate-700 text-xs sm:text-sm font-semibold rounded-xl border border-slate-300 transition">
                         <i data-lucide="download" class="w-4 h-4 text-slate-600"></i>
                         <span>Ekspor CSV</span>
@@ -2422,6 +2427,93 @@ html.dark option { background:#0f172a; color:#f1f5f9; }
             if (resetSampleBtn) resetSampleBtn.classList.add('hidden');
 
             resetAllFilters(true);
+        }
+
+        async function captureDashboardImage() {
+            const button = document.getElementById('btn-capture-dashboard');
+            if (typeof window.html2canvas !== 'function') {
+                showToast('Fitur Capture belum termuat. Periksa koneksi internet lalu coba lagi.', 'error');
+                return;
+            }
+            const total = filteredWorkOrders.length;
+            if (!total) {
+                showToast('Tidak ada data WO pada filter aktif untuk di-capture.', 'error');
+                return;
+            }
+            const originalLabel = button ? button.innerHTML : '';
+            if (button) {
+                button.disabled = true;
+                button.innerHTML = '<span class="inline-flex items-center gap-2"><i data-lucide="loader-circle" class="w-4 h-4 animate-spin"></i><span>Membuat gambar...</span></span>';
+            }
+            try {
+                if (document.fonts && document.fonts.ready) await document.fonts.ready;
+                await new Promise(resolve => setTimeout(resolve, 180));
+                const pageHeight = Math.max(document.body.scrollHeight, document.documentElement.scrollHeight);
+                const canvas = await window.html2canvas(document.body, {
+                    backgroundColor: document.documentElement.classList.contains('dark') ? '#080d1a' : '#f8fafc',
+                    scale: Math.min(1.5, Math.max(1, window.devicePixelRatio || 1)),
+                    useCORS: true,
+                    allowTaint: false,
+                    logging: false,
+                    width: Math.max(document.documentElement.scrollWidth, document.body.scrollWidth),
+                    height: pageHeight,
+                    windowWidth: Math.max(document.documentElement.scrollWidth, document.body.scrollWidth),
+                    windowHeight: pageHeight,
+                    scrollX: 0,
+                    scrollY: 0,
+                    onclone: clonedDoc => {
+                        ['#toast-container', '#preview-wa-modal', '#wo-modal', '.mobile-dashboard-nav', '#btn-capture-dashboard'].forEach(selector => {
+                            clonedDoc.querySelectorAll(selector).forEach(el => { el.style.display = 'none'; });
+                        });
+                        const clonedHeader = clonedDoc.querySelector('header');
+                        if (clonedHeader) {
+                            clonedHeader.style.position = 'static';
+                            clonedHeader.style.top = 'auto';
+                        }
+                        clonedDoc.querySelectorAll('canvas').forEach(canvasEl => { canvasEl.style.maxWidth = '100%'; });
+                    }
+                });
+                const blob = await new Promise((resolve, reject) => {
+                    canvas.toBlob(result => result ? resolve(result) : reject(new Error('Gagal mengubah hasil capture menjadi PNG.')), 'image/png');
+                });
+                const dateTag = new Date().toLocaleDateString('sv-SE');
+                const file = new File([blob], 'Monitoring_WO_' + dateTag + '.png', { type: 'image/png' });
+                if (navigator.share && (!navigator.canShare || navigator.canShare({ files: [file] }))) {
+                    try {
+                        await navigator.share({
+                            files: [file],
+                            title: 'Dashboard Monitoring WO',
+                            text: 'Monitoring WO • ' + total.toLocaleString('id-ID') + ' data sesuai filter aktif'
+                        });
+                        showToast('Gambar dashboard siap dibagikan.', 'success');
+                    } catch (shareError) {
+                        if (shareError && shareError.name === 'AbortError') {
+                            showToast('Berbagi dibatalkan. Gambar tidak dikirim.', 'info');
+                        } else {
+                            throw shareError;
+                        }
+                    }
+                } else {
+                    const url = URL.createObjectURL(blob);
+                    const a = document.createElement('a');
+                    a.href = url;
+                    a.download = file.name;
+                    document.body.appendChild(a);
+                    a.click();
+                    a.remove();
+                    setTimeout(() => URL.revokeObjectURL(url), 1500);
+                    showToast('Gambar berhasil dibuat dan diunduh. Lampirkan PNG ini ke grup WhatsApp.', 'success');
+                }
+            } catch (error) {
+                console.error('Gagal membuat capture dashboard:', error);
+                showToast('Capture gagal: ' + (error.message || 'Terjadi kesalahan saat membuat gambar.'), 'error');
+            } finally {
+                if (button) {
+                    button.disabled = false;
+                    button.innerHTML = originalLabel;
+                }
+                if (window.lucide && typeof window.lucide.createIcons === 'function') window.lucide.createIcons();
+            }
         }
 
         function exportFilteredCSV() {
