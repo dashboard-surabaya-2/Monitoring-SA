@@ -2046,8 +2046,9 @@ html.dark option { background:#0f172a; color:#f1f5f9; }
         rows.forEach((r,i) => {
           const targetInfo = targetByASM[r.name] || { target: 0, aeCount: 0 };
           const targetEOM = targetInfo.target;
-          const dailyTarget = monthDays > 0 ? targetEOM / monthDays : 0;
-          const targetToDate = dailyTarget * reportDay;
+          const rawDailyTarget = monthDays > 0 ? targetEOM / monthDays : 0;
+          const dailyTarget = Math.ceil(rawDailyTarget);
+          const targetToDate = rawDailyTarget * reportDay;
           const remainingTarget = Math.max(0, targetEOM - r.nov);
           const remainingDays = Math.max(0, monthDays - reportDay);
           const requiredDaily = remainingDays > 0 ? remainingTarget / remainingDays : remainingTarget;
