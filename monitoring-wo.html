@@ -2456,6 +2456,38 @@ html.dark option { background:#0f172a; color:#f1f5f9; }
             return el.options && el.selectedIndex >= 0 ? el.options[el.selectedIndex].textContent.trim() : (el.value || '');
         }
 
+        // Konfigurasi report: FREE aktif secara default. AI_API dapat diaktifkan
+        // kelak melalui backend; API key tidak pernah disimpan di HTML publik.
+        const WO_REPORT_IMAGE_CONFIG = {
+            mode: 'FREE',
+            aiEndpoint: '',
+            backgrounds: [
+                'monitoring-wo-teamwork-hero.webp',
+                'wo-teamwork-01.webp'
+            ]
+        };
+
+        function getDailyWOBackground() {
+            const pool = WO_REPORT_IMAGE_CONFIG.backgrounds;
+            const dayNumber = Math.floor(new Date().setHours(0,0,0,0) / 86400000);
+            return pool[((dayNumber % pool.length) + pool.length) % pool.length];
+        }
+
+        async function loadWOReportBackground() {
+            // Jalur API sudah disiapkan, tetapi sengaja tidak aktif pada mode gratis.
+            if (WO_REPORT_IMAGE_CONFIG.mode === 'AI_API' && WO_REPORT_IMAGE_CONFIG.aiEndpoint) {
+                try {
+                    const response = await fetch(WO_REPORT_IMAGE_CONFIG.aiEndpoint, { headers: { 'Accept': 'application/json' } });
+                    if (!response.ok) throw new Error('Layanan background AI tidak tersedia');
+                    const payload = await response.json();
+                    if (payload && payload.imageUrl) return payload.imageUrl;
+                } catch (error) {
+                    console.warn('Background AI gagal; memakai koleksi gratis.', error);
+                }
+            }
+            return getDailyWOBackground();
+        }
+
         async function buildWOInfographic() {
             const rows = Array.isArray(filteredWorkOrders) ? filteredWorkOrders : [];
             const total = rows.length;
@@ -2467,20 +2499,21 @@ html.dark option { background:#0f172a; color:#f1f5f9; }
             rows.forEach(wo => {
                 const st = normalizeStatus(wo.appointmentStatus || wo.statusWO || '');
                 status[st] = (status[st] || 0) + 1;
-                const ar = getEffectiveArea(wo) || 'Tidak diketahui';
-                areas[ar] = (areas[ar] || 0) + 1;
+                const area = getEffectiveArea(wo) || 'Tidak diketahui';
+                areas[area] = (areas[area] || 0) + 1;
                 const rankName = String(rankByAE ? (wo.salesName || '') : (wo.asmName || '')).trim();
                 if (rankName && rankName !== '-') {
                     if (!rankingKpis[rankName]) rankingKpis[rankName] = { total:0, completed:0, newCount:0, progress:0, unsuccessful:0, cancelled:0, other:0 };
-                    const a = rankingKpis[rankName]; a.total++;
-                    if (st === 'Completed') a.completed++;
-                    else if (st === 'New') a.newCount++;
-                    else if (st === 'In Progress') a.progress++;
-                    else if (st === 'Unsuccessful') a.unsuccessful++;
-                    else if (st === 'Cancelled') a.cancelled++;
-                    else a.other++;
+                    const item = rankingKpis[rankName]; item.total++;
+                    if (st === 'Completed') item.completed++;
+                    else if (st === 'New') item.newCount++;
+                    else if (st === 'In Progress') item.progress++;
+                    else if (st === 'Unsuccessful') item.unsuccessful++;
+                    else if (st === 'Cancelled') item.cancelled++;
+                    else item.other++;
                 }
             });
+
             const completed = status.Completed || 0;
             const newCount = status.New || 0;
             const progress = status['In Progress'] || 0;
@@ -2489,133 +2522,180 @@ html.dark option { background:#0f172a; color:#f1f5f9; }
             const clean = completed + newCount + progress;
             const pct = n => total ? (n / total * 100) : 0;
             const fmt = n => Number(n || 0).toLocaleString('id-ID');
+            const pctText = n => pct(n).toFixed(2).replace('.', ',') + '%';
             const filters = [['BSM','filter-bsm'],['ASM','filter-asm'],['AE','filter-ae'],['Area','filter-area'],['Contractor','filter-contractor'],['Slot','filter-slottime']]
                 .map(([label,id]) => [label,captureFilterValue(id)])
-                .filter(x => x[1] && !/^all$|^semua/i.test(x[1]));
+                .filter(v => v[1] && !/^all$|^semua/i.test(v[1]));
             const dateFrom = captureFilterValue('filter-appointment-from');
             const dateTo = captureFilterValue('filter-appointment-to');
-            const quickSearch = captureFilterValue('filter-search');
-            if (dateFrom) filters.push(['Appointment dari',dateFrom]);
-            if (dateTo) filters.push(['Appointment sampai',dateTo]);
-            if (quickSearch) filters.push(['Pencarian',quickSearch]);
+            if (dateFrom) filters.push(['Dari',dateFrom]);
+            if (dateTo) filters.push(['Sampai',dateTo]);
 
-            const W=1200, H=Math.max(2600,2050+Object.keys(rankingKpis).length*56), SCALE=3, c=document.createElement('canvas');
-            // Ekspor 3x agar teks dan angka tetap tajam saat diperbesar.
-            c.width=W*SCALE; c.height=H*SCALE;
-            const x=c.getContext('2d');
-            if(!x) throw new Error('Canvas 2D tidak tersedia');
-            x.setTransform(SCALE,0,0,SCALE,0,0);
-            // Background utama berupa ilustrasi lanskap teamwork penuh, bukan ikon kecil.
-            const bg=x.createLinearGradient(0,0,W,H);
-            bg.addColorStop(0,'#07143a'); bg.addColorStop(.42,'#102c63'); bg.addColorStop(.72,'#17104b'); bg.addColorStop(1,'#061629');
-            x.fillStyle=bg; x.fillRect(0,0,W,H);
-            // Gunakan banner teamwork final yang diberikan dan disetujui pengguna.
-            const sceneImg = new Image();
-            sceneImg.src = 'monitoring-wo-teamwork-hero.webp?v=2';
-            await new Promise((resolve,reject)=>{ sceneImg.onload=resolve; sceneImg.onerror=()=>reject(new Error('Background Report Gambar gagal dimuat')); });
-            // Rasio asli banner 1200:164; tidak diregangkan agar tulisan tetap proporsional.
-            x.drawImage(sceneImg,0,0,W,164);
-            const headerTail=x.createLinearGradient(0,164,0,224);
-            headerTail.addColorStop(0,'#071b3c'); headerTail.addColorStop(1,'#07152e');
-            x.fillStyle=headerTail; x.fillRect(0,164,W,60);
-            const round=(xx,yy,w,h,r=22,color='#142d4c')=>{x.fillStyle=color;x.beginPath();x.roundRect(xx,yy,w,h,r);x.fill();};
-            const txt=(v,xx,yy,size=22,color='#e2e8f0',weight='600')=>{x.fillStyle=color;x.font=weight+' '+size+'px Arial,sans-serif';x.fillText(String(v),xx,yy);};
-            const fit=(v,xx,yy,max,size=20,color='#e2e8f0')=>{let z=String(v);x.font='600 '+size+'px Arial,sans-serif';while(z.length>3&&x.measureText(z).width>max)z=z.slice(0,-2)+'…';txt(z,xx,yy,size,color);};
-            const pctText=n=>pct(n).toFixed(1)+'%';
+            // Kanvas landscape 16:9 agar komposisi report sama dengan mockup yang disetujui.
+            const W = 1600, H = 900, SCALE = 2;
+            const canvas = document.createElement('canvas');
+            canvas.width = W * SCALE; canvas.height = H * SCALE;
+            const ctx = canvas.getContext('2d');
+            if (!ctx) throw new Error('Canvas 2D tidak tersedia');
+            ctx.setTransform(SCALE,0,0,SCALE,0,0);
 
-            // Headline metrics
-            round(72,245,1056,210,24,'#103e78');
-            x.strokeStyle='#38bdf8'; x.lineWidth=2; x.strokeRect(73,246,1054,208);
-            txt('TOTAL WORK ORDER',105,292,19,'#93c5fd','700');
-            txt(fmt(total),105,382,76,'#ffffff','800');
-            round(650,275,1,150,1,'#3b5c7d');
-            txt('WO BERSIH',710,310,20,'#67e8f9','700');
-            txt(fmt(clean),710,382,60,'#ffffff','800');
-            txt(pctText(clean)+' dari total WO',900,380,19,'#a5f3fc','600');
+            const bgUrl = await loadWOReportBackground();
+            const bgImage = new Image();
+            bgImage.crossOrigin = 'anonymous';
+            bgImage.src = bgUrl + (bgUrl.includes('?') ? '&' : '?') + 'v=1';
+            await new Promise((resolve,reject) => {
+                bgImage.onload = resolve;
+                bgImage.onerror = () => reject(new Error('Background report gagal dimuat: ' + bgUrl));
+            });
+            const coverScale = Math.max(W / bgImage.width, H / bgImage.height);
+            const drawW = bgImage.width * coverScale, drawH = bgImage.height * coverScale;
+            ctx.drawImage(bgImage,(W-drawW)/2,(H-drawH)/2,drawW,drawH);
 
-            // Performance indicators
-            txt('INDIKATOR PERFORMA',82,520,25,'#ffffff','800');
-            const metrics=[
-                ['SUCCESS RATE',pctText(completed),fmt(completed)+' Completed','#10b981'],
-                ['IN PROGRESS',pctText(progress),fmt(progress)+' WO','#fbbf24'],
-                ['UNSUCCESSFUL',pctText(unsuccessful),fmt(unsuccessful)+' WO','#fb7185'],
-                ['CANCELLED',pctText(cancelled),fmt(cancelled)+' WO','#94a3b8']
+            const fullShade = ctx.createLinearGradient(0,0,0,H);
+            fullShade.addColorStop(0,'rgba(3,12,35,.48)');
+            fullShade.addColorStop(.43,'rgba(4,10,31,.72)');
+            fullShade.addColorStop(1,'rgba(10,4,34,.97)');
+            ctx.fillStyle = fullShade; ctx.fillRect(0,0,W,H);
+            const leftShade = ctx.createLinearGradient(0,0,W,0);
+            leftShade.addColorStop(0,'rgba(2,12,35,.78)');
+            leftShade.addColorStop(.58,'rgba(5,12,36,.22)');
+            leftShade.addColorStop(1,'rgba(5,10,30,.40)');
+            ctx.fillStyle = leftShade; ctx.fillRect(0,0,W,H);
+
+            const rounded = (x,y,w,h,r,fill,stroke,sw=1) => {
+                ctx.beginPath(); ctx.roundRect(x,y,w,h,r);
+                ctx.fillStyle = fill; ctx.fill();
+                if (stroke) { ctx.lineWidth = sw; ctx.strokeStyle = stroke; ctx.stroke(); }
+            };
+            const text = (value,x,y,size=22,color='#fff',weight=600,align='left') => {
+                ctx.font = weight + ' ' + size + 'px Arial,sans-serif';
+                ctx.textAlign = align; ctx.textBaseline = 'alphabetic';
+                ctx.fillStyle = color; ctx.fillText(String(value),x,y);
+            };
+            const fitText = (value,x,y,maxWidth,size=20,color='#fff',weight=600) => {
+                let s = String(value);
+                ctx.font = weight + ' ' + size + 'px Arial,sans-serif';
+                while (s.length > 3 && ctx.measureText(s).width > maxWidth) s = s.slice(0,-2) + '…';
+                text(s,x,y,size,color,weight);
+            };
+            const panel = (x,y,w,h,accent) => {
+                rounded(x,y,w,h,20,'rgba(5,17,43,.82)',accent,2);
+                const glow = ctx.createLinearGradient(x,y,x+w,y+h);
+                glow.addColorStop(0,'rgba(255,255,255,.10)');
+                glow.addColorStop(1,'rgba(255,255,255,.015)');
+                rounded(x+2,y+2,w-4,h-4,18,glow,null);
+            };
+            const line = (x1,y1,x2,y2,color='rgba(226,232,240,.18)',width=1) => {
+                ctx.beginPath(); ctx.moveTo(x1,y1); ctx.lineTo(x2,y2);
+                ctx.strokeStyle=color; ctx.lineWidth=width; ctx.stroke();
+            };
+            const today = new Date().toLocaleDateString('id-ID',{weekday:'long',day:'2-digit',month:'short',year:'numeric'});
+            const areaFilter = captureFilterValue('filter-area');
+            const areaLabel = areaFilter && !/^all$|^semua/i.test(areaFilter) ? areaFilter : 'All Area';
+
+            // Header dan identitas.
+            text('M',55,69,56,'#d946ef',800);
+            text('morarepublic',55,94,17,'#ffffff',700);
+            line(230,26,230,105,'rgba(255,255,255,.45)',2);
+            text('Monitoring WO',265,64,43,'#ffffff',800);
+            text('Laporan Harian Work Order',268,96,22,'#e2e8f0',600);
+            text(today,1005,54,22,'#ffffff',700);
+            text('Area: ' + areaLabel,1007,87,18,'#dbeafe',600);
+
+            // Slogan teamwork di pita gelap.
+            rounded(255,120,800,75,18,'rgba(30,13,65,.78)','rgba(192,132,252,.45)',1);
+            text('Dengan Kerja Sama (Teamwork),',655,151,25,'#ffffff',700,'center');
+            text('Apapun Pasti Bisa Kita Capai',655,181,25,'#ffffff',800,'center');
+
+            // KPI utama.
+            const mainKpis = [
+                {x:48,label:'TOTAL WO',value:fmt(total),accent:'#38bdf8',symbol:'▤'},
+                {x:560,label:'WO BERSIH',value:fmt(clean),accent:'#fbbf24',symbol:'✓'},
+                {x:1072,label:'SUCCESS RATE',value:pctText(completed),accent:'#22c55e',symbol:'◎'}
             ];
-            metrics.forEach((m,i)=>{
-                const xx=78+(i%2)*535, yy=550+Math.floor(i/2)*150;
-                round(xx,yy,510,124,18,['#073f68','#075b50','#65410c','#6b1748'][i]);
-                x.strokeStyle=['#22d3ee','#34d399','#fbbf24','#fb7185'][i]; x.lineWidth=2; x.strokeRect(xx+1,yy+1,508,122);
-                round(xx+22,yy+22,8,78,4,m[3]);
-                txt(m[0],xx+50,yy+42,18,'#a5c8e8','700');
-                txt(m[1],xx+50,yy+91,34,'#ffffff','800');
-                txt(m[2],xx+310,yy+88,17,'#cbd5e1','600');
+            mainKpis.forEach(k => {
+                panel(k.x,220,480,126,k.accent);
+                text(k.symbol,k.x+30,300,57,k.accent,800);
+                text(k.label,k.x+112,260,19,'#cbd5e1',700);
+                text(k.value,k.x+112,322,54,k.label==='SUCCESS RATE'?'#4ade80':'#ffffff',800);
             });
 
-            // Status distribution
-            txt('KOMPOSISI STATUS WO',82,900,25,'#ffffff','800');
-            const statusRows=[
-                ['Completed',completed,'#10b981'],
-                ['New',newCount,'#818cf8'],
-                ['In Progress',progress,'#fbbf24'],
-                ['Unsuccessful',unsuccessful,'#fb7185'],
-                ['Cancelled',cancelled,'#94a3b8'],
-                ['Other / Unknown',(status.Other||0)+(status.Unknown||0),'#64748b']
+            // Status cards.
+            const statusCards = [
+                {label:'COMPLETED',value:completed,color:'#16a34a',light:'#4ade80'},
+                {label:'NEW',value:newCount,color:'#075985',light:'#38bdf8'},
+                {label:'IN PROGRESS',value:progress,color:'#92400e',light:'#fbbf24'},
+                {label:'UNSUCCESSFUL',value:unsuccessful,color:'#991b1b',light:'#fb7185'},
+                {label:'CANCELLED',value:cancelled,color:'#475569',light:'#cbd5e1'}
             ];
-            const maxStatus=Math.max(1,...statusRows.map(a=>a[1]));
-            statusRows.forEach((m,i)=>{
-                const yy=935+i*76;
-                txt(m[0],90,yy+24,19,'#e2e8f0','600');
-                round(340,yy,560,22,11,'#29425f');
-                if(m[1])round(340,yy,Math.max(5,560*m[1]/maxStatus),22,11,m[2]);
-                txt(fmt(m[1]),930,yy+20,20,'#ffffff','800');
-                txt(pctText(m[1]),1030,yy+20,18,'#bfdbfe','700');
+            const cardW=286,cardGap=23,startX=48;
+            statusCards.forEach((s,i) => {
+                const xx=startX+i*(cardW+cardGap);
+                panel(xx,365,cardW,112,s.light);
+                rounded(xx+15,381,7,78,4,s.light,null);
+                text(s.label,xx+34,400,16,'#e2e8f0',700);
+                text(fmt(s.value),xx+34,444,34,'#ffffff',800);
+                text(pctText(s.value),xx+cardW-18,445,19,s.light,700,'right');
             });
 
-            // Ranking tambahan: ASM secara default, AE saat satu ASM dipilih
-            const rankTitle = rankByAE ? 'RANKING AE DALAM ASM TERPILIH' : 'RANKING SELURUH ASM';
-            const rankUnit = rankByAE ? 'AE' : 'ASM';
-            txt(rankTitle,82,1430,25,'#ffffff','800');
-            txt('Diurutkan berdasarkan jumlah WO Successful / Completed terbanyak',84,1464,16,'#93c5fd','500');
-            const rankRows=Object.entries(rankingKpis).map(([name,k])=>({name,...k,clean:k.completed+k.newCount+k.progress,successRate:k.total?(k.completed/k.total*100):0}))
-                .sort((a,b)=>b.completed-a.completed || b.total-a.total || a.name.localeCompare(b.name,'id'));
-            const cols=[
-                {label:'RANK / '+rankUnit,x:88,w:260},{label:'TOTAL WO',x:355,w:100},{label:'WO BERSIH',x:465,w:105},
-                {label:'SUCCESSFUL',x:580,w:105},{label:'NEW',x:695,w:65},{label:'IN PROG.',x:770,w:85},
-                {label:'UNSUCCESS.',x:865,w:95},{label:'CANCELLED',x:970,w:90},{label:'SUCCESS %',x:1070,w:75}
-            ];
-            round(78,1490,1044,42,10,'#174d91');
-            cols.forEach(col=>txt(col.label,col.x+(col.x>300?col.w-4:0),1517,13,'#bae6fd','700'));
-            const rowTop=1540,rowH=56;
-            if(!rankRows.length)txt('Tidak ada data '+rankUnit+' pada filter aktif',92,rowTop+30,18,'#cbd5e1','400');
-            rankRows.forEach((a,i)=>{
-                const yy=rowTop+i*rowH;
-                round(78,yy,1044,rowH-4,10,i%2===0?'#123e70':'#102d58');
-                txt(String(i+1).padStart(2,'0'),91,yy+27,16,i===0?'#fbbf24':'#7dd3fc','800');
-                fit(a.name,130,yy+32,210,18,'#ffffff');
-                [a.total,a.clean,a.completed,a.newCount,a.progress,a.unsuccessful,a.cancelled].forEach((v,j)=>txt(fmt(v),cols[j+1].x+cols[j+1].w-4,yy+32,18,j===2?'#6ee7b7':'#e2e8f0','700'));
-                txt(a.successRate.toFixed(1)+'%',1140,yy+32,16,'#6ee7b7','700');
-            });
-            const tableBottom=rowTop+Math.max(1,rankRows.length)*rowH+20;
+            // Tiga panel analitik: distribusi area, top area, ranking ASM/AE.
+            const yTop=500, panelH=322;
+            panel(48,yTop,480,panelH,'#fbbf24');
+            panel(550,yTop,475,panelH,'#a78bfa');
+            panel(1047,yTop,505,panelH,'#fbbf24');
+            text('⌖  DISTRIBUSI WO PER AREA',72,541,21,'#ffffff',800);
+            text('🏆  TOP 5 AREA (WO BERSIH)',574,541,21,'#ffffff',800);
+            text(rankByAE?'RANKING AE':'RANKING ASM',1070,541,21,'#ffffff',800);
 
-            const areaTitleY=tableBottom+10;
-            txt('AREA DENGAN JUMLAH WO TERBANYAK',82,areaTitleY,23,'#ffffff','800');
-            const topAreas=Object.entries(areas).sort((a,b)=>b[1]-a[1]).slice(0,5);
-            if(!topAreas.length)txt('Tidak ada data area pada filter ini',92,areaTitleY+48,18,'#cbd5e1','400');
-            topAreas.forEach(([name,n],i)=>{
-                const yy=areaTitleY+35+i*43;
-                fit((i+1)+'. '+name,95,yy+20,600,17,'#e2e8f0');
-                round(700,yy,300,11,6,'#29425f');
-                round(700,yy,Math.max(4,300*n/Math.max(1,topAreas[0][1])),11,6,'#38bdf8');
-                txt(fmt(n)+' WO',1020,yy+15,15,'#bae6fd','700');
+            const topAreas = Object.entries(areas).sort((a,b)=>b[1]-a[1]).slice(0,5);
+            const maxArea = Math.max(1,...topAreas.map(v=>v[1]));
+            topAreas.forEach(([name,count],i) => {
+                const yy=581+i*44;
+                fitText(name,73,yy+5,130,16,'#f8fafc',600);
+                rounded(210,yy-12,220,13,7,'rgba(148,163,184,.22)',null);
+                const grad=ctx.createLinearGradient(210,0,430,0);
+                grad.addColorStop(0,'#8b5cf6'); grad.addColorStop(1,'#0ea5e9');
+                rounded(210,yy-12,220*count/maxArea,13,7,grad,null);
+                text(fmt(count),500,yy+5,16,'#ffffff',700,'right');
             });
-            const filterY=areaTitleY+275;
-            txt('FILTER LAPORAN',82,filterY,20,'#7dd3fc','700');
-            const fl=filters.length?filters:['Semua filter default'];
-            fl.slice(0,3).forEach((v,i)=>fit(Array.isArray(v)?v[0]+': '+v[1]:v,88,filterY+36+i*25,1000,16,'#cbd5e1'));
-            if(fl.length>3)txt('+'+(fl.length-3)+' filter lainnya',88,filterY+112,15,'#93c5fd','600');
-            const footerY=filterY+155;
-            txt('Sumber: data Monitoring WO • Ranking dan KPI mengikuti filter aktif',82,footerY,15,'#94a3b8','400');
-            return new Promise((resolve,reject)=>c.toBlob(blob=>blob?resolve(blob):reject(new Error('Gagal membuat PNG')),'image/png'));
+
+            const rankAreas = topAreas;
+            rankAreas.forEach(([name,count],i) => {
+                const yy=574+i*48;
+                rounded(572,yy-22,430,39,12,'rgba(15,23,42,.78)','rgba(148,163,184,.24)',1);
+                text(String(i+1),590,yy+4,18,i<3?'#fbbf24':'#cbd5e1',800);
+                fitText(name,632,yy+4,250,17,'#ffffff',700);
+                text(fmt(count),982,yy+4,18,'#fde68a',800,'right');
+            });
+
+            const rankRows = Object.entries(rankingKpis)
+                .map(([name,k])=>({name,...k,clean:k.completed+k.newCount+k.progress,successRate:k.total?(k.completed/k.total*100):0}))
+                .sort((a,b)=>b.completed-a.completed || b.total-a.total || a.name.localeCompare(b.name,'id'))
+                .slice(0,5);
+            text('#',1072,576,14,'#cbd5e1',700);
+            text(rankByAE?'AE':'ASM',1110,576,14,'#cbd5e1',700);
+            text('WO',1370,576,14,'#cbd5e1',700,'right');
+            text('SR',1505,576,14,'#cbd5e1',700,'right');
+            line(1070,586,1525,586,'rgba(255,255,255,.22)',1);
+            rankRows.forEach((r,i) => {
+                const yy=619+i*39;
+                text(String(i+1),1076,yy,17,i===0?'#fbbf24':'#e2e8f0',800);
+                fitText(r.name,1110,yy,205,16,'#ffffff',700);
+                text(fmt(r.completed),1370,yy,17,'#fde68a',700,'right');
+                text(r.successRate.toFixed(1).replace('.',',')+'%',1505,yy,16,'#4ade80',700,'right');
+                if(i<4) line(1070,yy+12,1525,yy+12,'rgba(255,255,255,.12)',1);
+            });
+            if (!rankRows.length) text('Belum ada data ranking',1110,620,16,'#cbd5e1',500);
+
+            // Catatan filter dan footer.
+            const filterSummary = filters.map(v=>v[0]+': '+v[1]).join('  •  ');
+            if (filterSummary) fitText('FILTER AKTIF  '+filterSummary,58,855,1200,14,'#cbd5e1',600);
+            text('MoraRepublic Surabaya 2',1538,868,19,'#ffffff',800,'right');
+            const footerGlow=ctx.createLinearGradient(0,880,W,880);
+            footerGlow.addColorStop(0,'#ec4899'); footerGlow.addColorStop(.5,'#8b5cf6'); footerGlow.addColorStop(1,'#06b6d4');
+            ctx.fillStyle=footerGlow; ctx.fillRect(0,887,W,5);
+
+            return new Promise((resolve,reject)=>canvas.toBlob(blob=>blob?resolve(blob):reject(new Error('Gagal membuat PNG')),'image/png'));
         }
 
         function closeCaptureReportPreview() {
