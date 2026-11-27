@@ -2033,27 +2033,35 @@ html.dark option { background:#0f172a; color:#f1f5f9; }
         const q = (document.getElementById('searchRankASM')?.value || '').toLowerCase();
         const rows = Object.values(map).filter(r => r.name.toLowerCase().includes(q)).sort((a,b) => b.nov-a.nov || b.oct-a.oct);
         const performanceRows = getAEPerformanceRows();
-        const monthDays = new Date(new Date().getFullYear(), new Date().getMonth() + 1, 0).getDate();
+        const today = new Date();
+        const monthDays = new Date(today.getFullYear(), today.getMonth() + 1, 0).getDate();
+        const currentDay = Math.min(Math.max(1, today.getDate()), monthDays);
         const reportDay = Math.min(Math.max(1, getCurrentCutoffDay()), monthDays);
         const targetByASM = {};
         performanceRows.forEach(item => {
           const asmName = item.asm || '-';
-          if (!targetByASM[asmName]) targetByASM[asmName] = { target: 0, aeCount: 0 };
-          targetByASM[asmName].target += Number(item.target) || 0;
+          if (!targetByASM[asmName]) targetByASM[asmName] = { aeCount: 0, octoberEOM: 0 };
           targetByASM[asmName].aeCount++;
+        });
+        // Target tim: nilai terbesar antara 15 SA x jumlah AE dan total SA EOM Oktober seluruh tim.
+        filteredData.filter(isOctoberFullEOMData).forEach(item => {
+          const asmName = item.asm_name || '-';
+          if (!targetByASM[asmName]) targetByASM[asmName] = { aeCount: 0, octoberEOM: 0 };
+          targetByASM[asmName].octoberEOM++;
         });
         lines = ['🏆 *RANKING PENCAPAIAN SA PER ASM*', 'MORA REPUBLIC • SURABAYA 2', `Periode: November 2026 (MTD s/d ${reportDay})`, '', '*HASIL RANKING & TARGET HARIAN*'];
         rows.forEach((r,i) => {
-          const targetInfo = targetByASM[r.name] || { target: 0, aeCount: 0 };
-          const targetEOM = targetInfo.target;
-          const rawDailyTarget = monthDays > 0 ? targetEOM / monthDays : 0;
-          const dailyTarget = Math.ceil(rawDailyTarget);
-          const targetToDate = rawDailyTarget * reportDay;
+          const targetInfo = targetByASM[r.name] || { aeCount: 0, octoberEOM: 0 };
+          const minimumTarget = 15 * targetInfo.aeCount;
+          const targetEOM = Math.max(minimumTarget, targetInfo.octoberEOM);
           const remainingTarget = Math.max(0, targetEOM - r.nov);
-          const remainingDays = Math.max(0, monthDays - reportDay);
-          const requiredDaily = remainingDays > 0 ? remainingTarget / remainingDays : remainingTarget;
-          const achievedPct = targetToDate > 0 ? (r.nov / targetToDate * 100) : 0;
-          lines.push(`${i+1}. *${clean(r.name)}* — ${r.nov} SA\n   Okt: ${r.oct} SA | Selisih: ${growth(r.nov,r.oct)}\n   🎯 Target ASM EOM: *${targetEOM} SA* (${targetInfo.aeCount} AE; aturan: max. 15 SA/AE atau capaian EOM Oktober)\n   Target harian: *${dailyTarget.toFixed(2)} SA/hari* | Target kumulatif s/d tgl ${reportDay}: *${targetToDate.toFixed(1)} SA*\n   Sisa target: *${remainingTarget} SA* dalam ${remainingDays} hari (${requiredDaily.toFixed(2)} SA/hari mulai besok)\n   Capaian terhadap target berjalan: *${achievedPct.toFixed(1)}%*\n   Branch: ${clean(r.branch)}`);
+          // Sisa hari menghitung hari ini juga; kebutuhan dibulatkan ke atas bila pecahan.
+          const remainingDays = Math.max(1, monthDays - currentDay + 1);
+          const requiredDaily = Math.ceil(remainingTarget / remainingDays);
+          const targetBasis = targetInfo.octoberEOM > minimumTarget
+            ? 'total SA EOM Oktober'
+            : '15 SA x jumlah AE';
+          lines.push(`${i+1}. *${clean(r.name)}* — ${r.nov} SA\\n   Okt: ${r.oct} SA (MTD pembanding) | Selisih: ${growth(r.nov,r.oct)}\\n   🎯 Target bulanan ASM: *${targetEOM} SA* (15 x ${targetInfo.aeCount} AE = ${minimumTarget}; EOM Oktober = ${targetInfo.octoberEOM}; acuan: ${targetBasis})\\n   Sisa target: *${remainingTarget} SA*\\n   Target harian mulai hari ini: *${requiredDaily} SA/hari* (${remainingDays} hari termasuk hari ini)\\n   Branch: ${clean(r.branch)}`);
         });
         if (!rows.length) lines.push('_Tidak ada data untuk pencarian ini._');
       } else if (key === 'rankAE') {
