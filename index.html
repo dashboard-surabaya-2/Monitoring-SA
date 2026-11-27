@@ -2052,7 +2052,7 @@ html.dark option { background:#0f172a; color:#f1f5f9; }
           const remainingDays = Math.max(0, monthDays - reportDay);
           const requiredDaily = remainingDays > 0 ? remainingTarget / remainingDays : remainingTarget;
           const achievedPct = targetToDate > 0 ? (r.nov / targetToDate * 100) : 0;
-          lines.push(`${i+1}. *${clean(r.name)}* — ${r.nov} SA\\n   Okt: ${r.oct} SA | Selisih: ${growth(r.nov,r.oct)}\\n   🎯 Target ASM EOM: *${targetEOM} SA* (${targetInfo.aeCount} AE; aturan: max. 15 SA/AE atau capaian EOM Oktober)\\n   Target harian: *${dailyTarget.toFixed(2)} SA/hari* | Target kumulatif s/d tgl ${reportDay}: *${targetToDate.toFixed(1)} SA*\\n   Sisa target: *${remainingTarget} SA* dalam ${remainingDays} hari (${requiredDaily.toFixed(2)} SA/hari mulai besok)\\n   Capaian terhadap target berjalan: *${achievedPct.toFixed(1)}%*\\n   Branch: ${clean(r.branch)}`);
+          lines.push(`${i+1}. *${clean(r.name)}* — ${r.nov} SA\n   Okt: ${r.oct} SA | Selisih: ${growth(r.nov,r.oct)}\n   🎯 Target ASM EOM: *${targetEOM} SA* (${targetInfo.aeCount} AE; aturan: max. 15 SA/AE atau capaian EOM Oktober)\n   Target harian: *${dailyTarget.toFixed(2)} SA/hari* | Target kumulatif s/d tgl ${reportDay}: *${targetToDate.toFixed(1)} SA*\n   Sisa target: *${remainingTarget} SA* dalam ${remainingDays} hari (${requiredDaily.toFixed(2)} SA/hari mulai besok)\n   Capaian terhadap target berjalan: *${achievedPct.toFixed(1)}%*\n   Branch: ${clean(r.branch)}`);
         });
         if (!rows.length) lines.push('_Tidak ada data untuk pencarian ini._');
       } else if (key === 'rankAE') {
