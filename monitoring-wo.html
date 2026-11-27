@@ -2513,16 +2513,32 @@ html.dark option { background:#0f172a; color:#f1f5f9; }
             x.fillStyle='#244e70'; x.beginPath(); x.moveTo(0,250); x.lineTo(150,110); x.lineTo(260,220); x.lineTo(420,70); x.lineTo(590,245); x.lineTo(760,115); x.lineTo(920,240); x.lineTo(1060,95); x.lineTo(1200,220); x.lineTo(1200,390); x.lineTo(0,390); x.closePath(); x.fill();
             x.fillStyle='#173b5d'; x.beginPath(); x.moveTo(0,310); x.lineTo(190,205); x.lineTo(350,305); x.lineTo(520,170); x.lineTo(700,320); x.lineTo(900,205); x.lineTo(1080,310); x.lineTo(1200,235); x.lineTo(1200,470); x.lineTo(0,470); x.closePath(); x.fill();
             x.restore();
-            // Siluet tim di area footer, sebagai simbol kolaborasi dan pencapaian bersama.
-            const teamY=H-125;
-            x.save(); x.globalAlpha=.32; x.fillStyle='#020b18';
-            [-1,0,1,2,3].forEach((n)=>{const px=330+n*125, headY=teamY-(n%2?28:8); x.beginPath();x.arc(px,headY-35,22,0,Math.PI*2);x.fill();x.beginPath();x.moveTo(px-38,teamY+35);x.quadraticCurveTo(px-35,headY-8,px,headY-8);x.quadraticCurveTo(px+35,headY-8,px+38,teamY+35);x.closePath();x.fill();});
-            x.restore();
             const round=(xx,yy,w,h,r=22,color='#142d4c')=>{x.fillStyle=color;x.beginPath();x.roundRect(xx,yy,w,h,r);x.fill();};
             const txt=(v,xx,yy,size=22,color='#e2e8f0',weight='600')=>{x.fillStyle=color;x.font=weight+' '+size+'px Arial,sans-serif';x.fillText(String(v),xx,yy);};
             const fit=(v,xx,yy,max,size=20,color='#e2e8f0')=>{let z=String(v);x.font='600 '+size+'px Arial,sans-serif';while(z.length>3&&x.measureText(z).width>max)z=z.slice(0,-2)+'…';txt(z,xx,yy,size,color);};
             const pctText=n=>pct(n).toFixed(1)+'%';
             round(34,34,1132,H-68,30,'rgba(7,24,45,.88)');
+            // Ilustrasi utama teamwork: tim mendaki bersama dan saling membantu menuju satu tujuan.
+            x.save(); x.globalAlpha=.88;
+            x.fillStyle='#071a31';
+            x.beginPath(); x.moveTo(700,225); x.lineTo(790,150); x.lineTo(850,205); x.lineTo(930,125); x.lineTo(1030,220); x.closePath(); x.fill();
+            const climber=(px,py,scale=1,accent='#38bdf8')=>{
+                x.save(); x.translate(px,py); x.scale(scale,scale);
+                x.fillStyle='#07111f'; x.strokeStyle=accent; x.lineWidth=5; x.lineCap='round'; x.lineJoin='round';
+                x.beginPath(); x.arc(0,-34,11,0,Math.PI*2); x.fill();
+                x.beginPath(); x.moveTo(0,-21); x.lineTo(2,12); x.lineTo(-15,35); x.moveTo(2,12); x.lineTo(20,32);
+                x.moveTo(0,-12); x.lineTo(-22,1); x.moveTo(0,-12); x.lineTo(22,-29); x.stroke();
+                x.restore();
+            };
+            climber(770,191,.78,'#38bdf8');
+            climber(850,163,.92,'#34d399');
+            climber(925,151,1.02,'#fbbf24');
+            climber(1000,183,.82,'#38bdf8');
+            // Bendera bersama na szczycie.
+            x.strokeStyle='#dbeafe'; x.lineWidth=4; x.beginPath(); x.moveTo(944,118); x.lineTo(944,48); x.stroke();
+            x.fillStyle='#0ea5e9'; x.beginPath(); x.moveTo(947,50); x.lineTo(1042,67); x.lineTo(947,88); x.closePath(); x.fill();
+            x.fillStyle='#ffffff'; x.font='800 13px Arial,sans-serif'; x.fillText('SATU TIM',956,70);
+            x.restore();
             round(72,72,10,105,5,'#38bdf8');
             txt('MONITORING WO',108,122,50,'#ffffff','800');
             txt('WORK ORDER PERFORMANCE REPORT • ONE TEAM, ONE GOAL',110,164,21,'#7dd3fc','700');
