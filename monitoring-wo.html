@@ -2458,16 +2458,18 @@ html.dark option { background:#0f172a; color:#f1f5f9; }
             const total = rows.length;
             const status = { 'Completed':0, 'New':0, 'In Progress':0, 'Unsuccessful':0, 'Cancelled':0, 'Other':0, 'Unknown':0 };
             const areas = {};
-            const asmKpis = {};
+            const selectedAsm = document.getElementById('filter-asm')?.value || 'ALL';
+            const rankByAE = selectedAsm !== 'ALL';
+            const rankingKpis = {};
             rows.forEach(wo => {
                 const st = normalizeStatus(wo.appointmentStatus || wo.statusWO || '');
                 status[st] = (status[st] || 0) + 1;
                 const ar = getEffectiveArea(wo) || 'Tidak diketahui';
                 areas[ar] = (areas[ar] || 0) + 1;
-                const asm = String(wo.asmName || '').trim();
-                if (asm && asm !== '-') {
-                    if (!asmKpis[asm]) asmKpis[asm] = { total:0, completed:0, newCount:0, progress:0, unsuccessful:0, cancelled:0, other:0 };
-                    const a = asmKpis[asm]; a.total++;
+                const rankName = String(rankByAE ? (wo.salesName || '') : (wo.asmName || '')).trim();
+                if (rankName && rankName !== '-') {
+                    if (!rankingKpis[rankName]) rankingKpis[rankName] = { total:0, completed:0, newCount:0, progress:0, unsuccessful:0, cancelled:0, other:0 };
+                    const a = rankingKpis[rankName]; a.total++;
                     if (st === 'Completed') a.completed++;
                     else if (st === 'New') a.newCount++;
                     else if (st === 'In Progress') a.progress++;
@@ -2556,21 +2558,23 @@ html.dark option { background:#0f172a; color:#f1f5f9; }
                 txt(pctText(m[1]),1030,yy+20,18,'#bfdbfe','700');
             });
 
-            // Full ASM KPI table ranked by completed/successful WO
-            txt('RANKING SELURUH ASM',82,1430,25,'#ffffff','800');
-            txt('Urutan berdasarkan jumlah WO Completed / Successful terbanyak',84,1464,16,'#93c5fd','500');
-            const asmRows=Object.entries(asmKpis).map(([name,k])=>({name,...k,clean:k.completed+k.newCount+k.progress,successRate:k.total?(k.completed/k.total*100):0}))
+            // Ranking tambahan: ASM secara default, AE saat satu ASM dipilih
+            const rankTitle = rankByAE ? 'RANKING AE DALAM ASM TERPILIH' : 'RANKING SELURUH ASM';
+            const rankUnit = rankByAE ? 'AE' : 'ASM';
+            txt(rankTitle,82,1430,25,'#ffffff','800');
+            txt('Diurutkan berdasarkan jumlah WO Successful / Completed terbanyak',84,1464,16,'#93c5fd','500');
+            const rankRows=Object.entries(rankingKpis).map(([name,k])=>({name,...k,clean:k.completed+k.newCount+k.progress,successRate:k.total?(k.completed/k.total*100):0}))
                 .sort((a,b)=>b.completed-a.completed || b.total-a.total || a.name.localeCompare(b.name,'id'));
             const cols=[
-                {label:'RANK / ASM',x:88,w:260},{label:'TOTAL WO',x:355,w:100},{label:'WO BERSIH',x:465,w:105},
-                {label:'COMPLETED',x:580,w:105},{label:'NEW',x:695,w:65},{label:'IN PROG.',x:770,w:85},
+                {label:'RANK / '+rankUnit,x:88,w:260},{label:'TOTAL WO',x:355,w:100},{label:'WO BERSIH',x:465,w:105},
+                {label:'SUCCESSFUL',x:580,w:105},{label:'NEW',x:695,w:65},{label:'IN PROG.',x:770,w:85},
                 {label:'UNSUCCESS.',x:865,w:95},{label:'CANCELLED',x:970,w:90},{label:'SUCCESS %',x:1070,w:75}
             ];
             round(78,1490,1044,42,10,'#244665');
             cols.forEach(col=>txt(col.label,col.x+(col.x>300?col.w-4:0),1517,13,'#bae6fd','700'));
             const rowTop=1540,rowH=48;
-            if(!asmRows.length)txt('Tidak ada data ASM pada filter aktif',92,rowTop+30,18,'#cbd5e1','400');
-            asmRows.forEach((a,i)=>{
+            if(!rankRows.length)txt('Tidak ada data '+rankUnit+' pada filter aktif',92,rowTop+30,18,'#cbd5e1','400');
+            rankRows.forEach((a,i)=>{
                 const yy=rowTop+i*rowH;
                 round(78,yy,1044,rowH-4,8,i%2===0?'#142d4a':'#10253e');
                 txt(String(i+1).padStart(2,'0'),91,yy+27,16,i===0?'#fbbf24':'#7dd3fc','800');
@@ -2578,7 +2582,7 @@ html.dark option { background:#0f172a; color:#f1f5f9; }
                 [a.total,a.clean,a.completed,a.newCount,a.progress,a.unsuccessful,a.cancelled].forEach((v,j)=>txt(fmt(v),cols[j+1].x+cols[j+1].w-4,yy+27,16,j===2?'#6ee7b7':'#e2e8f0','700'));
                 txt(a.successRate.toFixed(1)+'%',1140,yy+27,14,'#6ee7b7','700');
             });
-            const tableBottom=rowTop+Math.max(1,asmRows.length)*rowH+20;
+            const tableBottom=rowTop+Math.max(1,rankRows.length)*rowH+20;
 
             const areaTitleY=tableBottom+10;
             txt('AREA DENGAN JUMLAH WO TERBANYAK',82,areaTitleY,23,'#ffffff','800');
