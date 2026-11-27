@@ -2496,23 +2496,36 @@ html.dark option { background:#0f172a; color:#f1f5f9; }
             if (dateTo) filters.push(['Appointment sampai',dateTo]);
             if (quickSearch) filters.push(['Pencarian',quickSearch]);
 
-            const W=1200, H=Math.max(2500,1900+Object.keys(rankingKpis).length*48), SCALE=2, c=document.createElement('canvas');
-            // Render at 2x pixel density while keeping all layout coordinates in logical 1200px units.
+            const W=1200, H=Math.max(2600,2050+Object.keys(rankingKpis).length*56), SCALE=3, c=document.createElement('canvas');
+            // Ekspor 3x agar teks dan angka tetap tajam saat diperbesar.
             c.width=W*SCALE; c.height=H*SCALE;
             const x=c.getContext('2d');
             if(!x) throw new Error('Canvas 2D tidak tersedia');
             x.setTransform(SCALE,0,0,SCALE,0,0);
+            // Latar ilustratif: sunrise, pegunungan, dan tim yang saling menyemangati.
             const bg=x.createLinearGradient(0,0,W,H);
-            bg.addColorStop(0,'#071426'); bg.addColorStop(.55,'#102b4c'); bg.addColorStop(1,'#071426');
+            bg.addColorStop(0,'#07152b'); bg.addColorStop(.42,'#123c61'); bg.addColorStop(.72,'#0b2945'); bg.addColorStop(1,'#061629');
             x.fillStyle=bg; x.fillRect(0,0,W,H);
+            const glow=x.createRadialGradient(930,145,12,930,145,520);
+            glow.addColorStop(0,'rgba(255,190,105,.42)'); glow.addColorStop(.42,'rgba(56,189,248,.13)'); glow.addColorStop(1,'rgba(7,21,43,0)');
+            x.fillStyle=glow; x.fillRect(0,0,W,620);
+            x.save(); x.globalAlpha=.48;
+            x.fillStyle='#244e70'; x.beginPath(); x.moveTo(0,250); x.lineTo(150,110); x.lineTo(260,220); x.lineTo(420,70); x.lineTo(590,245); x.lineTo(760,115); x.lineTo(920,240); x.lineTo(1060,95); x.lineTo(1200,220); x.lineTo(1200,390); x.lineTo(0,390); x.closePath(); x.fill();
+            x.fillStyle='#173b5d'; x.beginPath(); x.moveTo(0,310); x.lineTo(190,205); x.lineTo(350,305); x.lineTo(520,170); x.lineTo(700,320); x.lineTo(900,205); x.lineTo(1080,310); x.lineTo(1200,235); x.lineTo(1200,470); x.lineTo(0,470); x.closePath(); x.fill();
+            x.restore();
+            // Siluet tim di area footer, sebagai simbol kolaborasi dan pencapaian bersama.
+            const teamY=H-125;
+            x.save(); x.globalAlpha=.32; x.fillStyle='#020b18';
+            [-1,0,1,2,3].forEach((n)=>{const px=330+n*125, headY=teamY-(n%2?28:8); x.beginPath();x.arc(px,headY-35,22,0,Math.PI*2);x.fill();x.beginPath();x.moveTo(px-38,teamY+35);x.quadraticCurveTo(px-35,headY-8,px,headY-8);x.quadraticCurveTo(px+35,headY-8,px+38,teamY+35);x.closePath();x.fill();});
+            x.restore();
             const round=(xx,yy,w,h,r=22,color='#142d4c')=>{x.fillStyle=color;x.beginPath();x.roundRect(xx,yy,w,h,r);x.fill();};
             const txt=(v,xx,yy,size=22,color='#e2e8f0',weight='600')=>{x.fillStyle=color;x.font=weight+' '+size+'px Arial,sans-serif';x.fillText(String(v),xx,yy);};
             const fit=(v,xx,yy,max,size=20,color='#e2e8f0')=>{let z=String(v);x.font='600 '+size+'px Arial,sans-serif';while(z.length>3&&x.measureText(z).width>max)z=z.slice(0,-2)+'…';txt(z,xx,yy,size,color);};
             const pctText=n=>pct(n).toFixed(1)+'%';
-            round(34,34,1132,2432,30,'#0d2038');
+            round(34,34,1132,H-68,30,'rgba(7,24,45,.88)');
             round(72,72,10,105,5,'#38bdf8');
-            txt('MONITORING WO',108,122,48,'#ffffff','800');
-            txt('WORK ORDER PERFORMANCE REPORT',110,164,21,'#7dd3fc','700');
+            txt('MONITORING WO',108,122,50,'#ffffff','800');
+            txt('WORK ORDER PERFORMANCE REPORT • ONE TEAM, ONE GOAL',110,164,21,'#7dd3fc','700');
             txt(new Date().toLocaleString('id-ID',{dateStyle:'long',timeStyle:'short'}),110,205,18,'#cbd5e1','400');
 
             // Headline metrics
@@ -2575,15 +2588,15 @@ html.dark option { background:#0f172a; color:#f1f5f9; }
             ];
             round(78,1490,1044,42,10,'#244665');
             cols.forEach(col=>txt(col.label,col.x+(col.x>300?col.w-4:0),1517,13,'#bae6fd','700'));
-            const rowTop=1540,rowH=48;
+            const rowTop=1540,rowH=56;
             if(!rankRows.length)txt('Tidak ada data '+rankUnit+' pada filter aktif',92,rowTop+30,18,'#cbd5e1','400');
             rankRows.forEach((a,i)=>{
                 const yy=rowTop+i*rowH;
-                round(78,yy,1044,rowH-4,8,i%2===0?'#142d4a':'#10253e');
+                round(78,yy,1044,rowH-4,10,i%2===0?'#183b5d':'#112d4a');
                 txt(String(i+1).padStart(2,'0'),91,yy+27,16,i===0?'#fbbf24':'#7dd3fc','800');
-                fit(a.name,130,yy+27,210,16,'#ffffff');
-                [a.total,a.clean,a.completed,a.newCount,a.progress,a.unsuccessful,a.cancelled].forEach((v,j)=>txt(fmt(v),cols[j+1].x+cols[j+1].w-4,yy+27,16,j===2?'#6ee7b7':'#e2e8f0','700'));
-                txt(a.successRate.toFixed(1)+'%',1140,yy+27,14,'#6ee7b7','700');
+                fit(a.name,130,yy+32,210,18,'#ffffff');
+                [a.total,a.clean,a.completed,a.newCount,a.progress,a.unsuccessful,a.cancelled].forEach((v,j)=>txt(fmt(v),cols[j+1].x+cols[j+1].w-4,yy+32,18,j===2?'#6ee7b7':'#e2e8f0','700'));
+                txt(a.successRate.toFixed(1)+'%',1140,yy+32,16,'#6ee7b7','700');
             });
             const tableBottom=rowTop+Math.max(1,rankRows.length)*rowH+20;
 
