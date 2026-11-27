@@ -2509,64 +2509,19 @@ html.dark option { background:#0f172a; color:#f1f5f9; }
             const bg=x.createLinearGradient(0,0,W,H);
             bg.addColorStop(0,'#07143a'); bg.addColorStop(.42,'#102c63'); bg.addColorStop(.72,'#17104b'); bg.addColorStop(1,'#061629');
             x.fillStyle=bg; x.fillRect(0,0,W,H);
-            const sceneSvg = `<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="300" viewBox="0 0 1200 300">
-              <defs>
-                <linearGradient id="sky" x1="0" y1="0" x2="0" y2="1"><stop stop-color="#17105c"/><stop offset=".34" stop-color="#6d35a5"/><stop offset=".68" stop-color="#ff875e"/><stop offset="1" stop-color="#ffd58a"/></linearGradient>
-                <linearGradient id="peak" x1="0" y1="0" x2="0" y2="1"><stop stop-color="#9ac8ef"/><stop offset=".38" stop-color="#355b9b"/><stop offset="1" stop-color="#10244e"/></linearGradient>
-                <linearGradient id="front" x1="0" y1="0" x2="0" y2="1"><stop stop-color="#183b73"/><stop offset="1" stop-color="#07152e"/></linearGradient>
-                <radialGradient id="glow"><stop stop-color="#fffbd5"/><stop offset=".18" stop-color="#ffe9a0"/><stop offset="1" stop-color="#ffb65c" stop-opacity="0"/></radialGradient>
-                <linearGradient id="leftShade"><stop stop-color="#07152e" stop-opacity=".88"/><stop offset=".55" stop-color="#07152e" stop-opacity=".42"/><stop offset="1" stop-color="#07152e" stop-opacity="0"/></linearGradient>
-                <filter id="soft"><feGaussianBlur stdDeviation="12"/></filter>
-              </defs>
-              <rect width="1200" height="300" fill="url(#sky)"/>
-              <circle cx="820" cy="132" r="155" fill="url(#glow)"/>
-              <circle cx="820" cy="132" r="38" fill="#fff2bd"/>
-              <path d="M0 172 L100 104 190 154 300 78 390 166 510 88 625 174 750 64 870 174 1000 82 1110 164 1200 108 V300 H0Z" fill="#8e9bd0" opacity=".8"/>
-              <path d="M0 222 L130 126 245 223 390 78 535 220 670 111 815 223 965 70 1105 216 1200 148 V300 H0Z" fill="url(#peak)"/>
-              <path d="M390 78 L425 129 398 116 376 150 349 119 390 78 M965 70 L1005 126 977 111 951 151 925 115 965 70" fill="#eaf5ff" opacity=".9"/>
-              <path d="M0 252 Q180 205 350 254 T700 245 T1200 230 V300 H0Z" fill="#102c5b"/>
-              <path d="M520 300 L710 215 830 242 955 155 1065 212 1165 150 1200 175 V300Z" fill="#0a2046"/>
-              <g fill="#ffdca1" opacity=".4" filter="url(#soft)"><ellipse cx="820" cy="164" rx="250" ry="28"/></g>
-              <!-- pendaki teamwork berskala besar, saling membantu di punggung gunung -->
-              <g stroke="#08152c" stroke-width="13" stroke-linecap="round" stroke-linejoin="round" fill="none">
-                <path d="M705 230 L694 178 L672 151 M694 178 L728 151 M694 178 L665 195 M705 230 L681 267 M705 230 L735 263"/>
-                <path d="M790 193 L798 133 L772 111 M798 133 L831 111 M798 133 L765 145 M790 193 L766 231 M790 193 L823 230"/>
-                <path d="M890 171 L900 111 L875 88 M900 111 L932 90 M900 111 L867 126 M890 171 L865 207 M890 171 L923 205"/>
-                <path d="M982 207 L978 151 L955 130 M978 151 L1010 128 M978 151 L949 166 M982 207 L958 242 M982 207 L1013 239"/>
-                <path d="M1060 226 L1050 176 L1030 158 M1050 176 L1080 155 M1050 176 L1022 190 M1060 226 L1038 259 M1060 226 L1090 255"/>
-              </g>
-              <g fill="#07152e"><circle cx="694" cy="139" r="16"/><circle cx="798" cy="98" r="17"/><circle cx="900" cy="73" r="17"/><circle cx="978" cy="115" r="16"/><circle cx="1050" cy="143" r="15"/></g>
-              <path d="M925 112 V25" stroke="#f8fafc" stroke-width="5"/>
-              <path d="M929 27 L1110 48 L929 88Z" fill="#c51e58" stroke="#ff8bb0" stroke-width="2"/>
-              <text x="948" y="52" font-family="Arial,sans-serif" font-size="20" font-weight="900" fill="#fff">TEAMWORK</text>
-              <text x="948" y="73" font-family="Arial,sans-serif" font-size="14" font-weight="800" fill="#fff">SATU TIM • SATU TUJUAN</text>
-              <rect width="1200" height="300" fill="url(#leftShade)"/>
-              <g font-family="Arial,sans-serif" font-weight="800">
-                <path d="M38 30 L66 14 L93 14 L66 44 L39 44Z" fill="#a855f7"/>
-                <path d="M72 30 L100 14 L127 14 L100 44 L73 44Z" fill="#7c3aed"/>
-                <text x="139" y="39" font-size="31" fill="#fff">morarepublic</text>
-              </g>
-              <path d="M0 294 H1200" stroke="#38bdf8" stroke-width="5" opacity=".9"/>
-            </svg>`;
-            const sceneImg=new Image();
-            sceneImg.src='data:image/svg+xml;charset=utf-8,'+encodeURIComponent(sceneSvg);
-            await new Promise((resolve,reject)=>{sceneImg.onload=resolve;sceneImg.onerror=reject;});
-            x.drawImage(sceneImg,0,0,W,300);
-            // Gradasi gelap di sisi kiri menjaga judul tetap terbaca di atas foto.
-            const titleShade=x.createLinearGradient(0,0,760,0);
-            titleShade.addColorStop(0,'rgba(3,17,39,.88)'); titleShade.addColorStop(.72,'rgba(3,17,39,.38)'); titleShade.addColorStop(1,'rgba(3,17,39,0)');
-            x.fillStyle=titleShade; x.fillRect(0,0,800,300);
-            // Panel data dimulai di bawah visual utama agar gambar teamwork benar-benar terlihat.
+            // Gunakan banner teamwork final yang diberikan dan disetujui pengguna.
+            const sceneImg = new Image();
+            sceneImg.src = 'monitoring-wo-teamwork-hero.webp?v=2';
+            await new Promise((resolve,reject)=>{ sceneImg.onload=resolve; sceneImg.onerror=()=>reject(new Error('Background Report Gambar gagal dimuat')); });
+            // Rasio asli banner 1200:164; tidak diregangkan agar tulisan tetap proporsional.
+            x.drawImage(sceneImg,0,0,W,164);
+            const headerTail=x.createLinearGradient(0,164,0,224);
+            headerTail.addColorStop(0,'#071b3c'); headerTail.addColorStop(1,'#07152e');
+            x.fillStyle=headerTail; x.fillRect(0,164,W,60);
             const round=(xx,yy,w,h,r=22,color='#142d4c')=>{x.fillStyle=color;x.beginPath();x.roundRect(xx,yy,w,h,r);x.fill();};
             const txt=(v,xx,yy,size=22,color='#e2e8f0',weight='600')=>{x.fillStyle=color;x.font=weight+' '+size+'px Arial,sans-serif';x.fillText(String(v),xx,yy);};
             const fit=(v,xx,yy,max,size=20,color='#e2e8f0')=>{let z=String(v);x.font='600 '+size+'px Arial,sans-serif';while(z.length>3&&x.measureText(z).width>max)z=z.slice(0,-2)+'…';txt(z,xx,yy,size,color);};
             const pctText=n=>pct(n).toFixed(1)+'%';
-            round(34,220,1132,H-254,30,'rgba(5,18,48,.96)');
-            x.strokeStyle='#38bdf8'; x.lineWidth=2; x.shadowColor='#22d3ee'; x.shadowBlur=18; x.strokeRect(35,221,1130,H-256); x.shadowBlur=0;
-            round(72,72,10,105,5,'#38bdf8');
-            txt('MONITORING WO',108,122,50,'#ffffff','800');
-            txt('WORK ORDER PERFORMANCE REPORT • ONE TEAM, ONE GOAL',110,164,21,'#7dd3fc','700');
-            txt(new Date().toLocaleString('id-ID',{dateStyle:'long',timeStyle:'short'}),110,205,18,'#cbd5e1','400');
 
             // Headline metrics
             round(72,245,1056,210,24,'#103e78');
