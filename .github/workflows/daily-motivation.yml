@@ -1,0 +1,98 @@
+name: Daily Cinematic Motivation Poster
+
+on:
+  schedule:
+    - cron: "5 17 * * *"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: daily-motivation-poster
+  cancel-in-progress: false
+
+jobs:
+  generate-and-publish:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Generate daily poster
+        env:
+          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+        run: |
+          python - <<'PY'
+          import os, json, base64, urllib.request, datetime, pathlib, sys
+          key = os.environ.get("OPENAI_API_KEY")
+          if not key:
+              print("Missing repository secret OPENAI_API_KEY", file=sys.stderr)
+              sys.exit(1)
+          today = datetime.datetime.now(datetime.timezone.utc).astimezone(
+              datetime.timezone(datetime.timedelta(hours=7))
+          ).strftime("%d %B %Y")
+          themes = [
+              "leadership and taking responsibility",
+              "teamwork, trust, and helping colleagues",
+              "discipline, consistency, and daily progress",
+              "courage to face challenges and achieve targets",
+              "celebrating small wins and continuous improvement",
+              "resilience, focus, and finishing strong",
+              "fresh energy, optimism, and new opportunities"
+          ]
+          day_index = datetime.datetime.now(datetime.timezone.utc).timetuple().tm_yday
+          theme = themes[day_index % len(themes)]
+          prompt = (
+              "Create a premium, photorealistic, cinematic motivational campaign poster "
+              "background for a professional Indonesian broadband sales and field operations team. "
+              "Theme: " + theme + ". Date context: " + today + ". "
+              "Show a compelling human-centered scene with expressive people, authentic teamwork "
+              "or an inspiring individual, dramatic golden-hour lighting, atmospheric depth, "
+              "volumetric rays, rich cinematic contrast, premium commercial photography, "
+              "beautiful composition, realistic details, sophisticated color grading. "
+              "Use a portrait 2:3 composition. Reserve a clean, darker lower-middle area for "
+              "legible overlay text. Do not include logos, watermarks, gibberish, or any text. "
+              "The dashboard will overlay the exact Indonesian motivational headline and "
+              "MoraRepublic Surabaya 2 brand separately."
+          )
+          body = json.dumps({
+              "model": "gpt-image-2.6-flare",
+              "prompt": prompt,
+              "size": "1024x1536",
+              "quality": "high",
+              "output_format": "jpeg",
+              "output_compression": 90,
+              "n": 1
+          }).encode()
+          req = urllib.request.Request(
+              "https://api.openai.com/v1/images/generations",
+              data=body,
+              headers={"Authorization": "Bearer " + key, "Content-Type": "application/json"},
+              method="POST"
+          )
+          with urllib.request.urlopen(req, timeout=600) as response:
+              result = json.loads(response.read().decode())
+          image_b64 = result["data"][0].get("b64_json")
+          if not image_b64:
+              raise RuntimeError("Image API did not return b64_json")
+          image_bytes = base64.b64decode(image_b64)
+          if len(image_bytes) < 20000:
+              raise RuntimeError("Generated image unexpectedly small; refusing to publish")
+          out = pathlib.Path("assets/mora-popup.jpg")
+          out.parent.mkdir(parents=True, exist_ok=True)
+          out.write_bytes(image_bytes)
+          print(f"Generated {out} ({len(image_bytes)} bytes) for {today}")
+          PY
+
+      - name: Commit and push poster
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add assets/mora-popup.jpg
+          if git diff --cached --quiet; then
+            echo "No poster changes to commit"
+            exit 0
+          fi
+          git commit -m "Publish daily cinematic motivation poster"
+          git push
