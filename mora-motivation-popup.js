@@ -42,7 +42,25 @@ daily:[
 ["FOKUS PADA SOLUSI","🧭","Saat tantangan datang, jangan berhenti pada masalah. Cari jalan keluar, komunikasikan dengan tim, dan terus bergerak maju."],
 ["DISIPLIN MEMBAWA HASIL","🏅","Semangat membuat kita memulai, disiplin membantu kita menyelesaikan. Jaga komitmen dan tuntaskan prioritas hari ini."],
 ["SALING DUKUNG, SALING TUMBUH","🤝","Bagikan pengalaman, bantu rekan yang membutuhkan, dan rayakan keberhasilan bersama. Tim yang kuat tumbuh bersama."],
-["HARI INI PUNYA PELUANG","🌅","Buka mata untuk setiap kesempatan. Dengarkan kebutuhan pelanggan, berikan layanan terbaik, dan jadikan hari ini berarti."]
+["HARI INI PUNYA PELUANG","🌅","Buka mata untuk setiap kesempatan. Dengarkan kebutuhan pelanggan, berikan layanan terbaik, dan jadikan hari ini berarti."],
+["MULAI DENGAN TUJUAN","🧭","Tentukan hal terpenting yang harus selesai hari ini. Fokus yang jelas membuat tenaga dan waktu bekerja lebih efektif."],
+["PELUANG ADA DI DEPAN MATA","🔎","Jangan lewatkan kesempatan kecil. Satu percakapan yang baik bisa membuka kepercayaan dan peluang baru."],
+["LAYANI DENGAN SEPENUH HATI","💜","Dengarkan kebutuhan pelanggan, berikan solusi yang tepat, dan tinggalkan pengalaman yang membuat mereka percaya."],
+["GERAK CEPAT, TETAP TEPAT","⚡","Kecepatan penting, kualitas tetap utama. Rencanakan langkah, komunikasikan progres, dan tuntaskan pekerjaan dengan baik."],
+["JANGAN TAKUT BERPROSES","🌱","Kemajuan tidak selalu terlihat dalam sehari. Terus belajar, perbaiki cara kerja, dan biarkan konsistensi menunjukkan hasilnya."],
+["KOMITMEN ADALAH KEKUATAN","🛡️","Pegang tanggung jawab yang sudah dipercayakan. Selesaikan dengan sungguh-sungguh dan jadilah rekan yang bisa diandalkan."],
+["SATU TARGET, BANYAK AKSI","🎯","Ubah target menjadi langkah yang bisa dilakukan sekarang. Hubungi, tindak lanjuti, bantu, dan catat setiap progres."],
+["TANTANGAN MEMBUAT KITA KUAT","⛰️","Hambatan bukan tanda untuk menyerah. Ambil pelajaran, minta dukungan, dan cari cara terbaik untuk melewatinya."],
+["KABAR BAIK DIMULAI DARI AKSI","📣","Jangan hanya menunggu hasil. Bangun momentum lewat tindakan nyata dan komunikasi yang konsisten sepanjang hari."],
+["KUALITAS DI SETIAP LANGKAH","✨","Kerjakan hal sederhana dengan standar terbaik. Detail kecil sering menjadi alasan pelanggan mengingat pelayanan kita."],
+["BERSAMA LEBIH TANGGUH","🫶","Saling berbagi informasi dan bantu menyelesaikan kendala. Kolaborasi membuat seluruh tim melangkah lebih jauh."],
+["JAGA API SEMANGAT","🔥","Saat energi mulai turun, ingat tujuan dan orang-orang yang berjuang bersama. Ambil jeda singkat, lalu lanjutkan dengan fokus."],
+["PROGRES LEBIH BAIK DARI ALASAN","🚀","Tidak semua hal harus sempurna untuk dimulai. Ambil langkah pertama, evaluasi, lalu tingkatkan kualitasnya."],
+["PERCAYA PADA KEMAMPUAN TIM","🏆","Setiap anggota membawa kekuatan berbeda. Satukan pengalaman dan keterampilan untuk mencapai hasil yang lebih baik."],
+["TUNTASKAN YANG DIMULAI","✅","Pilih prioritas, selesaikan satu per satu, dan pastikan tidak ada tindak lanjut penting yang terlewat."],
+["SIKAP POSITIF, AKSI NYATA","☀️","Optimisme memberi energi, tindakan memberi bukti. Hadapi hari ini dengan pikiran terbuka dan kerja yang terukur."],
+["BELAJAR, BERUBAH, BERTUMBUH","📚","Setiap evaluasi adalah kesempatan memperbaiki diri. Ambil masukan dengan terbuka dan coba cara yang lebih efektif."],
+["AKHIRI HARI DENGAN BANGGA","🌟","Berikan usaha terbaik pada setiap kesempatan. Apa pun hasilnya, pastikan hari ini diisi dengan langkah yang berarti."]
 ]};
 const key=eom?(weekend?"eomWeekend":"eom"):opening?(weekend?"openingWeekend":"opening"):weekend?"weekend":"daily";
 const dayNo=Math.floor((d-new Date(d.getFullYear(),0,0))/86400000),pool=pools[key],msg=pool[dayNo%pool.length];
