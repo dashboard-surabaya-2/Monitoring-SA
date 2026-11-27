@@ -262,6 +262,21 @@ html.dark option { background:#0f172a; color:#f1f5f9; }
         </div>
     </div>
 
+    <!-- Preview gambar infografis Monitoring WO -->
+    <div id="capture-report-preview" class="fixed inset-0 z-[90] hidden bg-slate-950/80 backdrop-blur-sm p-3 sm:p-6 items-center justify-center">
+      <div class="bg-white rounded-2xl shadow-2xl w-full max-w-3xl max-h-[94vh] flex flex-col overflow-hidden">
+        <div class="px-4 py-3 bg-slate-900 text-white flex items-center justify-between gap-3">
+          <div><h3 class="font-bold text-base">Preview Laporan Monitoring WO</h3><p class="text-xs text-slate-300">Periksa gambar sebelum dibagikan</p></div>
+          <button type="button" onclick="closeCaptureReportPreview()" class="px-3 py-2 rounded-lg bg-slate-700 text-white text-sm">Tutup</button>
+        </div>
+        <div class="p-3 sm:p-5 overflow-auto bg-slate-100 flex justify-center"><img id="capture-report-image" alt="Preview infografis laporan Monitoring WO" class="w-full max-w-[560px] h-auto rounded-xl shadow-lg"></div>
+        <div class="p-3 sm:p-4 border-t border-slate-200 flex flex-wrap justify-end gap-2">
+          <button type="button" onclick="closeCaptureReportPreview()" class="px-4 py-2.5 rounded-xl border border-slate-300 text-slate-700 font-semibold">Tutup Preview</button>
+          <button type="button" onclick="shareCaptureReport()" class="px-4 py-2.5 rounded-xl bg-emerald-600 text-white font-bold">Kirim ke Grup WhatsApp</button>
+        </div>
+      </div>
+    </div>
+
     <!-- Modal Detail Atribut Work Order -->
     <div id="wo-modal" class="fixed inset-0 z-50 hidden bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4">
         <div class="bg-white rounded-2xl shadow-2xl max-w-2xl w-full overflow-hidden border border-slate-200 fade-in">
@@ -2429,91 +2444,87 @@ html.dark option { background:#0f172a; color:#f1f5f9; }
             resetAllFilters(true);
         }
 
+        let captureReportBlob = null;
+        let captureReportFileName = '';
+
+        function captureFilterValue(id) {
+            const el = document.getElementById(id);
+            if (!el) return '';
+            return el.options && el.selectedIndex >= 0 ? el.options[el.selectedIndex].textContent.trim() : (el.value || '');
+        }
+
+        async function buildWOInfographic() {
+            const rows = filteredWorkOrders || [];
+            const total = rows.length;
+            const status = {}, areas = {};
+            rows.forEach(wo => {
+                const st = normalizeStatus(wo.appointmentStatus || wo.statusWO || '');
+                status[st] = (status[st] || 0) + 1;
+                const ar = getEffectiveArea(wo) || 'Tidak diketahui';
+                areas[ar] = (areas[ar] || 0) + 1;
+            });
+            const filters = [['BSM','filter-bsm'],['ASM','filter-asm'],['AE','filter-ae'],['Area','filter-area'],['Contractor','filter-contractor'],['Slot','filter-slottime']]
+                .map(([label,id])=>[label,captureFilterValue(id)])
+                .filter(x=>x[1] && !/^all$|^semua/i.test(x[1]));
+            const c = document.createElement('canvas'); c.width=1200; c.height=1500;
+            const x=c.getContext('2d');
+            const bg=x.createLinearGradient(0,0,1200,1500); bg.addColorStop(0,'#0b1730'); bg.addColorStop(1,'#1e3a5f');
+            x.fillStyle=bg; x.fillRect(0,0,1200,1500);
+            const card=(xx,yy,w,h,color='#172b4d')=>{x.fillStyle=color;x.beginPath();x.roundRect(xx,yy,w,h,22);x.fill();};
+            const t=(v,xx,yy,size=22,color='#e2e8f0',weight='600')=>{x.fillStyle=color;x.font=weight+' '+size+'px Inter,Arial,sans-serif';x.fillText(String(v),xx,yy);};
+            const fit=(v,xx,yy,max,size=20,color='#e2e8f0')=>{let z=String(v);x.font='600 '+size+'px Inter,Arial,sans-serif';while(z.length>4&&x.measureText(z).width>max)z=z.slice(0,-2)+'…';t(z,xx,yy,size,color);};
+            card(42,42,1116,1416,'#101f3b');
+            card(78,78,10,95,'#38bdf8'); t('MONITORING WO',112,130,48,'#ffffff','800');
+            t('WORK ORDER PERFORMANCE REPORT',112,170,20,'#93c5fd','700');
+            t(new Date().toLocaleString('id-ID',{dateStyle:'long',timeStyle:'short'}),112,218,18,'#cbd5e1','400');
+            card(78,255,1044,155,'#1e3a5f'); t('TOTAL WORK ORDER SESUAI FILTER',112,305,19,'#bfdbfe','700');
+            t(total.toLocaleString('id-ID'),112,380,66,'#ffffff','800');
+            card(78,435,1044,170); t('FILTER LAPORAN',110,478,18,'#93c5fd','700');
+            const fl=filters.length?filters.map(z=>z[0]+': '+z[1]):['Semua data'];
+            fl.slice(0,3).forEach((v,i)=>fit(v,110,520+i*28,950,19));
+            if(fl.length>3)t('+'+(fl.length-3)+' filter lainnya',110,590,16,'#93c5fd');
+            t('RINGKASAN STATUS WO',88,665,25,'#ffffff','800');
+            const order=['New','In Progress','Completed','Unsuccessful','Cancelled','Other','Unknown'].filter(k=>status[k]);
+            const max=Math.max(1,...order.map(k=>status[k]));
+            order.slice(0,6).forEach((k,i)=>{const y=700+i*72;card(88,y,1024,56,'#243a5c');fit(k,112,y+36,250,21);card(400,y+17,500,22,'#334b6d');card(400,y+17,Math.max(8,500*status[k]/max),22,'#38bdf8');t(status[k].toLocaleString('id-ID'),950,y+37,21,'#fff','800');});
+            t('AREA DENGAN DATA TERBANYAK',88,1160,22,'#fff','800');
+            Object.entries(areas).sort((a,b)=>b[1]-a[1]).slice(0,4).forEach(([name,n],i)=>{const y=1205+i*45;fit(name,100,y,680,18);t(n.toLocaleString('id-ID')+' WO',930,y,18,'#7dd3fc','700');});
+            t('Sumber: data Monitoring WO • Angka mengikuti filter aktif',88,1408,16,'#94a3b8','400');
+            return new Promise((resolve,reject)=>c.toBlob(blob=>blob?resolve(blob):reject(new Error('Gagal membuat PNG')),'image/png'));
+        }
+
+        function closeCaptureReportPreview() {
+            const m=document.getElementById('capture-report-preview'); if(m)m.classList.add('hidden');
+        }
+
         async function captureDashboardImage() {
-            const button = document.getElementById('btn-capture-dashboard');
-            if (typeof window.html2canvas !== 'function') {
-                showToast('Fitur Capture belum termuat. Periksa koneksi internet lalu coba lagi.', 'error');
-                return;
-            }
-            const total = filteredWorkOrders.length;
-            if (!total) {
-                showToast('Tidak ada data WO pada filter aktif untuk di-capture.', 'error');
-                return;
-            }
-            const originalLabel = button ? button.innerHTML : '';
-            if (button) {
-                button.disabled = true;
-                button.innerHTML = '<span class="inline-flex items-center gap-2"><i data-lucide="loader-circle" class="w-4 h-4 animate-spin"></i><span>Membuat gambar...</span></span>';
-            }
+            const button=document.getElementById('btn-capture-dashboard');
+            if(!filteredWorkOrders || !filteredWorkOrders.length){showToast('Tidak ada data WO pada filter aktif.','error');return;}
+            const old=button?button.innerHTML:'';
+            if(button){button.disabled=true;button.innerHTML='<span>Menyusun laporan...</span>';}
             try {
-                if (document.fonts && document.fonts.ready) await document.fonts.ready;
-                await new Promise(resolve => setTimeout(resolve, 180));
-                const pageHeight = Math.max(document.body.scrollHeight, document.documentElement.scrollHeight);
-                const canvas = await window.html2canvas(document.body, {
-                    backgroundColor: document.documentElement.classList.contains('dark') ? '#080d1a' : '#f8fafc',
-                    scale: Math.min(1.5, Math.max(1, window.devicePixelRatio || 1)),
-                    useCORS: true,
-                    allowTaint: false,
-                    logging: false,
-                    width: Math.max(document.documentElement.scrollWidth, document.body.scrollWidth),
-                    height: pageHeight,
-                    windowWidth: Math.max(document.documentElement.scrollWidth, document.body.scrollWidth),
-                    windowHeight: pageHeight,
-                    scrollX: 0,
-                    scrollY: 0,
-                    onclone: clonedDoc => {
-                        ['#toast-container', '#preview-wa-modal', '#wo-modal', '.mobile-dashboard-nav', '#btn-capture-dashboard'].forEach(selector => {
-                            clonedDoc.querySelectorAll(selector).forEach(el => { el.style.display = 'none'; });
-                        });
-                        const clonedHeader = clonedDoc.querySelector('header');
-                        if (clonedHeader) {
-                            clonedHeader.style.position = 'static';
-                            clonedHeader.style.top = 'auto';
-                        }
-                        clonedDoc.querySelectorAll('canvas').forEach(canvasEl => { canvasEl.style.maxWidth = '100%'; });
-                    }
-                });
-                const blob = await new Promise((resolve, reject) => {
-                    canvas.toBlob(result => result ? resolve(result) : reject(new Error('Gagal mengubah hasil capture menjadi PNG.')), 'image/png');
-                });
-                const dateTag = new Date().toLocaleDateString('sv-SE');
-                const file = new File([blob], 'Monitoring_WO_' + dateTag + '.png', { type: 'image/png' });
-                if (navigator.share && (!navigator.canShare || navigator.canShare({ files: [file] }))) {
-                    try {
-                        await navigator.share({
-                            files: [file],
-                            title: 'Dashboard Monitoring WO',
-                            text: 'Monitoring WO • ' + total.toLocaleString('id-ID') + ' data sesuai filter aktif'
-                        });
-                        showToast('Gambar dashboard siap dibagikan.', 'success');
-                    } catch (shareError) {
-                        if (shareError && shareError.name === 'AbortError') {
-                            showToast('Berbagi dibatalkan. Gambar tidak dikirim.', 'info');
-                        } else {
-                            throw shareError;
-                        }
-                    }
-                } else {
-                    const url = URL.createObjectURL(blob);
-                    const a = document.createElement('a');
-                    a.href = url;
-                    a.download = file.name;
-                    document.body.appendChild(a);
-                    a.click();
-                    a.remove();
-                    setTimeout(() => URL.revokeObjectURL(url), 1500);
-                    showToast('Gambar berhasil dibuat dan diunduh. Lampirkan PNG ini ke grup WhatsApp.', 'success');
+                captureReportBlob=await buildWOInfographic();
+                captureReportFileName='Laporan_Monitoring_WO_'+new Date().toLocaleDateString('sv-SE')+'.png';
+                const img=document.getElementById('capture-report-image');
+                if(img){if(img.dataset.objectUrl)URL.revokeObjectURL(img.dataset.objectUrl);img.dataset.objectUrl=URL.createObjectURL(captureReportBlob);img.src=img.dataset.objectUrl;}
+                const modal=document.getElementById('capture-report-preview'); if(modal)modal.classList.remove('hidden');
+                showToast('Preview infografis laporan berhasil dibuat.','success');
+            } catch(e){console.error(e);showToast('Gagal membuat laporan: '+(e.message||'Kesalahan tidak diketahui'),'error');}
+            finally{if(button){button.disabled=false;button.innerHTML=old;}if(window.lucide&&window.lucide.createIcons)window.lucide.createIcons();}
+        }
+
+        async function shareCaptureReport() {
+            if(!captureReportBlob){showToast('Buat preview laporan terlebih dahulu.','error');return;}
+            const file=new File([captureReportBlob],captureReportFileName||'Laporan_Monitoring_WO.png',{type:'image/png'});
+            try{
+                if(navigator.share&&(!navigator.canShare||navigator.canShare({files:[file]}))){
+                    await navigator.share({files:[file],title:'Laporan Monitoring WO',text:'Laporan Monitoring WO berdasarkan filter aktif.'});
+                    showToast('Menu berbagi berhasil dibuka. Pilih grup WhatsApp tujuan.','success');
+                }else{
+                    const u=URL.createObjectURL(captureReportBlob),a=document.createElement('a');a.href=u;a.download=file.name;document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(u),2000);
+                    showToast('Gambar diunduh. Lampirkan ke grup WhatsApp tujuan.','info');
                 }
-            } catch (error) {
-                console.error('Gagal membuat capture dashboard:', error);
-                showToast('Capture gagal: ' + (error.message || 'Terjadi kesalahan saat membuat gambar.'), 'error');
-            } finally {
-                if (button) {
-                    button.disabled = false;
-                    button.innerHTML = originalLabel;
-                }
-                if (window.lucide && typeof window.lucide.createIcons === 'function') window.lucide.createIcons();
-            }
+            }catch(e){if(e&&e.name==='AbortError')showToast('Berbagi dibatalkan.','info');else{console.error(e);showToast('Menu berbagi gagal dibuka. Coba unduh gambar.','error');}}
         }
 
         function exportFilteredCSV() {
