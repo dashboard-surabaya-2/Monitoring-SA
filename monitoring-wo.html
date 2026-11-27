@@ -2618,10 +2618,69 @@ html.dark option { background:#0f172a; color:#f1f5f9; }
             rounded(967,75,11,11,6,'#38bdf8',null);
             text('Area  /  ' + areaLabel,989,88,17,'#e0e7ff',600);
 
-            // Slogan teamwork di pita gelap.
+            // Motivasi harian mengikuti fase bulan, weekend/Golden Day, dan momentum EOM.
+            const now = new Date();
+            const dayOfMonth = now.getDate();
+            const daysInMonth = new Date(now.getFullYear(), now.getMonth()+1, 0).getDate();
+            const dayOfWeek = now.getDay(); // 0 Minggu, 6 Sabtu
+            const isWeekend = dayOfWeek === 0 || dayOfWeek === 6;
+            const isEOM = dayOfMonth > daysInMonth - 10;
+            const isOpening = dayOfMonth <= 7;
+            const dailyIndex = Math.floor((Date.UTC(now.getFullYear(),now.getMonth(),dayOfMonth)-Date.UTC(now.getFullYear(),0,1))/86400000);
+
+            const motivation = {
+                eom: [
+                    ['Waktu closing semakin dekat.','Kejar sisa target, tuntaskan setiap peluang!'],
+                    ['Jangan biarkan target tertinggal.','Maksimalkan hari ini sebelum EOM tiba!'],
+                    ['Sepuluh hari terakhir adalah penentuan.','Percepat follow-up, kuatkan closing!'],
+                    ['Akhiri bulan dengan pencapaian terbaik.','Setiap WO dan setiap closing berarti!'],
+                    ['Jangan kendurkan langkah menjelang EOM.','Pastikan target bulan ini tercapai!'],
+                    ['Saatnya gas penuh menuju garis akhir.','Tuntaskan peluang, raih target bersama!']
+                ],
+                eomWeekend: [
+                    ['Golden Day menjelang EOM!','Maksimalkan weekend, amankan target sebelum closing!'],
+                    ['Weekend ini jadi kesempatan penentu.','Kejar closing, jangan biarkan target terlewat!'],
+                    ['Momentum terbaik sebelum akhir bulan.','Gas bersama, tuntaskan target EOM!'],
+                    ['Golden Day, peluang tidak boleh lewat.','Follow-up cepat, closing tepat, target tercapai!']
+                ],
+                opening: [
+                    ['Bulan baru, target baru, semangat baru.','Mulai lebih cepat agar hasil lebih hebat!'],
+                    ['Jangan menunggu akhir bulan untuk berlari.','Kejar target sejak hari pertama!'],
+                    ['Awali bulan dengan langkah terbaik.','Buat bulan ini lebih baik dari bulan kemarin!'],
+                    ['Target besar dimulai dari aksi hari ini.','Bangun momentum sejak awal bulan!'],
+                    ['Mulai kuat, jaga konsisten, tutup dengan bangga.','Bulan ini kita tingkatkan pencapaiannya!']
+                ],
+                openingWeekend: [
+                    ['Awal bulan bertemu Golden Day!','Manfaatkan weekend untuk unggul sejak start!'],
+                    ['Target baru, momentum baru.','Jadikan weekend ini awal pencapaian terbaik!'],
+                    ['Mulai lebih cepat, raih lebih banyak.','Golden Day ini saatnya membangun keunggulan!']
+                ],
+                weekend: [
+                    ['Hari ini momentum Golden Day!','Maksimalkan setiap peluang dan kuatkan closing!'],
+                    ['Weekend adalah peluang untuk melesat.','Gerak cepat, follow-up tepat, hasil meningkat!'],
+                    ['Jadikan Golden Day penuh pencapaian.','Satu tim, satu semangat, hasil maksimal!'],
+                    ['Peluang terbaik harus ditangkap hari ini.','Maksimalkan aktivitas dan raih lebih banyak!']
+                ],
+                daily: [
+                    ['Konsistensi hari ini menentukan hasil akhir.','Jaga ritme, tingkatkan aktivitas, capai target!'],
+                    ['Setiap hari adalah peluang untuk lebih baik.','Jangan berhenti sebelum hasil terbaik diraih!'],
+                    ['Langkah kecil yang konsisten membawa hasil besar.','Terus bergerak dan saling menguatkan!'],
+                    ['Pencapaian hebat lahir dari disiplin harian.','Fokus pada proses, tuntaskan target!'],
+                    ['Hari ini harus lebih produktif dari kemarin.','Kolaborasi kuat, hasil pun meningkat!'],
+                    ['Jangan hanya menunggu hasil, ciptakan peluang.','Aktif bergerak, cepat merespons, raih sukses!']
+                ]
+            };
+            let motivationPool = motivation.daily;
+            if (isEOM && isWeekend) motivationPool = motivation.eomWeekend;
+            else if (isEOM) motivationPool = motivation.eom;
+            else if (isOpening && isWeekend) motivationPool = motivation.openingWeekend;
+            else if (isOpening) motivationPool = motivation.opening;
+            else if (isWeekend) motivationPool = motivation.weekend;
+            const dailyMotivation = motivationPool[dailyIndex % motivationPool.length];
+
             rounded(255,120,800,75,18,'rgba(30,13,65,.78)','rgba(192,132,252,.45)',1);
-            text('Dengan Kerja Sama (Teamwork),',655,151,25,'#ffffff',700,'center');
-            text('Apapun Pasti Bisa Kita Capai',655,181,25,'#ffffff',800,'center');
+            text(dailyMotivation[0],655,151,24,'#ffffff',700,'center');
+            text(dailyMotivation[1],655,181,23,'#ffffff',800,'center');
 
             // KPI utama.
             const mainKpis = [
