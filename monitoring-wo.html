@@ -2454,48 +2454,115 @@ html.dark option { background:#0f172a; color:#f1f5f9; }
         }
 
         async function buildWOInfographic() {
-            const rows = filteredWorkOrders || [];
+            const rows = Array.isArray(filteredWorkOrders) ? filteredWorkOrders : [];
             const total = rows.length;
-            const status = {}, areas = {};
+            const status = { 'Completed':0, 'New':0, 'In Progress':0, 'Unsuccessful':0, 'Cancelled':0, 'Other':0, 'Unknown':0 };
+            const areas = {};
             rows.forEach(wo => {
                 const st = normalizeStatus(wo.appointmentStatus || wo.statusWO || '');
                 status[st] = (status[st] || 0) + 1;
                 const ar = getEffectiveArea(wo) || 'Tidak diketahui';
                 areas[ar] = (areas[ar] || 0) + 1;
             });
+            const completed = status.Completed || 0;
+            const newCount = status.New || 0;
+            const progress = status['In Progress'] || 0;
+            const unsuccessful = status.Unsuccessful || 0;
+            const cancelled = status.Cancelled || 0;
+            const clean = completed + newCount + progress;
+            const pct = n => total ? (n / total * 100) : 0;
+            const fmt = n => Number(n || 0).toLocaleString('id-ID');
             const filters = [['BSM','filter-bsm'],['ASM','filter-asm'],['AE','filter-ae'],['Area','filter-area'],['Contractor','filter-contractor'],['Slot','filter-slottime']]
-                .map(([label,id])=>[label,captureFilterValue(id)])
-                .filter(x=>x[1] && !/^all$|^semua/i.test(x[1]));
+                .map(([label,id]) => [label,captureFilterValue(id)])
+                .filter(x => x[1] && !/^all$|^semua/i.test(x[1]));
             const dateFrom = captureFilterValue('filter-appointment-from');
             const dateTo = captureFilterValue('filter-appointment-to');
             const quickSearch = captureFilterValue('filter-search');
-            if (dateFrom) filters.push(['Tanggal dari', dateFrom]);
-            if (dateTo) filters.push(['Tanggal sampai', dateTo]);
-            if (quickSearch) filters.push(['Pencarian', quickSearch]);
-            const c = document.createElement('canvas'); c.width=1200; c.height=1500;
+            if (dateFrom) filters.push(['Appointment dari',dateFrom]);
+            if (dateTo) filters.push(['Appointment sampai',dateTo]);
+            if (quickSearch) filters.push(['Pencarian',quickSearch]);
+
+            const W=1200, H=1900, c=document.createElement('canvas');
+            c.width=W; c.height=H;
             const x=c.getContext('2d');
-            const bg=x.createLinearGradient(0,0,1200,1500); bg.addColorStop(0,'#0b1730'); bg.addColorStop(1,'#1e3a5f');
-            x.fillStyle=bg; x.fillRect(0,0,1200,1500);
-            const card=(xx,yy,w,h,color='#172b4d')=>{x.fillStyle=color;x.beginPath();x.roundRect(xx,yy,w,h,22);x.fill();};
-            const t=(v,xx,yy,size=22,color='#e2e8f0',weight='600')=>{x.fillStyle=color;x.font=weight+' '+size+'px Inter,Arial,sans-serif';x.fillText(String(v),xx,yy);};
-            const fit=(v,xx,yy,max,size=20,color='#e2e8f0')=>{let z=String(v);x.font='600 '+size+'px Inter,Arial,sans-serif';while(z.length>4&&x.measureText(z).width>max)z=z.slice(0,-2)+'…';t(z,xx,yy,size,color);};
-            card(42,42,1116,1416,'#101f3b');
-            card(78,78,10,95,'#38bdf8'); t('MONITORING WO',112,130,48,'#ffffff','800');
-            t('WORK ORDER PERFORMANCE REPORT',112,170,20,'#93c5fd','700');
-            t(new Date().toLocaleString('id-ID',{dateStyle:'long',timeStyle:'short'}),112,218,18,'#cbd5e1','400');
-            card(78,255,1044,155,'#1e3a5f'); t('TOTAL WORK ORDER SESUAI FILTER',112,305,19,'#bfdbfe','700');
-            t(total.toLocaleString('id-ID'),112,380,66,'#ffffff','800');
-            card(78,435,1044,170); t('FILTER LAPORAN',110,478,18,'#93c5fd','700');
-            const fl=filters.length?filters.map(z=>z[0]+': '+z[1]):['Semua data'];
-            fl.slice(0,3).forEach((v,i)=>fit(v,110,520+i*28,950,19));
-            if(fl.length>3)t('+'+(fl.length-3)+' filter lainnya',110,590,16,'#93c5fd');
-            t('RINGKASAN STATUS WO',88,665,25,'#ffffff','800');
-            const order=['New','In Progress','Completed','Unsuccessful','Cancelled','Other','Unknown'].filter(k=>status[k]);
-            const max=Math.max(1,...order.map(k=>status[k]));
-            order.slice(0,6).forEach((k,i)=>{const y=700+i*72;card(88,y,1024,56,'#243a5c');fit(k,112,y+36,250,21);card(400,y+17,500,22,'#334b6d');card(400,y+17,Math.max(8,500*status[k]/max),22,'#38bdf8');t(status[k].toLocaleString('id-ID'),950,y+37,21,'#fff','800');});
-            t('AREA DENGAN DATA TERBANYAK',88,1160,22,'#fff','800');
-            Object.entries(areas).sort((a,b)=>b[1]-a[1]).slice(0,4).forEach(([name,n],i)=>{const y=1205+i*45;fit(name,100,y,680,18);t(n.toLocaleString('id-ID')+' WO',930,y,18,'#7dd3fc','700');});
-            t('Sumber: data Monitoring WO • Angka mengikuti filter aktif',88,1408,16,'#94a3b8','400');
+            const bg=x.createLinearGradient(0,0,W,H);
+            bg.addColorStop(0,'#071426'); bg.addColorStop(.55,'#102b4c'); bg.addColorStop(1,'#071426');
+            x.fillStyle=bg; x.fillRect(0,0,W,H);
+            const round=(xx,yy,w,h,r=22,color='#142d4c')=>{x.fillStyle=color;x.beginPath();x.roundRect(xx,yy,w,h,r);x.fill();};
+            const txt=(v,xx,yy,size=22,color='#e2e8f0',weight='600')=>{x.fillStyle=color;x.font=weight+' '+size+'px Arial,sans-serif';x.fillText(String(v),xx,yy);};
+            const fit=(v,xx,yy,max,size=20,color='#e2e8f0')=>{let z=String(v);x.font='600 '+size+'px Arial,sans-serif';while(z.length>3&&x.measureText(z).width>max)z=z.slice(0,-2)+'…';txt(z,xx,yy,size,color);};
+            const pctText=n=>pct(n).toFixed(1)+'%';
+            round(34,34,1132,1832,30,'#0d2038');
+            round(72,72,10,105,5,'#38bdf8');
+            txt('MONITORING WO',108,122,48,'#ffffff','800');
+            txt('WORK ORDER PERFORMANCE REPORT',110,164,21,'#7dd3fc','700');
+            txt(new Date().toLocaleString('id-ID',{dateStyle:'long',timeStyle:'short'}),110,205,18,'#cbd5e1','400');
+
+            // Headline metrics
+            round(72,245,1056,210,24,'#17395e');
+            txt('TOTAL WORK ORDER',105,292,19,'#93c5fd','700');
+            txt(fmt(total),105,382,76,'#ffffff','800');
+            round(650,275,1,150,1,'#3b5c7d');
+            txt('WO BERSIH',710,310,20,'#67e8f9','700');
+            txt(fmt(clean),710,382,60,'#ffffff','800');
+            txt(pctText(clean)+' dari total WO',900,380,19,'#a5f3fc','600');
+
+            // Performance indicators
+            txt('INDIKATOR PERFORMA',82,520,25,'#ffffff','800');
+            const metrics=[
+                ['SUCCESS RATE',pctText(completed),fmt(completed)+' Completed','#10b981'],
+                ['IN PROGRESS',pctText(progress),fmt(progress)+' WO','#fbbf24'],
+                ['UNSUCCESSFUL',pctText(unsuccessful),fmt(unsuccessful)+' WO','#fb7185'],
+                ['CANCELLED',pctText(cancelled),fmt(cancelled)+' WO','#94a3b8']
+            ];
+            metrics.forEach((m,i)=>{
+                const xx=78+(i%2)*535, yy=550+Math.floor(i/2)*150;
+                round(xx,yy,510,124,18,'#162f4e');
+                round(xx+22,yy+22,8,78,4,m[3]);
+                txt(m[0],xx+50,yy+42,18,'#a5c8e8','700');
+                txt(m[1],xx+50,yy+91,34,'#ffffff','800');
+                txt(m[2],xx+310,yy+88,17,'#cbd5e1','600');
+            });
+
+            // Status distribution
+            txt('KOMPOSISI STATUS WO',82,900,25,'#ffffff','800');
+            const statusRows=[
+                ['Completed',completed,'#10b981'],
+                ['New',newCount,'#818cf8'],
+                ['In Progress',progress,'#fbbf24'],
+                ['Unsuccessful',unsuccessful,'#fb7185'],
+                ['Cancelled',cancelled,'#94a3b8'],
+                ['Other / Unknown',(status.Other||0)+(status.Unknown||0),'#64748b']
+            ];
+            const maxStatus=Math.max(1,...statusRows.map(a=>a[1]));
+            statusRows.forEach((m,i)=>{
+                const yy=935+i*76;
+                txt(m[0],90,yy+24,19,'#e2e8f0','600');
+                round(340,yy,560,22,11,'#29425f');
+                if(m[1])round(340,yy,Math.max(5,560*m[1]/maxStatus),22,11,m[2]);
+                txt(fmt(m[1]),930,yy+20,20,'#ffffff','800');
+                txt(pctText(m[1]),1030,yy+20,18,'#bfdbfe','700');
+            });
+
+            // Top areas
+            txt('AREA DENGAN JUMLAH WO TERBANYAK',82,1430,25,'#ffffff','800');
+            const topAreas=Object.entries(areas).sort((a,b)=>b[1]-a[1]).slice(0,5);
+            if(!topAreas.length) txt('Tidak ada data area pada filter ini',92,1480,19,'#cbd5e1','400');
+            topAreas.forEach(([name,n],i)=>{
+                const yy=1465+i*55;
+                fit((i+1)+'. '+name,95,yy+20,600,19,'#e2e8f0');
+                round(700,yy,300,14,7,'#29425f');
+                round(700,yy,Math.max(4,300*n/Math.max(1,topAreas[0][1])),14,7,'#38bdf8');
+                txt(fmt(n)+' WO',1020,yy+16,17,'#bae6fd','700');
+            });
+
+            // Active filters
+            const filterY=1760;
+            txt('FILTER LAPORAN',82,filterY,20,'#7dd3fc','700');
+            const fl=filters.length?filters:['Semua filter default'];
+            fl.slice(0,3).forEach((v,i)=>fit(Array.isArray(v)?v[0]+': '+v[1]:v,88,filterY+36+i*25,1000,16,'#cbd5e1'));
+            if(fl.length>3)txt('+'+(fl.length-3)+' filter lainnya',88,filterY+112,15,'#93c5fd','600');
+            txt('Sumber: data Monitoring WO • Seluruh angka mengikuti filter aktif',82,1840,15,'#94a3b8','400');
             return new Promise((resolve,reject)=>c.toBlob(blob=>blob?resolve(blob):reject(new Error('Gagal membuat PNG')),'image/png'));
         }
 
