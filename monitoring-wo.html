@@ -2496,7 +2496,7 @@ html.dark option { background:#0f172a; color:#f1f5f9; }
             if (dateTo) filters.push(['Appointment sampai',dateTo]);
             if (quickSearch) filters.push(['Pencarian',quickSearch]);
 
-            const W=1200, H=2500, c=document.createElement('canvas');
+            const W=1200, H=Math.max(2500,1900+Object.keys(rankingKpis).length*48), c=document.createElement('canvas');
             c.width=W; c.height=H;
             const x=c.getContext('2d');
             const bg=x.createLinearGradient(0,0,W,H);
@@ -2602,8 +2602,6 @@ html.dark option { background:#0f172a; color:#f1f5f9; }
             if(fl.length>3)txt('+'+(fl.length-3)+' filter lainnya',88,filterY+112,15,'#93c5fd','600');
             const footerY=filterY+155;
             txt('Sumber: data Monitoring WO • Ranking dan KPI mengikuti filter aktif',82,footerY,15,'#94a3b8','400');
-            c.height=Math.max(footerY+65,1900);
-            round(34,34,1132,c.height-68,30,'#0d2038');
             return new Promise((resolve,reject)=>c.toBlob(blob=>blob?resolve(blob):reject(new Error('Gagal membuat PNG')),'image/png'));
         }
 
