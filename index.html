@@ -2032,8 +2032,28 @@ html.dark option { background:#0f172a; color:#f1f5f9; }
         });
         const q = (document.getElementById('searchRankASM')?.value || '').toLowerCase();
         const rows = Object.values(map).filter(r => r.name.toLowerCase().includes(q)).sort((a,b) => b.nov-a.nov || b.oct-a.oct);
-        lines = ['🏆 *RANKING PENCAPAIAN SA PER ASM*', 'MORA REPUBLIC • SURABAYA 2', `Periode: November 2026 (MTD s/d ${getCurrentCutoffDay()})`, '', '*HASIL RANKING*'];
-        rows.forEach((r,i) => lines.push(`${i+1}. *${clean(r.name)}* — ${r.nov} SA\n   Okt: ${r.oct} SA | Selisih: ${growth(r.nov,r.oct)}\n   Branch: ${clean(r.branch)}`));
+        const performanceRows = getAEPerformanceRows();
+        const monthDays = new Date(new Date().getFullYear(), new Date().getMonth() + 1, 0).getDate();
+        const reportDay = Math.min(Math.max(1, getCurrentCutoffDay()), monthDays);
+        const targetByASM = {};
+        performanceRows.forEach(item => {
+          const asmName = item.asm || '-';
+          if (!targetByASM[asmName]) targetByASM[asmName] = { target: 0, aeCount: 0 };
+          targetByASM[asmName].target += Number(item.target) || 0;
+          targetByASM[asmName].aeCount++;
+        });
+        lines = ['🏆 *RANKING PENCAPAIAN SA PER ASM*', 'MORA REPUBLIC • SURABAYA 2', `Periode: November 2026 (MTD s/d ${reportDay})`, '', '*HASIL RANKING & TARGET HARIAN*'];
+        rows.forEach((r,i) => {
+          const targetInfo = targetByASM[r.name] || { target: 0, aeCount: 0 };
+          const targetEOM = targetInfo.target;
+          const dailyTarget = monthDays > 0 ? targetEOM / monthDays : 0;
+          const targetToDate = dailyTarget * reportDay;
+          const remainingTarget = Math.max(0, targetEOM - r.nov);
+          const remainingDays = Math.max(0, monthDays - reportDay);
+          const requiredDaily = remainingDays > 0 ? remainingTarget / remainingDays : remainingTarget;
+          const achievedPct = targetToDate > 0 ? (r.nov / targetToDate * 100) : 0;
+          lines.push(`${i+1}. *${clean(r.name)}* — ${r.nov} SA\\n   Okt: ${r.oct} SA | Selisih: ${growth(r.nov,r.oct)}\\n   🎯 Target ASM EOM: *${targetEOM} SA* (${targetInfo.aeCount} AE; aturan: max. 15 SA/AE atau capaian EOM Oktober)\\n   Target harian: *${dailyTarget.toFixed(2)} SA/hari* | Target kumulatif s/d tgl ${reportDay}: *${targetToDate.toFixed(1)} SA*\\n   Sisa target: *${remainingTarget} SA* dalam ${remainingDays} hari (${requiredDaily.toFixed(2)} SA/hari mulai besok)\\n   Capaian terhadap target berjalan: *${achievedPct.toFixed(1)}%*\\n   Branch: ${clean(r.branch)}`);
+        });
         if (!rows.length) lines.push('_Tidak ada data untuk pencarian ini._');
       } else if (key === 'rankAE') {
         title = 'Ranking Pencapaian SA per AE';
