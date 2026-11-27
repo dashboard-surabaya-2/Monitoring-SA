@@ -2507,37 +2507,46 @@ html.dark option { background:#0f172a; color:#f1f5f9; }
             x.setTransform(SCALE,0,0,SCALE,0,0);
             // Background utama berupa ilustrasi lanskap teamwork penuh, bukan ikon kecil.
             const bg=x.createLinearGradient(0,0,W,H);
-            bg.addColorStop(0,'#07152b'); bg.addColorStop(.55,'#123c61'); bg.addColorStop(1,'#061629');
+            bg.addColorStop(0,'#07143a'); bg.addColorStop(.42,'#102c63'); bg.addColorStop(.72,'#17104b'); bg.addColorStop(1,'#061629');
             x.fillStyle=bg; x.fillRect(0,0,W,H);
             const sceneSvg = `<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="300" viewBox="0 0 1200 300">
               <defs>
-                <linearGradient id="sky" x2="0" y2="1"><stop stop-color="#092d68"/><stop offset=".48" stop-color="#f59e70"/><stop offset="1" stop-color="#f8c88b"/></linearGradient>
-                <linearGradient id="mount" x2="0" y2="1"><stop stop-color="#8bb7d8"/><stop offset=".42" stop-color="#315f8c"/><stop offset="1" stop-color="#102d50"/></linearGradient>
-                <linearGradient id="shade"><stop stop-color="#06172e" stop-opacity=".96"/><stop offset=".46" stop-color="#06172e" stop-opacity=".58"/><stop offset="1" stop-color="#06172e" stop-opacity=".04"/></linearGradient>
-                <radialGradient id="sun"><stop stop-color="#fff8cf"/><stop offset=".28" stop-color="#ffd28b" stop-opacity=".95"/><stop offset="1" stop-color="#ffb36b" stop-opacity="0"/></radialGradient>
+                <linearGradient id="sky" x1="0" y1="0" x2="0" y2="1"><stop stop-color="#17105c"/><stop offset=".34" stop-color="#6d35a5"/><stop offset=".68" stop-color="#ff875e"/><stop offset="1" stop-color="#ffd58a"/></linearGradient>
+                <linearGradient id="peak" x1="0" y1="0" x2="0" y2="1"><stop stop-color="#9ac8ef"/><stop offset=".38" stop-color="#355b9b"/><stop offset="1" stop-color="#10244e"/></linearGradient>
+                <linearGradient id="front" x1="0" y1="0" x2="0" y2="1"><stop stop-color="#183b73"/><stop offset="1" stop-color="#07152e"/></linearGradient>
+                <radialGradient id="glow"><stop stop-color="#fffbd5"/><stop offset=".18" stop-color="#ffe9a0"/><stop offset="1" stop-color="#ffb65c" stop-opacity="0"/></radialGradient>
+                <linearGradient id="leftShade"><stop stop-color="#07152e" stop-opacity=".88"/><stop offset=".55" stop-color="#07152e" stop-opacity=".42"/><stop offset="1" stop-color="#07152e" stop-opacity="0"/></linearGradient>
+                <filter id="soft"><feGaussianBlur stdDeviation="12"/></filter>
               </defs>
               <rect width="1200" height="300" fill="url(#sky)"/>
-              <circle cx="850" cy="112" r="125" fill="url(#sun)"/>
-              <circle cx="850" cy="112" r="34" fill="#fff0c2" opacity=".9"/>
-              <path d="M0 180 L115 108 210 166 330 65 430 172 565 88 675 174 790 57 905 176 1025 82 1200 180 V300 H0Z" fill="#527da2" opacity=".8"/>
-              <path d="M0 220 L140 125 245 220 405 78 540 221 690 110 825 220 965 80 1105 213 1200 150 V300 H0Z" fill="url(#mount)"/>
-              <path d="M330 78 L405 78 365 128 405 113 455 183 405 165 375 196 345 148 300 170Z" fill="#dcecf6" opacity=".8"/>
-              <path d="M760 58 L790 57 765 105 810 88 850 145 810 128 780 156 752 112 720 134Z" fill="#e5f2fa" opacity=".85"/>
-              <path d="M0 250 Q220 200 390 255 T760 245 T1200 220 V300 H0Z" fill="#0a2949"/>
-              <path d="M575 258 L710 205 815 228 925 153 1010 191 1125 132 1200 164 V300 H575Z" fill="#09233e"/>
-              <path d="M0 0 H1200 V300 H0Z" fill="url(#shade)"/>
-              <!-- pendaki saling mengulurkan tangan menuju puncak -->
-              <g stroke="#071629" stroke-width="10" stroke-linecap="round" stroke-linejoin="round" fill="none">
-                <path d="M770 222 l-4 -48 -24 -22 M766 174 l28 -25 M766 174 l-26 19 M766 222 l-22 31 M766 222 l27 28"/>
-                <path d="M855 190 l3 -52 -22 -22 M858 145 l29 -17 M858 145 l-25 13 M858 190 l-20 35 M858 190 l27 32"/>
-                <path d="M945 166 l2 -54 -24 -18 M947 119 l31 -17 M947 119 l-22 10 M947 166 l-20 34 M947 166 l29 28"/>
-                <path d="M1032 208 l-1 -48 -21 -21 M1031 165 l26 -20 M1031 165 l-25 12 M1031 208 l-20 30 M1031 208 l28 25"/>
+              <circle cx="820" cy="132" r="155" fill="url(#glow)"/>
+              <circle cx="820" cy="132" r="38" fill="#fff2bd"/>
+              <path d="M0 172 L100 104 190 154 300 78 390 166 510 88 625 174 750 64 870 174 1000 82 1110 164 1200 108 V300 H0Z" fill="#8e9bd0" opacity=".8"/>
+              <path d="M0 222 L130 126 245 223 390 78 535 220 670 111 815 223 965 70 1105 216 1200 148 V300 H0Z" fill="url(#peak)"/>
+              <path d="M390 78 L425 129 398 116 376 150 349 119 390 78 M965 70 L1005 126 977 111 951 151 925 115 965 70" fill="#eaf5ff" opacity=".9"/>
+              <path d="M0 252 Q180 205 350 254 T700 245 T1200 230 V300 H0Z" fill="#102c5b"/>
+              <path d="M520 300 L710 215 830 242 955 155 1065 212 1165 150 1200 175 V300Z" fill="#0a2046"/>
+              <g fill="#ffdca1" opacity=".4" filter="url(#soft)"><ellipse cx="820" cy="164" rx="250" ry="28"/></g>
+              <!-- pendaki teamwork berskala besar, saling membantu di punggung gunung -->
+              <g stroke="#08152c" stroke-width="13" stroke-linecap="round" stroke-linejoin="round" fill="none">
+                <path d="M705 230 L694 178 L672 151 M694 178 L728 151 M694 178 L665 195 M705 230 L681 267 M705 230 L735 263"/>
+                <path d="M790 193 L798 133 L772 111 M798 133 L831 111 M798 133 L765 145 M790 193 L766 231 M790 193 L823 230"/>
+                <path d="M890 171 L900 111 L875 88 M900 111 L932 90 M900 111 L867 126 M890 171 L865 207 M890 171 L923 205"/>
+                <path d="M982 207 L978 151 L955 130 M978 151 L1010 128 M978 151 L949 166 M982 207 L958 242 M982 207 L1013 239"/>
+                <path d="M1060 226 L1050 176 L1030 158 M1050 176 L1080 155 M1050 176 L1022 190 M1060 226 L1038 259 M1060 226 L1090 255"/>
               </g>
-              <g fill="#071629"><circle cx="766" cy="157" r="14"/><circle cx="858" cy="122" r="15"/><circle cx="947" cy="98" r="15"/><circle cx="1031" cy="145" r="14"/></g>
-              <path d="M988 120 V32" stroke="#f4f7fb" stroke-width="5"/>
-              <path d="M992 34 L1110 54 L992 82Z" fill="#c0265b"/>
-              <text x="1002" y="55" font-family="Arial,sans-serif" font-size="16" font-weight="800" fill="#fff">SATU TIM</text>
-              <text x="1002" y="72" font-family="Arial,sans-serif" font-size="10" font-weight="700" fill="#fff">SATU TUJUAN</text>
+              <g fill="#07152e"><circle cx="694" cy="139" r="16"/><circle cx="798" cy="98" r="17"/><circle cx="900" cy="73" r="17"/><circle cx="978" cy="115" r="16"/><circle cx="1050" cy="143" r="15"/></g>
+              <path d="M925 112 V25" stroke="#f8fafc" stroke-width="5"/>
+              <path d="M929 27 L1110 48 L929 88Z" fill="#c51e58" stroke="#ff8bb0" stroke-width="2"/>
+              <text x="948" y="52" font-family="Arial,sans-serif" font-size="20" font-weight="900" fill="#fff">TEAMWORK</text>
+              <text x="948" y="73" font-family="Arial,sans-serif" font-size="14" font-weight="800" fill="#fff">SATU TIM • SATU TUJUAN</text>
+              <rect width="1200" height="300" fill="url(#leftShade)"/>
+              <g font-family="Arial,sans-serif" font-weight="800">
+                <path d="M38 30 L66 14 L93 14 L66 44 L39 44Z" fill="#a855f7"/>
+                <path d="M72 30 L100 14 L127 14 L100 44 L73 44Z" fill="#7c3aed"/>
+                <text x="139" y="39" font-size="31" fill="#fff">morarepublic</text>
+              </g>
+              <path d="M0 294 H1200" stroke="#38bdf8" stroke-width="5" opacity=".9"/>
             </svg>`;
             const sceneImg=new Image();
             sceneImg.src='data:image/svg+xml;charset=utf-8,'+encodeURIComponent(sceneSvg);
@@ -2552,14 +2561,16 @@ html.dark option { background:#0f172a; color:#f1f5f9; }
             const txt=(v,xx,yy,size=22,color='#e2e8f0',weight='600')=>{x.fillStyle=color;x.font=weight+' '+size+'px Arial,sans-serif';x.fillText(String(v),xx,yy);};
             const fit=(v,xx,yy,max,size=20,color='#e2e8f0')=>{let z=String(v);x.font='600 '+size+'px Arial,sans-serif';while(z.length>3&&x.measureText(z).width>max)z=z.slice(0,-2)+'…';txt(z,xx,yy,size,color);};
             const pctText=n=>pct(n).toFixed(1)+'%';
-            round(34,220,1132,H-254,30,'rgba(7,24,45,.94)');
+            round(34,220,1132,H-254,30,'rgba(5,18,48,.96)');
+            x.strokeStyle='#38bdf8'; x.lineWidth=2; x.shadowColor='#22d3ee'; x.shadowBlur=18; x.strokeRect(35,221,1130,H-256); x.shadowBlur=0;
             round(72,72,10,105,5,'#38bdf8');
             txt('MONITORING WO',108,122,50,'#ffffff','800');
             txt('WORK ORDER PERFORMANCE REPORT • ONE TEAM, ONE GOAL',110,164,21,'#7dd3fc','700');
             txt(new Date().toLocaleString('id-ID',{dateStyle:'long',timeStyle:'short'}),110,205,18,'#cbd5e1','400');
 
             // Headline metrics
-            round(72,245,1056,210,24,'#17395e');
+            round(72,245,1056,210,24,'#103e78');
+            x.strokeStyle='#38bdf8'; x.lineWidth=2; x.strokeRect(73,246,1054,208);
             txt('TOTAL WORK ORDER',105,292,19,'#93c5fd','700');
             txt(fmt(total),105,382,76,'#ffffff','800');
             round(650,275,1,150,1,'#3b5c7d');
@@ -2577,7 +2588,8 @@ html.dark option { background:#0f172a; color:#f1f5f9; }
             ];
             metrics.forEach((m,i)=>{
                 const xx=78+(i%2)*535, yy=550+Math.floor(i/2)*150;
-                round(xx,yy,510,124,18,'#162f4e');
+                round(xx,yy,510,124,18,['#073f68','#075b50','#65410c','#6b1748'][i]);
+                x.strokeStyle=['#22d3ee','#34d399','#fbbf24','#fb7185'][i]; x.lineWidth=2; x.strokeRect(xx+1,yy+1,508,122);
                 round(xx+22,yy+22,8,78,4,m[3]);
                 txt(m[0],xx+50,yy+42,18,'#a5c8e8','700');
                 txt(m[1],xx+50,yy+91,34,'#ffffff','800');
@@ -2616,13 +2628,13 @@ html.dark option { background:#0f172a; color:#f1f5f9; }
                 {label:'SUCCESSFUL',x:580,w:105},{label:'NEW',x:695,w:65},{label:'IN PROG.',x:770,w:85},
                 {label:'UNSUCCESS.',x:865,w:95},{label:'CANCELLED',x:970,w:90},{label:'SUCCESS %',x:1070,w:75}
             ];
-            round(78,1490,1044,42,10,'#244665');
+            round(78,1490,1044,42,10,'#174d91');
             cols.forEach(col=>txt(col.label,col.x+(col.x>300?col.w-4:0),1517,13,'#bae6fd','700'));
             const rowTop=1540,rowH=56;
             if(!rankRows.length)txt('Tidak ada data '+rankUnit+' pada filter aktif',92,rowTop+30,18,'#cbd5e1','400');
             rankRows.forEach((a,i)=>{
                 const yy=rowTop+i*rowH;
-                round(78,yy,1044,rowH-4,10,i%2===0?'#183b5d':'#112d4a');
+                round(78,yy,1044,rowH-4,10,i%2===0?'#123e70':'#102d58');
                 txt(String(i+1).padStart(2,'0'),91,yy+27,16,i===0?'#fbbf24':'#7dd3fc','800');
                 fit(a.name,130,yy+32,210,18,'#ffffff');
                 [a.total,a.clean,a.completed,a.newCount,a.progress,a.unsuccessful,a.cancelled].forEach((v,j)=>txt(fmt(v),cols[j+1].x+cols[j+1].w-4,yy+32,18,j===2?'#6ee7b7':'#e2e8f0','700'));
