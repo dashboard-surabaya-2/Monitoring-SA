@@ -37,7 +37,12 @@ daily:[
 ["SEDIKIT LAGI, TERUS MAJU","🧡","Jangan remehkan progres hari ini. Setiap usaha punya arti—terus jaga ritme dan saling dorong untuk hasil yang lebih baik."],
 ["TEAMWORK ON FIRE","🔥","Bukan tentang siapa paling hebat, tapi bagaimana kita membuat satu sama lain jadi lebih hebat. Yuk, bikin hari ini berarti!"],
 ["BISA KARENA BERSAMA","🤝","Saat kita berbagi info, bantu menyelesaikan kendala, dan saling percaya, pekerjaan berat pun terasa lebih ringan."],
-["ONE TEAM. BIG DREAMS.","🌟","Tetap penasaran, tetap bergerak, dan jangan takut mencoba cara yang lebih baik. Hari ini kesempatan kita untuk naik level."]
+["ONE TEAM. BIG DREAMS.","🌟","Tetap penasaran, tetap bergerak, dan jangan takut mencoba cara yang lebih baik. Hari ini kesempatan kita untuk naik level."],
+["LANGKAH KECIL, HASIL BESAR","📈","Jangan menunggu perubahan besar. Mulai dari satu tindakan yang konsisten, satu pelanggan yang dibantu, dan satu target yang didekati."],
+["FOKUS PADA SOLUSI","🧭","Saat tantangan datang, jangan berhenti pada masalah. Cari jalan keluar, komunikasikan dengan tim, dan terus bergerak maju."],
+["DISIPLIN MEMBAWA HASIL","🏅","Semangat membuat kita memulai, disiplin membantu kita menyelesaikan. Jaga komitmen dan tuntaskan prioritas hari ini."],
+["SALING DUKUNG, SALING TUMBUH","🤝","Bagikan pengalaman, bantu rekan yang membutuhkan, dan rayakan keberhasilan bersama. Tim yang kuat tumbuh bersama."],
+["HARI INI PUNYA PELUANG","🌅","Buka mata untuk setiap kesempatan. Dengarkan kebutuhan pelanggan, berikan layanan terbaik, dan jadikan hari ini berarti."]
 ]};
 const key=eom?(weekend?"eomWeekend":"eom"):opening?(weekend?"openingWeekend":"opening"):weekend?"weekend":"daily";
 const dayNo=Math.floor((d-new Date(d.getFullYear(),0,0))/86400000),pool=pools[key],msg=pool[dayNo%pool.length];
@@ -48,7 +53,7 @@ weekend:'<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 900 620"><defs><li
 daily:'<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 900 620"><defs><linearGradient id="g" x2="1" y2="1"><stop stop-color="#173c88"/><stop offset=".52" stop-color="#087fbb"/><stop offset="1" stop-color="#513e9d"/></linearGradient><radialGradient id="a"><stop stop-color="#40e0d0" stop-opacity=".7"/><stop offset="1" stop-color="#40e0d0" stop-opacity="0"/></radialGradient></defs><rect width="900" height="620" fill="url(#g)"/><circle cx="700" cy="190" r="270" fill="url(#a)"/><path d="M0 430 160 320l130 90 160-180 150 160 130-105 170 120v215H0Z" fill="#102e68" opacity=".55"/><path d="M0 520 180 410l170 115 180-130 180 100 110-55 80 50v130H0Z" fill="#0a204d" opacity=".62"/></svg>'
 };
 const sceneKey=key.startsWith("eom")?"eom":key.startsWith("opening")?"opening":key==="weekend"?"weekend":"daily";
-const sceneUrl="./assets/mora-popup.jpg?v="+d.getFullYear()+"-"+(d.getMonth()+1)+"-"+d.getDate();
+const sceneUrl="data:image/svg+xml;charset=UTF-8,"+encodeURIComponent(scenes[sceneKey]);
 const s=document.createElement("style");s.textContent=
 '#mora-motivation-overlay{position:fixed;inset:0;z-index:2147483000;display:flex;align-items:center;justify-content:center;padding:18px;background:rgba(3,7,22,.76);backdrop-filter:blur(13px);-webkit-backdrop-filter:blur(13px);opacity:0;animation:mmFade .4s ease forwards;cursor:pointer}'+
 '#mora-motivation-card{position:relative;isolation:isolate;overflow:hidden;width:min(520px,100%);min-height:510px;padding:28px 30px 25px;border:1px solid rgba(255,255,255,.32);border-radius:30px;background:#13264b url("'+sceneUrl+'") center/cover no-repeat;box-shadow:0 32px 100px rgba(0,0,0,.55),0 0 0 1px rgba(255,255,255,.06);color:#fff;text-align:center;font-family:"Plus Jakarta Sans","Avenir Next",Inter,system-ui,sans-serif;transform:translateY(24px) scale(.94);animation:mmPop .62s cubic-bezier(.16,1,.3,1) .04s forwards}'+
