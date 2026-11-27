@@ -2505,43 +2505,54 @@ html.dark option { background:#0f172a; color:#f1f5f9; }
             const x=c.getContext('2d');
             if(!x) throw new Error('Canvas 2D tidak tersedia');
             x.setTransform(SCALE,0,0,SCALE,0,0);
-            // Latar ilustratif: sunrise, pegunungan, dan tim yang saling menyemangati.
+            // Background utama berupa ilustrasi lanskap teamwork penuh, bukan ikon kecil.
             const bg=x.createLinearGradient(0,0,W,H);
-            bg.addColorStop(0,'#07152b'); bg.addColorStop(.42,'#123c61'); bg.addColorStop(.72,'#0b2945'); bg.addColorStop(1,'#061629');
+            bg.addColorStop(0,'#07152b'); bg.addColorStop(.55,'#123c61'); bg.addColorStop(1,'#061629');
             x.fillStyle=bg; x.fillRect(0,0,W,H);
-            const glow=x.createRadialGradient(930,145,12,930,145,520);
-            glow.addColorStop(0,'rgba(255,190,105,.42)'); glow.addColorStop(.42,'rgba(56,189,248,.13)'); glow.addColorStop(1,'rgba(7,21,43,0)');
-            x.fillStyle=glow; x.fillRect(0,0,W,620);
-            x.save(); x.globalAlpha=.48;
-            x.fillStyle='#244e70'; x.beginPath(); x.moveTo(0,250); x.lineTo(150,110); x.lineTo(260,220); x.lineTo(420,70); x.lineTo(590,245); x.lineTo(760,115); x.lineTo(920,240); x.lineTo(1060,95); x.lineTo(1200,220); x.lineTo(1200,390); x.lineTo(0,390); x.closePath(); x.fill();
-            x.fillStyle='#173b5d'; x.beginPath(); x.moveTo(0,310); x.lineTo(190,205); x.lineTo(350,305); x.lineTo(520,170); x.lineTo(700,320); x.lineTo(900,205); x.lineTo(1080,310); x.lineTo(1200,235); x.lineTo(1200,470); x.lineTo(0,470); x.closePath(); x.fill();
-            x.restore();
+            const sceneSvg = `<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="300" viewBox="0 0 1200 300">
+              <defs>
+                <linearGradient id="sky" x2="0" y2="1"><stop stop-color="#092d68"/><stop offset=".48" stop-color="#f59e70"/><stop offset="1" stop-color="#f8c88b"/></linearGradient>
+                <linearGradient id="mount" x2="0" y2="1"><stop stop-color="#8bb7d8"/><stop offset=".42" stop-color="#315f8c"/><stop offset="1" stop-color="#102d50"/></linearGradient>
+                <linearGradient id="shade"><stop stop-color="#06172e" stop-opacity=".96"/><stop offset=".46" stop-color="#06172e" stop-opacity=".58"/><stop offset="1" stop-color="#06172e" stop-opacity=".04"/></linearGradient>
+                <radialGradient id="sun"><stop stop-color="#fff8cf"/><stop offset=".28" stop-color="#ffd28b" stop-opacity=".95"/><stop offset="1" stop-color="#ffb36b" stop-opacity="0"/></radialGradient>
+              </defs>
+              <rect width="1200" height="300" fill="url(#sky)"/>
+              <circle cx="850" cy="112" r="125" fill="url(#sun)"/>
+              <circle cx="850" cy="112" r="34" fill="#fff0c2" opacity=".9"/>
+              <path d="M0 180 L115 108 210 166 330 65 430 172 565 88 675 174 790 57 905 176 1025 82 1200 180 V300 H0Z" fill="#527da2" opacity=".8"/>
+              <path d="M0 220 L140 125 245 220 405 78 540 221 690 110 825 220 965 80 1105 213 1200 150 V300 H0Z" fill="url(#mount)"/>
+              <path d="M330 78 L405 78 365 128 405 113 455 183 405 165 375 196 345 148 300 170Z" fill="#dcecf6" opacity=".8"/>
+              <path d="M760 58 L790 57 765 105 810 88 850 145 810 128 780 156 752 112 720 134Z" fill="#e5f2fa" opacity=".85"/>
+              <path d="M0 250 Q220 200 390 255 T760 245 T1200 220 V300 H0Z" fill="#0a2949"/>
+              <path d="M575 258 L710 205 815 228 925 153 1010 191 1125 132 1200 164 V300 H575Z" fill="#09233e"/>
+              <path d="M0 0 H1200 V300 H0Z" fill="url(#shade)"/>
+              <!-- pendaki saling mengulurkan tangan menuju puncak -->
+              <g stroke="#071629" stroke-width="10" stroke-linecap="round" stroke-linejoin="round" fill="none">
+                <path d="M770 222 l-4 -48 -24 -22 M766 174 l28 -25 M766 174 l-26 19 M766 222 l-22 31 M766 222 l27 28"/>
+                <path d="M855 190 l3 -52 -22 -22 M858 145 l29 -17 M858 145 l-25 13 M858 190 l-20 35 M858 190 l27 32"/>
+                <path d="M945 166 l2 -54 -24 -18 M947 119 l31 -17 M947 119 l-22 10 M947 166 l-20 34 M947 166 l29 28"/>
+                <path d="M1032 208 l-1 -48 -21 -21 M1031 165 l26 -20 M1031 165 l-25 12 M1031 208 l-20 30 M1031 208 l28 25"/>
+              </g>
+              <g fill="#071629"><circle cx="766" cy="157" r="14"/><circle cx="858" cy="122" r="15"/><circle cx="947" cy="98" r="15"/><circle cx="1031" cy="145" r="14"/></g>
+              <path d="M988 120 V32" stroke="#f4f7fb" stroke-width="5"/>
+              <path d="M992 34 L1110 54 L992 82Z" fill="#c0265b"/>
+              <text x="1002" y="55" font-family="Arial,sans-serif" font-size="16" font-weight="800" fill="#fff">SATU TIM</text>
+              <text x="1002" y="72" font-family="Arial,sans-serif" font-size="10" font-weight="700" fill="#fff">SATU TUJUAN</text>
+            </svg>`;
+            const sceneImg=new Image();
+            sceneImg.src='data:image/svg+xml;charset=utf-8,'+encodeURIComponent(sceneSvg);
+            await new Promise((resolve,reject)=>{sceneImg.onload=resolve;sceneImg.onerror=reject;});
+            x.drawImage(sceneImg,0,0,W,300);
+            // Gradasi gelap di sisi kiri menjaga judul tetap terbaca di atas foto.
+            const titleShade=x.createLinearGradient(0,0,760,0);
+            titleShade.addColorStop(0,'rgba(3,17,39,.88)'); titleShade.addColorStop(.72,'rgba(3,17,39,.38)'); titleShade.addColorStop(1,'rgba(3,17,39,0)');
+            x.fillStyle=titleShade; x.fillRect(0,0,800,300);
+            // Panel data dimulai di bawah visual utama agar gambar teamwork benar-benar terlihat.
+            round(34,220,1132,H-254,30,'rgba(7,24,45,.94)');
             const round=(xx,yy,w,h,r=22,color='#142d4c')=>{x.fillStyle=color;x.beginPath();x.roundRect(xx,yy,w,h,r);x.fill();};
             const txt=(v,xx,yy,size=22,color='#e2e8f0',weight='600')=>{x.fillStyle=color;x.font=weight+' '+size+'px Arial,sans-serif';x.fillText(String(v),xx,yy);};
             const fit=(v,xx,yy,max,size=20,color='#e2e8f0')=>{let z=String(v);x.font='600 '+size+'px Arial,sans-serif';while(z.length>3&&x.measureText(z).width>max)z=z.slice(0,-2)+'…';txt(z,xx,yy,size,color);};
             const pctText=n=>pct(n).toFixed(1)+'%';
-            round(34,34,1132,H-68,30,'rgba(7,24,45,.88)');
-            // Ilustrasi utama teamwork: tim mendaki bersama dan saling membantu menuju satu tujuan.
-            x.save(); x.globalAlpha=.88;
-            x.fillStyle='#071a31';
-            x.beginPath(); x.moveTo(700,225); x.lineTo(790,150); x.lineTo(850,205); x.lineTo(930,125); x.lineTo(1030,220); x.closePath(); x.fill();
-            const climber=(px,py,scale=1,accent='#38bdf8')=>{
-                x.save(); x.translate(px,py); x.scale(scale,scale);
-                x.fillStyle='#07111f'; x.strokeStyle=accent; x.lineWidth=5; x.lineCap='round'; x.lineJoin='round';
-                x.beginPath(); x.arc(0,-34,11,0,Math.PI*2); x.fill();
-                x.beginPath(); x.moveTo(0,-21); x.lineTo(2,12); x.lineTo(-15,35); x.moveTo(2,12); x.lineTo(20,32);
-                x.moveTo(0,-12); x.lineTo(-22,1); x.moveTo(0,-12); x.lineTo(22,-29); x.stroke();
-                x.restore();
-            };
-            climber(770,191,.78,'#38bdf8');
-            climber(850,163,.92,'#34d399');
-            climber(925,151,1.02,'#fbbf24');
-            climber(1000,183,.82,'#38bdf8');
-            // Bendera bersama na szczycie.
-            x.strokeStyle='#dbeafe'; x.lineWidth=4; x.beginPath(); x.moveTo(944,118); x.lineTo(944,48); x.stroke();
-            x.fillStyle='#0ea5e9'; x.beginPath(); x.moveTo(947,50); x.lineTo(1042,67); x.lineTo(947,88); x.closePath(); x.fill();
-            x.fillStyle='#ffffff'; x.font='800 13px Arial,sans-serif'; x.fillText('SATU TIM',956,70);
-            x.restore();
             round(72,72,10,105,5,'#38bdf8');
             txt('MONITORING WO',108,122,50,'#ffffff','800');
             txt('WORK ORDER PERFORMANCE REPORT • ONE TEAM, ONE GOAL',110,164,21,'#7dd3fc','700');
