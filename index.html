@@ -2061,7 +2061,7 @@ html.dark option { background:#0f172a; color:#f1f5f9; }
           const targetBasis = targetInfo.octoberEOM > minimumTarget
             ? 'total SA EOM Oktober'
             : '15 SA x jumlah AE';
-          lines.push(`${i+1}. *${clean(r.name)}* — ${r.nov} SA\\n   Okt: ${r.oct} SA (MTD pembanding) | Selisih: ${growth(r.nov,r.oct)}\\n   🎯 Target bulanan ASM: *${targetEOM} SA* (15 x ${targetInfo.aeCount} AE = ${minimumTarget}; EOM Oktober = ${targetInfo.octoberEOM}; acuan: ${targetBasis})\\n   Sisa target: *${remainingTarget} SA*\\n   Target harian mulai hari ini: *${requiredDaily} SA/hari* (${remainingDays} hari termasuk hari ini)\\n   Branch: ${clean(r.branch)}`);
+          lines.push(`${i+1}. *${clean(r.name)}* — ${r.nov} SA\n   Okt: ${r.oct} SA (MTD pembanding) | Selisih: ${growth(r.nov,r.oct)}\n   🎯 Target bulanan ASM: *${targetEOM} SA* (15 x ${targetInfo.aeCount} AE = ${minimumTarget}; EOM Oktober = ${targetInfo.octoberEOM}; acuan: ${targetBasis})\n   Sisa target: *${remainingTarget} SA*\n   Target harian mulai hari ini: *${requiredDaily} SA/hari* (${remainingDays} hari termasuk hari ini)\n   Branch: ${clean(r.branch)}`);
         });
         if (!rows.length) lines.push('_Tidak ada data untuk pencarian ini._');
       } else if (key === 'rankAE') {
