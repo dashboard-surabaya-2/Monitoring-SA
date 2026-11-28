@@ -58,6 +58,9 @@
         if (tab) tab.className = key === view ? activeClass : inactiveClass;
       });
       window.scrollTo({ top: 0, behavior: 'smooth' });
+      // Tampilkan satu popup terpusat setiap kali dashboard berpindah.
+      if (typeof window.showDashboardPoster === 'function') window.showDashboardPoster();
+      else window.__moraPosterPending = true;
     }
 
     // Terima navigasi dari tombol bawah di dalam iframe WO/CTJ.
@@ -2248,7 +2251,7 @@ html.dark option { background:#0f172a; color:#f1f5f9; }
 
 <script>
   (function () {
-    const AUTO_CLOSE_MS = 3000; // 3 detik
+    const AUTO_CLOSE_MS = 3000;
     let autoCloseTimer = null;
 
     function forceClosePosterModal() {
@@ -2263,23 +2266,20 @@ html.dark option { background:#0f172a; color:#f1f5f9; }
       }
     }
 
+    function showPosterModal() {
+      const overlay = document.getElementById('posterModalOverlay');
+      if (!overlay) return;
+      if (autoCloseTimer) clearTimeout(autoCloseTimer);
+      overlay.style.setProperty('display', 'flex', 'important');
+      overlay.setAttribute('aria-hidden', 'false');
+      autoCloseTimer = setTimeout(forceClosePosterModal, AUTO_CLOSE_MS);
+    }
+
     function bindCloseEvents() {
       const overlay = document.getElementById('posterModalOverlay');
       const closeBtn = document.getElementById('closePosterModalBtn');
       if (!overlay) return;
 
-      // Popup pada halaman utama hanya untuk Performa SA.
-      // Saat WO/CTJ aktif, popup ditampilkan oleh halaman dashboard di dalam iframe.
-      let activeDashboard = 'sa';
-      try {
-        activeDashboard = new URLSearchParams(window.location.search).get('dashboard') || 'sa';
-      } catch (e) {}
-      if (activeDashboard !== 'sa') {
-        forceClosePosterModal();
-        return;
-      }
-
-      // Sentuh atau klik di mana saja pada overlay maupun kartu poster langsung menutup modal
       ['click', 'pointerup', 'touchend'].forEach(function (evtName) {
         overlay.addEventListener(evtName, function (e) {
           e.preventDefault();
@@ -2298,12 +2298,13 @@ html.dark option { background:#0f172a; color:#f1f5f9; }
       }
 
       document.addEventListener('keydown', function (e) {
-        if (e.key === 'Escape') {
-          forceClosePosterModal();
-        }
+        if (e.key === 'Escape') forceClosePosterModal();
       });
 
-      autoCloseTimer = setTimeout(forceClosePosterModal, AUTO_CLOSE_MS);
+      window.showDashboardPoster = showPosterModal;
+      // Popup pertama saat halaman dibuka; pemanggilan dari navigasi awal juga aman.
+      showPosterModal();
+      window.__moraPosterPending = false;
     }
 
     if (document.readyState === 'loading') {
