@@ -3356,12 +3356,11 @@ html.dark option { background:#0f172a; color:#f1f5f9; }
       const image = document.getElementById('dailyPosterImg');
       if (!image) return;
       const fallbackLink = document.querySelector('#posterShareFallback a[href]');
-      const candidates = [
-        ...Array.from({ length: 8 }, (_, index) =>
-          POSTER_BASE_URL + 'poster-' + jakartaDateKey(index) + '.webp'
-        ),
-        POSTER_BASE_URL + 'poster-' + jakartaDateKey(-1) + '.webp'
-      ];
+      // Hanya cari poster hari ini dan tanggal-tanggal sebelumnya.
+      // Jangan pernah menampilkan poster bertanggal masa depan.
+      const candidates = Array.from({ length: 8 }, (_, index) =>
+        POSTER_BASE_URL + 'poster-' + jakartaDateKey(index) + '.webp'
+      );
       let candidateIndex = 0;
       const attemptId = ++posterLoadAttempt;
 
@@ -3371,7 +3370,9 @@ html.dark option { background:#0f172a; color:#f1f5f9; }
           image.onerror = null;
           image.onload = null;
           image.removeAttribute('src');
-          showStatus('Poster hari ini belum tersedia. Sistem akan memeriksa kembali otomatis setiap 1 menit.');
+          const dateLabel = document.getElementById('posterDateLabel');
+          if (dateLabel) dateLabel.textContent = 'POSTER HARI INI BELUM TERSEDIA';
+          showStatus('Poster hari ini dan 7 hari sebelumnya belum tersedia. Sistem akan memeriksa kembali otomatis setiap 1 menit.');
           schedulePosterRetry();
           return;
         }
