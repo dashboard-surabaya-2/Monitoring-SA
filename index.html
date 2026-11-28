@@ -2288,9 +2288,13 @@ html.dark option { background:#0f172a; color:#f1f5f9; }
       const image = document.getElementById('dailyPosterImg');
       if (!image) return;
       const fallbackLink = document.querySelector('#posterShareFallback a[href]');
-      const candidates = Array.from({ length: 8 }, (_, index) =>
-        POSTER_BASE_URL + 'poster-' + jakartaDateKey(index) + '.webp'
-      );
+      const candidates = [
+        ...Array.from({ length: 8 }, (_, index) =>
+          POSTER_BASE_URL + 'poster-' + jakartaDateKey(index) + '.webp'
+        ),
+        // Fallback sementara: poster berikutnya jika poster hari ini dan arsip belum tersedia.
+        POSTER_BASE_URL + 'poster-' + jakartaDateKey(-1) + '.webp'
+      ];
       let candidateIndex = 0;
 
       const tryNextPoster = () => {
