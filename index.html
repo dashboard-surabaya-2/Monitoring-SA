@@ -2268,6 +2268,17 @@ html.dark option { background:#0f172a; color:#f1f5f9; }
       const closeBtn = document.getElementById('closePosterModalBtn');
       if (!overlay) return;
 
+      // Popup pada halaman utama hanya untuk Performa SA.
+      // Saat WO/CTJ aktif, popup ditampilkan oleh halaman dashboard di dalam iframe.
+      let activeDashboard = 'sa';
+      try {
+        activeDashboard = new URLSearchParams(window.location.search).get('dashboard') || 'sa';
+      } catch (e) {}
+      if (activeDashboard !== 'sa') {
+        forceClosePosterModal();
+        return;
+      }
+
       // Sentuh atau klik di mana saja pada overlay maupun kartu poster langsung menutup modal
       ['click', 'pointerup', 'touchend'].forEach(function (evtName) {
         overlay.addEventListener(evtName, function (e) {
