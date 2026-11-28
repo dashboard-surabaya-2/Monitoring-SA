@@ -3326,7 +3326,43 @@ html.dark option { background:#0f172a; color:#f1f5f9; }
 <script>
   (function () {
     const AUTO_CLOSE_MS = 4000;
-    const POSTER_IMAGE_URL = 'https://katalog-poster.pages.dev/assets/poster-2026-11-29.webp';
+    const POSTER_BASE_URL = 'https://katalog-poster.pages.dev/assets/';
+    let POSTER_IMAGE_URL = '';
+
+    function jakartaDateKey(daysAgo = 0) {
+      const parts = new Intl.DateTimeFormat('en-CA', {
+        timeZone: 'Asia/Jakarta', year: 'numeric', month: '2-digit', day: '2-digit'
+      }).formatToParts(new Date());
+      const values = Object.fromEntries(parts.map(part => [part.type, part.value]));
+      const date = new Date(Date.UTC(Number(values.year), Number(values.month) - 1, Number(values.day) - daysAgo));
+      return date.toISOString().slice(0, 10);
+    }
+
+    function loadDailyPoster() {
+      const image = document.getElementById('dailyPosterImg');
+      if (!image) return;
+      const fallbackLink = document.querySelector('#posterShareFallback a[href]');
+      const candidates = Array.from({ length: 8 }, (_, index) =>
+        POSTER_BASE_URL + 'poster-' + jakartaDateKey(index) + '.webp'
+      );
+      let candidateIndex = 0;
+
+      const tryNextPoster = () => {
+        if (candidateIndex >= candidates.length) {
+          image.onerror = null;
+          image.removeAttribute('src');
+          showStatus('Poster hari ini dan 7 hari sebelumnya belum tersedia. Silakan coba lagi setelah poster diunggah.');
+          return;
+        }
+        POSTER_IMAGE_URL = candidates[candidateIndex++];
+        if (fallbackLink) fallbackLink.href = POSTER_IMAGE_URL;
+        image.onerror = tryNextPoster;
+        image.onload = () => { image.onerror = null; };
+        image.src = POSTER_IMAGE_URL;
+      };
+
+      tryNextPoster();
+    }
     let autoCloseTimer = null;
     let shareStarted = false;
 
