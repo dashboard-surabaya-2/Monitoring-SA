@@ -3024,7 +3024,7 @@ html.dark option { background:#0f172a; color:#f1f5f9; }
           style="display: block; text-align: center; color: #fff; background: #374151; border-radius: 8px; padding: 10px; font-size: 13px; text-decoration: none;">
           BUKA / SIMPAN POSTER
         </a>
-        <a href="https://wa.me/?text=Poster%20motivasi%20harian%20MoraRepublic%20Surabaya%202" target="_blank" rel="noopener"
+        <a href="https://wa.me/" target="_blank" rel="noopener"
           style="display: block; text-align: center; color: #fff; background: #166534; border-radius: 8px; padding: 10px; font-size: 13px; text-decoration: none;">
           BUKA WHATSAPP
         </a>
@@ -3041,7 +3041,6 @@ html.dark option { background:#0f172a; color:#f1f5f9; }
   (function () {
     const AUTO_CLOSE_MS = 4000;
     const POSTER_IMAGE_URL = 'https://katalog-poster.pages.dev/assets/poster-29.jpg';
-    const POSTER_CAPTION = 'Poster motivasi harian MoraRepublic Surabaya 2';
     let autoCloseTimer = null;
     let shareStarted = false;
 
@@ -3113,7 +3112,7 @@ html.dark option { background:#0f172a; color:#f1f5f9; }
           throw new Error('SHARE_NOT_SUPPORTED');
         }
         if (shareButton) shareButton.textContent = 'PILIH GROUP WHATSAPP...';
-        await navigator.share({ files: [file], title: 'Poster Motivasi MoraRepublic', text: POSTER_CAPTION });
+        await navigator.share({ files: [file] });
         showStatus('Menu berbagi telah ditutup. Pastikan poster benar-benar sudah dikirim ke grup WhatsApp, lalu tekan tombol konfirmasi di bawah.');
         if (confirmButton) confirmButton.style.display = 'block';
         if (shareButton) { shareButton.disabled = false; shareButton.textContent = 'BAGIKAN LAGI'; shareButton.style.opacity = '1'; }
