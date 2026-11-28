@@ -3296,8 +3296,11 @@ html.dark option { background:#0f172a; color:#f1f5f9; }
       id="dailyPosterImg"
       src="https://raw.githubusercontent.com/dashboard-surabaya-2/katalog-poster/main/assets/poster-2026-11-29.webp"
       alt="Poster Motivasi Harian MoraRepublic Surabaya 2"
-      style="display: block; width: auto; height: auto; max-width: min(95vw, 720px); max-height: calc(94dvh - 112px); object-fit: contain;"
+      style="display: block; width: auto; height: auto; max-width: min(95vw, 720px); max-height: calc(94dvh - 145px); object-fit: contain;"
     />
+    <div id="posterDateLabel" style="width:100%; box-sizing:border-box; padding:8px 12px; color:#fff; background:#1f2937; text-align:center; font-size:13px; font-weight:700; letter-spacing:.2px;">
+      TANGGAL POSTER: MEMUAT...
+    </div>
     <div style="width: 100%; box-sizing: border-box; padding: 12px; display: flex; flex-direction: column; gap: 8px; background: #111827;">
       <button id="sharePosterWhatsAppBtn" type="button"
         style="width: 100%; border: 0; border-radius: 10px; padding: 13px 16px; background: #16a34a; color: #fff; font-size: 14px; font-weight: 800; letter-spacing: .3px; cursor: pointer;">
@@ -3381,6 +3384,16 @@ html.dark option { background:#0f172a; color:#f1f5f9; }
           image.onerror = null;
           if (posterRetryTimer) clearTimeout(posterRetryTimer);
           posterRetryTimer = null;
+          const dateMatch = baseUrl.match(/poster-(\d{4})-(\d{2})-(\d{2})\.webp$/);
+          const dateLabel = document.getElementById('posterDateLabel');
+          if (dateMatch && dateLabel) {
+            const posterDate = new Date(Number(dateMatch[1]), Number(dateMatch[2]) - 1, Number(dateMatch[3]));
+            const formatted = new Intl.DateTimeFormat('id-ID', {
+              timeZone: 'Asia/Jakarta', weekday: 'long', day: 'numeric',
+              month: 'long', year: 'numeric'
+            }).format(posterDate);
+            dateLabel.textContent = 'TANGGAL POSTER: ' + formatted.toLocaleUpperCase('id-ID');
+          }
           const status = document.getElementById('posterShareStatus');
           if (status && !shareStarted) {
             status.style.display = 'none';
