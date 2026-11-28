@@ -2986,6 +2986,51 @@ html.dark option { background:#0f172a; color:#f1f5f9; }
  apply('light');
 })();;
 </script>
-<!-- Fitur popup motivasi dinonaktifkan atas permintaan pengguna. -->
+<!-- Daily Motivation Poster Modal -->
+<div id="posterModalOverlay" class="fixed inset-0 z-[9999] flex items-center justify-center bg-black/75 p-4 backdrop-blur-xs" role="dialog" aria-modal="true" aria-label="Poster Motivasi Harian">
+  <div class="relative w-full max-w-md overflow-hidden rounded-2xl bg-slate-900 shadow-2xl ring-1 ring-white/15">
+    <button
+      id="closePosterModalBtn"
+      type="button"
+      aria-label="Tutup poster"
+      class="absolute top-3 right-3 z-10 flex h-9 w-9 items-center justify-center rounded-full bg-black/65 text-xl font-bold text-white transition hover:bg-black/85 cursor-pointer"
+    >
+      &times;
+    </button>
+    <img
+      id="dailyPosterImg"
+      src="https://katalog-poster.pages.dev/assets/poster-29.jpg"
+      alt="Poster Motivasi Harian MoraRepublic Surabaya 2"
+      class="max-h-[82vh] w-full object-contain bg-slate-950"
+    />
+  </div>
+</div>
+
+<script>
+  (function () {
+    const overlay = document.getElementById('posterModalOverlay');
+    const closeBtn = document.getElementById('closePosterModalBtn');
+    if (!overlay || !closeBtn) return;
+
+    function closePosterModal() {
+      overlay.classList.add('hidden');
+      overlay.classList.remove('flex');
+    }
+
+    closeBtn.addEventListener('click', closePosterModal);
+
+    overlay.addEventListener('click', function (event) {
+      if (event.target === overlay) {
+        closePosterModal();
+      }
+    });
+
+    document.addEventListener('keydown', function (event) {
+      if (event.key === 'Escape' && !overlay.classList.contains('hidden')) {
+        closePosterModal();
+      }
+    });
+  })();
+</script>
 </body>
 </html>
