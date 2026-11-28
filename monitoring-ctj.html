@@ -3279,7 +3279,7 @@ html.dark option { background:#0f172a; color:#f1f5f9; }
   role="dialog"
   aria-modal="true"
   aria-label="Poster Motivasi Harian"
-  style="position: fixed; inset: 0; z-index: 2147483647; display: flex; align-items: center; justify-content: center; padding: clamp(8px, 2vw, 24px); background: rgba(0, 0, 0, 0.8); cursor: pointer;"
+  style="position: fixed; inset: 0; z-index: 2147483647; display: none; align-items: center; justify-content: center; padding: clamp(8px, 2vw, 24px); background: rgba(0, 0, 0, 0.8); cursor: pointer;"
 >
   <div
     id="posterModalCard"
@@ -3324,6 +3324,14 @@ html.dark option { background:#0f172a; color:#f1f5f9; }
       const overlay = document.getElementById('posterModalOverlay');
       const closeBtn = document.getElementById('closePosterModalBtn');
       if (!overlay) return;
+
+      // Jika dibuka di dalam iframe dashboard utama, popup dikendalikan parent agar tidak ganda.
+      if (window.parent !== window) {
+        forceClosePosterModal();
+        return;
+      }
+      overlay.style.setProperty('display', 'flex', 'important');
+      overlay.setAttribute('aria-hidden', 'false');
 
       // Sentuh atau klik di mana saja pada overlay maupun kartu poster langsung menutup modal
       ['click', 'pointerup', 'touchend'].forEach(function (evtName) {
