@@ -2215,5 +2215,92 @@ html.dark option { background:#0f172a; color:#f1f5f9; }
     });
   </script>
 <!-- Fitur popup motivasi dinonaktifkan atas permintaan pengguna. -->
+<!-- Daily Motivation Poster Modal (Auto-Close + Tap Anywhere to Close) -->
+<div
+  id="posterModalOverlay"
+  class="fixed inset-0 flex items-center justify-center bg-black/80 backdrop-blur-xs"
+  role="dialog"
+  aria-modal="true"
+  aria-label="Poster Motivasi Harian"
+  style="position: fixed; inset: 0; z-index: 2147483647; display: flex; align-items: center; justify-content: center; padding: clamp(8px, 2vw, 24px); background: rgba(0, 0, 0, 0.8); cursor: pointer;"
+>
+  <div
+    id="posterModalCard"
+    class="relative flex items-center justify-center overflow-hidden rounded-2xl bg-slate-900 shadow-2xl"
+    style="position: relative; display: flex; align-items: center; justify-content: center; overflow: hidden; border-radius: 16px; width: fit-content; max-width: min(95vw, 720px); max-height: 92dvh;"
+  >
+    <button
+      id="closePosterModalBtn"
+      type="button"
+      aria-label="Tutup poster"
+      style="position: absolute; top: 12px; right: 12px; z-index: 10; width: 40px; height: 40px; border-radius: 9999px; border: none; background: rgba(0, 0, 0, 0.75); color: #ffffff; font-size: 24px; font-weight: bold; line-height: 1; display: flex; align-items: center; justify-content: center; cursor: pointer;"
+    >
+      &times;
+    </button>
+    <img
+      id="dailyPosterImg"
+      src="https://katalog-poster.pages.dev/assets/poster-29.jpg"
+      alt="Poster Motivasi Harian MoraRepublic Surabaya 2"
+      style="display: block; width: auto; height: auto; max-width: min(95vw, 720px); max-height: 92dvh; object-fit: contain;"
+    />
+  </div>
+</div>
+
+<script>
+  (function () {
+    const AUTO_CLOSE_MS = 3000; // 3 detik
+    let autoCloseTimer = null;
+
+    function forceClosePosterModal() {
+      if (autoCloseTimer) {
+        clearTimeout(autoCloseTimer);
+        autoCloseTimer = null;
+      }
+      const overlay = document.getElementById('posterModalOverlay');
+      if (overlay) {
+        overlay.style.setProperty('display', 'none', 'important');
+        overlay.setAttribute('aria-hidden', 'true');
+      }
+    }
+
+    function bindCloseEvents() {
+      const overlay = document.getElementById('posterModalOverlay');
+      const closeBtn = document.getElementById('closePosterModalBtn');
+      if (!overlay) return;
+
+      // Sentuh atau klik di mana saja pada overlay maupun kartu poster langsung menutup modal
+      ['click', 'pointerup', 'touchend'].forEach(function (evtName) {
+        overlay.addEventListener(evtName, function (e) {
+          e.preventDefault();
+          forceClosePosterModal();
+        }, { passive: false });
+      });
+
+      if (closeBtn) {
+        ['click', 'pointerup', 'touchend'].forEach(function (evtName) {
+          closeBtn.addEventListener(evtName, function (e) {
+            e.preventDefault();
+            e.stopPropagation();
+            forceClosePosterModal();
+          }, { passive: false });
+        });
+      }
+
+      document.addEventListener('keydown', function (e) {
+        if (e.key === 'Escape') {
+          forceClosePosterModal();
+        }
+      });
+
+      autoCloseTimer = setTimeout(forceClosePosterModal, AUTO_CLOSE_MS);
+    }
+
+    if (document.readyState === 'loading') {
+      document.addEventListener('DOMContentLoaded', bindCloseEvents);
+    } else {
+      bindCloseEvents();
+    }
+  })();
+</script>
 </body>
 </html>
