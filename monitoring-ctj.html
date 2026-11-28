@@ -3272,60 +3272,157 @@ html.dark option { background:#0f172a; color:#f1f5f9; }
 })();;
 </script>
 <!-- Fitur popup motivasi dinonaktifkan atas permintaan pengguna. -->
-<!-- Daily Motivation Poster Modal (Auto-Close + Tap Anywhere to Close) -->
+<!-- Daily Motivation Poster Modal with WhatsApp sharing -->
 <div
   id="posterModalOverlay"
   class="fixed inset-0 flex items-center justify-center bg-black/80 backdrop-blur-xs"
   role="dialog"
   aria-modal="true"
   aria-label="Poster Motivasi Harian"
-  style="position: fixed; inset: 0; z-index: 2147483647; display: none; align-items: center; justify-content: center; padding: clamp(8px, 2vw, 24px); background: rgba(0, 0, 0, 0.8); cursor: pointer;"
+  aria-hidden="true"
+  style="position: fixed; inset: 0; z-index: 2147483647; display: none; align-items: center; justify-content: center; padding: clamp(8px, 2vw, 24px); background: rgba(0, 0, 0, 0.82); cursor: pointer;"
 >
   <div
     id="posterModalCard"
-    class="relative flex items-center justify-center overflow-hidden rounded-2xl bg-slate-900 shadow-2xl"
-    style="position: relative; display: flex; align-items: center; justify-content: center; overflow: hidden; border-radius: 16px; width: fit-content; max-width: min(95vw, 720px); max-height: 92dvh;"
+    style="position: relative; display: flex; flex-direction: column; align-items: center; overflow: hidden; border-radius: 16px; width: fit-content; max-width: min(95vw, 720px); max-height: 94dvh; background: #111827; box-shadow: 0 20px 60px rgba(0,0,0,.5); cursor: default;"
   >
     <button
       id="closePosterModalBtn"
       type="button"
       aria-label="Tutup poster"
-      style="position: absolute; top: 12px; right: 12px; z-index: 10; width: 40px; height: 40px; border-radius: 9999px; border: none; background: rgba(0, 0, 0, 0.75); color: #ffffff; font-size: 24px; font-weight: bold; line-height: 1; display: flex; align-items: center; justify-content: center; cursor: pointer;"
-    >
-      &times;
-    </button>
+      style="position: absolute; top: 10px; right: 10px; z-index: 10; width: 40px; height: 40px; border-radius: 9999px; border: none; background: rgba(0,0,0,.78); color: #fff; font-size: 24px; font-weight: bold; line-height: 1; display: flex; align-items: center; justify-content: center; cursor: pointer;"
+    >&times;</button>
     <img
       id="dailyPosterImg"
       src="https://katalog-poster.pages.dev/assets/poster-29.jpg"
       alt="Poster Motivasi Harian MoraRepublic Surabaya 2"
-      style="display: block; width: auto; height: auto; max-width: min(95vw, 720px); max-height: 92dvh; object-fit: contain;"
+      style="display: block; width: auto; height: auto; max-width: min(95vw, 720px); max-height: calc(94dvh - 112px); object-fit: contain;"
     />
+    <div style="width: 100%; box-sizing: border-box; padding: 12px; display: flex; flex-direction: column; gap: 8px; background: #111827;">
+      <button id="sharePosterWhatsAppBtn" type="button"
+        style="width: 100%; border: 0; border-radius: 10px; padding: 13px 16px; background: #16a34a; color: #fff; font-size: 14px; font-weight: 800; letter-spacing: .3px; cursor: pointer;">
+        KIRIM KE GROUP WA
+      </button>
+      <div id="posterShareStatus" role="status" aria-live="polite"
+        style="display: none; color: #e5e7eb; font-size: 12px; line-height: 1.45; text-align: center;"></div>
+      <div id="posterShareFallback" style="display: none; gap: 8px; flex-direction: column;">
+        <a href="https://katalog-poster.pages.dev/assets/poster-29.jpg" target="_blank" rel="noopener"
+          style="display: block; text-align: center; color: #fff; background: #374151; border-radius: 8px; padding: 10px; font-size: 13px; text-decoration: none;">
+          BUKA / SIMPAN POSTER
+        </a>
+        <a href="https://wa.me/?text=Poster%20motivasi%20harian%20MoraRepublic%20Surabaya%202" target="_blank" rel="noopener"
+          style="display: block; text-align: center; color: #fff; background: #166534; border-radius: 8px; padding: 10px; font-size: 13px; text-decoration: none;">
+          BUKA WHATSAPP
+        </a>
+      </div>
+      <button id="confirmPosterSentBtn" type="button"
+        style="display: none; width: 100%; border: 1px solid rgba(255,255,255,.35); border-radius: 10px; padding: 11px 16px; background: transparent; color: #fff; font-size: 13px; font-weight: 700; cursor: pointer;">
+        POSTER SUDAH TERKIRIM — TUTUP
+      </button>
+    </div>
   </div>
 </div>
 
 <script>
   (function () {
-    const AUTO_CLOSE_MS = 4000; // 3 detik
+    const AUTO_CLOSE_MS = 4000;
+    const POSTER_IMAGE_URL = 'https://katalog-poster.pages.dev/assets/poster-29.jpg';
+    const POSTER_CAPTION = 'Poster motivasi harian MoraRepublic Surabaya 2';
     let autoCloseTimer = null;
+    let shareStarted = false;
 
-    function forceClosePosterModal() {
+    function stopAutoClose() {
       if (autoCloseTimer) {
         clearTimeout(autoCloseTimer);
         autoCloseTimer = null;
       }
+    }
+
+    function forceClosePosterModal() {
+      stopAutoClose();
       const overlay = document.getElementById('posterModalOverlay');
       if (overlay) {
         overlay.style.setProperty('display', 'none', 'important');
         overlay.setAttribute('aria-hidden', 'true');
+      }
+      shareStarted = false;
+    }
+
+    function resetShareUI() {
+      const status = document.getElementById('posterShareStatus');
+      const fallback = document.getElementById('posterShareFallback');
+      const confirm = document.getElementById('confirmPosterSentBtn');
+      const share = document.getElementById('sharePosterWhatsAppBtn');
+      if (status) { status.style.display = 'none'; status.textContent = ''; }
+      if (fallback) fallback.style.display = 'none';
+      if (confirm) confirm.style.display = 'none';
+      if (share) { share.disabled = false; share.textContent = 'KIRIM KE GROUP WA'; share.style.opacity = '1'; }
+      shareStarted = false;
+    }
+
+    function showPosterModal() {
+      const overlay = document.getElementById('posterModalOverlay');
+      if (!overlay) return;
+      stopAutoClose();
+      resetShareUI();
+      overlay.style.setProperty('display', 'flex', 'important');
+      overlay.setAttribute('aria-hidden', 'false');
+      autoCloseTimer = setTimeout(forceClosePosterModal, AUTO_CLOSE_MS);
+    }
+
+    function showStatus(message) {
+      const status = document.getElementById('posterShareStatus');
+      if (status) {
+        status.textContent = message;
+        status.style.display = 'block';
+      }
+    }
+
+    async function sharePosterToWhatsApp() {
+      stopAutoClose();
+      shareStarted = true;
+      const shareButton = document.getElementById('sharePosterWhatsAppBtn');
+      const confirmButton = document.getElementById('confirmPosterSentBtn');
+      const fallback = document.getElementById('posterShareFallback');
+      if (shareButton) {
+        shareButton.disabled = true;
+        shareButton.textContent = 'MENYIAPKAN POSTER...';
+        shareButton.style.opacity = '.7';
+      }
+      showStatus('Menyiapkan gambar untuk dibagikan. Pilih grup WhatsApp tujuan pada menu berbagi.');
+      try {
+        const response = await fetch(POSTER_IMAGE_URL, { mode: 'cors', cache: 'no-cache' });
+        if (!response.ok) throw new Error('Gambar poster tidak dapat diambil.');
+        const blob = await response.blob();
+        const file = new File([blob], 'poster-motivasi-morarepublic.jpg', { type: blob.type || 'image/jpeg' });
+        if (!navigator.share || !navigator.canShare || !navigator.canShare({ files: [file] })) {
+          throw new Error('SHARE_NOT_SUPPORTED');
+        }
+        if (shareButton) shareButton.textContent = 'PILIH GROUP WHATSAPP...';
+        await navigator.share({ files: [file], title: 'Poster Motivasi MoraRepublic', text: POSTER_CAPTION });
+        showStatus('Menu berbagi telah ditutup. Pastikan poster benar-benar sudah dikirim ke grup WhatsApp, lalu tekan tombol konfirmasi di bawah.');
+        if (confirmButton) confirmButton.style.display = 'block';
+        if (shareButton) { shareButton.disabled = false; shareButton.textContent = 'BAGIKAN LAGI'; shareButton.style.opacity = '1'; }
+      } catch (error) {
+        if (error && error.name === 'AbortError') {
+          showStatus('Proses berbagi dibatalkan. Popup tetap terbuka dan timer otomatis tetap nonaktif. Anda bisa mencoba lagi.');
+          if (shareButton) { shareButton.disabled = false; shareButton.textContent = 'COBA KIRIM LAGI'; shareButton.style.opacity = '1'; }
+          return;
+        }
+        if (fallback) fallback.style.display = 'flex';
+        if (confirmButton) confirmButton.style.display = 'block';
+        showStatus('Berbagi gambar langsung tidak didukung pada browser ini. Buka/simpan poster, lalu buka WhatsApp dan lampirkan gambar ke grup. Setelah terkirim, tekan konfirmasi.');
+        if (shareButton) { shareButton.disabled = false; shareButton.textContent = 'COBA BAGIKAN LAGI'; shareButton.style.opacity = '1'; }
       }
     }
 
     function bindCloseEvents() {
       const overlay = document.getElementById('posterModalOverlay');
       const closeBtn = document.getElementById('closePosterModalBtn');
+      const shareBtn = document.getElementById('sharePosterWhatsAppBtn');
+      const confirmBtn = document.getElementById('confirmPosterSentBtn');
       if (!overlay) return;
 
-      // Jika dibuka di dalam iframe dashboard utama, popup dikendalikan parent agar tidak ganda.
       if (window.parent !== window) {
         forceClosePosterModal();
         return;
@@ -3333,31 +3430,25 @@ html.dark option { background:#0f172a; color:#f1f5f9; }
       overlay.style.setProperty('display', 'flex', 'important');
       overlay.setAttribute('aria-hidden', 'false');
 
-      // Sentuh atau klik di mana saja pada overlay maupun kartu poster langsung menutup modal
-      ['click', 'pointerup', 'touchend'].forEach(function (evtName) {
-        overlay.addEventListener(evtName, function (e) {
-          e.preventDefault();
-          forceClosePosterModal();
-        }, { passive: false });
+      overlay.addEventListener('click', function (e) {
+        if (e.target === overlay) forceClosePosterModal();
       });
-
-      if (closeBtn) {
-        ['click', 'pointerup', 'touchend'].forEach(function (evtName) {
-          closeBtn.addEventListener(evtName, function (e) {
-            e.preventDefault();
-            e.stopPropagation();
-            forceClosePosterModal();
-          }, { passive: false });
-        });
-      }
-
+      if (closeBtn) closeBtn.addEventListener('click', function (e) {
+        e.preventDefault(); e.stopPropagation(); forceClosePosterModal();
+      });
+      if (shareBtn) shareBtn.addEventListener('click', function (e) {
+        e.preventDefault(); e.stopPropagation(); sharePosterToWhatsApp();
+      });
+      if (confirmBtn) confirmBtn.addEventListener('click', function (e) {
+        e.preventDefault(); e.stopPropagation(); forceClosePosterModal();
+      });
       document.addEventListener('keydown', function (e) {
-        if (e.key === 'Escape') {
-          forceClosePosterModal();
-        }
+        if (e.key === 'Escape') forceClosePosterModal();
       });
 
-      autoCloseTimer = setTimeout(forceClosePosterModal, AUTO_CLOSE_MS);
+      window.showDashboardPoster = showPosterModal;
+      showPosterModal();
+      window.__moraPosterPending = false;
     }
 
     if (document.readyState === 'loading') {
