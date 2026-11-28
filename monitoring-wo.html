@@ -3049,6 +3049,28 @@ html.dark option { background:#0f172a; color:#f1f5f9; }
 
       if (closeBtn) {
         ['click', 'pointerup', 'touchend'].forEach(function (evtName) {
-          closeBtn.addEventListener(evtName, function
-</body>
+          closeBtn.addEventListener(evtName, function (e) {
+            e.preventDefault();
+            e.stopPropagation();
+            forceClosePosterModal();
+          }, { passive: false });
+        });
+      }
+
+      document.addEventListener('keydown', function (e) {
+        if (e.key === 'Escape') {
+          forceClosePosterModal();
+        }
+      });
+
+      autoCloseTimer = setTimeout(forceClosePosterModal, AUTO_CLOSE_MS);
+    }
+
+    if (document.readyState === 'loading') {
+      document.addEventListener('DOMContentLoaded', bindCloseEvents);
+    } else {
+      bindCloseEvents();
+    }
+  })();
+</script></body>
 </html>
